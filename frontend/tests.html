@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Bac Info</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== RESET & VARIABILE - DESIGN MODERN ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #f0f4ff;
+            --bg-card: #ffffff;
+            --bg-input: #f8f9fa;
+            --text-primary: #1a1a2e;
+            --text-secondary: #6c757d;
+            --border-color: #e9ecef;
+            --border-dark: #dee2e6;
+            --shadow: 0 8px 30px rgba(0,0,0,0.08);
+            --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
+            --primary: #4361ee;
+            --primary-light: #eef0ff;
+            --primary-dark: #3a56d4;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --bg-code: #1e1e2e;
+            --text-code: #cdd6f4;
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #0f0e17;
+            --bg-card: #1a1a2e;
+            --bg-input: #1a1a2e;
+            --text-primary: #e8e8f0;
+            --text-secondary: #a0a0b8;
+            --border-color: #2a2a4a;
+            --border-dark: #3a3a5a;
+            --shadow: 0 8px 30px rgba(0,0,0,0.4);
+            --shadow-hover: 0 12px 40px rgba(0,0,0,0.6);
+            --primary: #6c8cff;
+            --primary-light: #1a2a4a;
+            --bg-code: #0d0d1a;
+            --text-code: #cdd6f4;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 1.5rem;
+            min-height: 100vh;
+            transition: var(--transition);
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
+        
+        /* ===== HEADER ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            transition: var(--transition);
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+        }
+        .logo-area i { 
+            font-size: 2rem; 
+            color: var(--primary);
+            background: var(--primary-light);
+            padding: 0.5rem;
+            border-radius: 12px;
+        }
+        .logo-area h1 { 
+            font-size: 1.4rem; 
+            font-weight: 800; 
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+        .logo-area h1 span { 
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo-area small { 
+            font-size: 0.75rem; 
+            color: var(--text-secondary); 
+            margin-left: 0.5rem; 
+            font-weight: 500;
+        }
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        /* ===== ROLE BADGE ===== */
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 1rem 0.3rem 0.7rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 2px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        .role-badge i { font-size: 1rem; }
+        .role-badge.teacher {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .role-badge.student {
+            border-color: var(--warning);
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        /* ===== BUTOANE ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            text-decoration: none;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+        
+        .btn-primary { 
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            color: white; 
+            border-color: transparent;
+        }
+        .btn-primary:hover { 
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.35);
+        }
+        
+        .btn-outline { 
+            background: transparent; 
+            border: 2px solid var(--border-dark);
+            color: var(--text-primary);
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        
+        .btn-success { 
+            background: linear-gradient(135deg, var(--success), #27ae60);
+            color: white;
+            border-color: transparent;
+        }
+        .btn-success:hover { 
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.35);
+        }
+        
+        .btn-theme {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 0.8rem;
+        }
+        .btn-theme:hover { border-color: var(--primary); color: var(--primary); }
+        
+        .btn-warning { 
+            background: linear-gradient(135deg, var(--warning), #e67e22);
+            color: white;
+            border-color: transparent;
+        }
+        .btn-warning:hover { 
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(243, 156, 18, 0.35);
+        }
+        
+        .btn-danger { 
+            background: linear-gradient(135deg, var(--danger), #c0392b);
+            color: white;
+            border-color: transparent;
+        }
+        .btn-danger:hover { 
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.35);
+        }
+        
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+        
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 1.5rem 1.8rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+        .card:hover { box-shadow: var(--shadow-hover); }
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--text-primary);
+        }
+        .card-title i { color: var(--primary); }
+        
+        /* ===== STEPPER ===== */
+        .stepper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.2rem;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.8rem;
+            border: 1px solid transparent;
+        }
+        .step .num {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--border-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 0.7rem;
+        }
+        .step.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+        .step.active .num { background: var(--primary); }
+        .step.done { background: #1a3a2a; color: var(--success); border-color: var(--success); }
+        .step.done .num { background: var(--success); }
+        .step-arrow { color: var(--text-secondary); font-weight: 300; }
+        
+        /* ===== FORM ===== */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: var(--text-primary);
+        }
+        .form-group label i { color: var(--primary); width: 1.1rem; }
+        .form-control {
+            padding: 0.6rem 0.8rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-family: inherit;
+            transition: var(--transition);
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--bg-card);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.15);
+        }
+        select.form-control { appearance: auto; cursor: pointer; }
+        textarea.form-control {
+            min-height: 80px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+        
+        /* ===== TAB-URI ===== */
+        .taburi {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        .tab {
+            padding: 0.5rem 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            border: 2px solid transparent;
+        }
+        .tab:hover { border-color: var(--border-dark); }
+        .tab.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* ===== EXERCIȚIU ITEM ===== */
+        .exercitiu-item {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+        .exercitiu-item:hover { border-color: var(--primary); box-shadow: var(--shadow-hover); }
+        .exercitiu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .exercitiu-header .nr {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+        
+        /* ===== OPTIUNI ===== */
+        .optiuni-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        @media (max-width: 600px) { .optiuni-grid { grid-template-columns: 1fr; } }
+        .optiune-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            background: var(--bg-input);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .optiune-item input[type="radio"] {
+            accent-color: var(--primary);
+            width: 16px;
+            height: 16px;
+        }
+        .optiune-item input[type="text"] {
+            border: none;
+            background: transparent;
+            flex: 1;
+            padding: 0.2rem;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+        .optiune-item input[type="text"]:focus { outline: none; }
+        
+        /* ===== Q-CARD ===== */
+        .q-card {
+            background: var(--bg-input);
+            border-radius: var(--radius);
+            padding: 1rem 1.2rem;
+            margin-bottom: 0.8rem;
+            border-left: 5px solid var(--primary);
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+        .q-card:hover { background: var(--bg-card); box-shadow: var(--shadow-hover); transform: translateX(4px); }
+        .q-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 0.2rem;
+            font-size: 0.75rem;
+        }
+        
+        /* ===== BADGE ===== */
+        .badge {
+            padding: 0.1rem 0.6rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+        }
+        .badge-s1 { background: #dbeafe; color: #1e40af; }
+        .badge-s2 { background: #fce4ec; color: #b71c1c; }
+        .badge-s3 { background: #f3e5f5; color: #6a1b9a; }
+        .badge-grila { background: #dbeafe; color: #1e40af; }
+        .badge-cod { background: #fce4ec; color: #b71c1c; }
+        .badge-scris { background: #f3e5f5; color: #6a1b9a; }
+        .badge-profesor { background: #e3f2fd; color: #1565c0; }
+        .badge-public { background: #fff3e0; color: #e65100; }
+        
+        [data-theme="dark"] .badge-s1 { background: #1a2a4a; color: #6c8cff; }
+        [data-theme="dark"] .badge-s2 { background: #3a1a2a; color: #ff6b8a; }
+        [data-theme="dark"] .badge-s3 { background: #2a1a4a; color: #b87aff; }
+        [data-theme="dark"] .badge-profesor { background: #1a2a4a; color: #6c8cff; }
+        [data-theme="dark"] .badge-public { background: #3a2a1a; color: #ffa86b; }
+        
+        /* ===== DIFFICULTY DOTS ===== */
+        .diff-dots { display: flex; gap: 2px; align-items: center; }
+        .diff-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border-dark); }
+        .diff-dot.filled { background: var(--primary); }
+        
+        /* ===== QUESTION DISPLAY ===== */
+        .question-display {
+            background: var(--bg-input);
+            border-radius: var(--radius);
+            padding: 1.2rem 1.5rem;
+            border: 2px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+        .question-display h3 { font-size: 1.1rem; margin-bottom: 0.3rem; color: var(--text-primary); }
+        .question-display .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        /* ===== HINT BOX ===== */
+        .hint-box {
+            background: rgba(243, 156, 18, 0.1);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            margin-top: 0.6rem;
+            border-left: 4px solid var(--warning);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+        
+        /* ===== OPTIONS LIST ===== */
+        .options-list { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.4rem; }
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem 0.8rem;
+            background: var(--bg-input);
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+        .option-item:hover { border-color: var(--primary); }
+        .option-item input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+        .option-item.correct { border-color: var(--success); background: rgba(46, 204, 113, 0.1); }
+        .option-item.wrong { border-color: var(--danger); background: rgba(231, 76, 60, 0.1); }
+        
+        /* ===== PROGRESS BAR ===== */
+        .progress-bar {
+            width: 100%;
+            height: 5px;
+            background: var(--bg-input);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0.3rem 0 1rem;
+            border: 1px solid var(--border-color);
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #7c3aed);
+            border-radius: 10px;
+            transition: width 0.4s ease;
+        }
+        
+        /* ===== FEEDBACK BOX ===== */
+        .feedback-box {
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            background: var(--bg-input);
+            border-left: 4px solid var(--border-dark);
+            margin-top: 0.6rem;
+            min-height: 40px;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+        }
+        .feedback-box.correct { border-color: var(--success); background: rgba(46, 204, 113, 0.1); color: var(--success); }
+        .feedback-box.wrong { border-color: var(--danger); background: rgba(231, 76, 60, 0.1); color: var(--danger); }
+        .feedback-box.info { border-color: var(--primary); background: rgba(67, 97, 238, 0.1); color: var(--primary); }
+        
+        /* ===== NAV ACTIONS ===== */
+        .nav-actions {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-top: 1rem;
+        }
+        .flex { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+        .hidden { display: none !important; }
+        .text-muted { color: var(--text-secondary); }
+        
+        /* ===== CODE OUTPUT ===== */
+        #cod-output {
+            background: var(--bg-code) !important;
+            color: var(--text-code) !important;
+            font-family: 'Courier New', monospace;
+            min-height: 35px;
+            white-space: pre-wrap;
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+        
+        /* ===== STATS BADGE ===== */
+        .stats-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 0.2rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        /* ===== CODE REQUIREMENTS ===== */
+        .code-requirements {
+            background: var(--bg-input);
+            border-radius: 8px;
+            padding: 0.5rem 0.8rem;
+            margin-top: 0.5rem;
+            border: 1px solid var(--border-color);
+            font-size: 0.8rem;
+        }
+        .code-requirements strong { color: var(--primary); }
+        
+        /* ===== AI EVAL BADGE ===== */
+        .ai-eval-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.1rem 0.6rem;
+            border-radius: 50px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+        .empty-state i { font-size: 3rem; margin-bottom: 0.5rem; color: var(--border-dark); }
+        
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-hover);
+            border-left: 4px solid var(--success);
+            z-index: 9999;
+            font-weight: 600;
+            animation: fadeIn 0.3s ease;
+            border: 1px solid var(--border-color);
+            max-width: 400px;
+        }
+        
+        /* ===== RESTRICTIE PROFESOR ===== */
+        .restrictie-profesor {
+            background: rgba(231, 76, 60, 0.08);
+            border: 2px solid var(--danger);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--danger);
+        }
+        .restrictie-profesor i { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+        .restrictie-profesor h3 { margin-bottom: 0.3rem; }
+        
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            body { padding: 0.8rem; }
+            .app-header { flex-direction: column; text-align: center; padding: 0.8rem 1rem; }
+            .header-actions { justify-content: center; }
+            .card { padding: 1rem; }
+            .step { font-size: 0.7rem; padding: 0.2rem 0.6rem; }
+            .form-grid { grid-template-columns: 1fr; }
+            .q-card { padding: 0.8rem 1rem; }
+            .optiuni-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- ===== HEADER ===== -->
+    <header class="app-header">
+        <div class="logo-area" onclick="window.location.href='/dashboard'">
+            <i class="fas fa-graduation-cap"></i>
+            <div>
+                <h1>Pro<span>InfoBAC</span></h1>
+                <small>· Teste</small>
+            </div>
+        </div>
+        <div class="header-actions">
+            <span class="stats-badge"><i class="fas fa-database"></i> <span id="ex-count">0</span> exerciții</span>
+            <span class="role-badge" id="role-badge">
+                <i class="fas fa-user-graduate"></i>
+                <span id="role-text">Elev</span>
+            </span>
+            <button class="btn btn-theme" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon"></i> <span id="theme-text">Dark</span></button>
+            <button class="btn btn-outline" onclick="resetAll()"><i class="fas fa-undo"></i> Reset</button>
+            <button class="btn btn-primary" onclick="genereazaTest()"><i class="fas fa-magic"></i> Test nou</button>
+        </div>
+    </header>
+
+    <!-- ===== TAB-URI ===== -->
+    <div class="taburi">
+        <button class="tab active" onclick="switchTab('rezolva')" id="tab-rezolva">
+            <i class="fas fa-pencil-alt"></i> Rezolvă teste
+        </button>
+        <button class="tab" onclick="switchTab('creeaza')" id="tab-creeaza">
+            <i class="fas fa-plus-circle"></i> Creează exercițiu
+        </button>
+        <button class="tab" onclick="switchTab('biblioteca')" id="tab-biblioteca">
+            <i class="fas fa-book"></i> Biblioteca mea
+        </button>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TAB 1: REZOLVĂ TESTE -->
+    <!-- ============================================================ -->
+    <div id="tab-rezolva-content" class="tab-content active fade-in">
+
+        <!-- STEP 1 -->
+        <div class="card" id="step1-card">
+            <div class="stepper">
+                <div class="step active" id="step1-indicator"><span class="num">1</span> Configurare</div>
+                <span class="step-arrow">→</span>
+                <div class="step" id="step2-indicator"><span class="num">2</span> Listează</div>
+                <span class="step-arrow">→</span>
+                <div class="step" id="step3-indicator"><span class="num">3</span> Rezolvă</div>
+            </div>
+            <div class="card-title"><i class="fas fa-sliders-h"></i> Configurare test</div>
+            <p class="text-muted" style="margin-bottom:1rem; font-size:0.9rem;">
+                Alege capitolul și numărul de întrebări. Testele includ exercițiile create de profesori în comunitate.
+            </p>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label><i class="fas fa-book-open"></i> Capitol</label>
+                    <select class="form-control" id="topic-select">
+                        <option value="algoritmi">Algoritmi elementari</option>
+                        <option value="tablouri">Tablouri (vectori/matrice)</option>
+                        <option value="siruri">Șiruri de caractere</option>
+                        <option value="subprograme">Subprograme</option>
+                        <option value="recursivitate">Recursivitate</option>
+                        <option value="grafuri">Grafuri</option>
+                        <option value="mixed">Mixt (toate)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-list-ol"></i> Număr întrebări</label>
+                    <select class="form-control" id="count-select">
+                        <option value="3">3 (rapid)</option>
+                        <option value="5" selected>5 (standard)</option>
+                        <option value="8">8 (complet)</option>
+                        <option value="10">10 (maraton)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-layer-group"></i> Tip exerciții</label>
+                    <select class="form-control" id="type-select">
+                        <option value="toate">Toate (S1+S2+S3)</option>
+                        <option value="s1">Subiectul I (grilă)</option>
+                        <option value="s2">Subiectul II (pseudocod)</option>
+                        <option value="s3">Subiectul III (programare)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; margin-top:1rem;">
+                <button class="btn btn-primary" onclick="genereazaTest()"><i class="fas fa-play"></i> Generează test</button>
+            </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="card hidden" id="step2-card">
+            <div class="stepper">
+                <div class="step done" id="step1-indicator2"><span class="num">1</span> Configurare</div>
+                <span class="step-arrow">→</span>
+                <div class="step active" id="step2-indicator2"><span class="num">2</span> Listează</div>
+                <span class="step-arrow">→</span>
+                <div class="step" id="step3-indicator2"><span class="num">3</span> Rezolvă</div>
+            </div>
+            <div class="card-title"><i class="fas fa-list-ul"></i> <span id="test-title">Testul tău</span></div>
+            <p id="test-summary" class="text-muted" style="margin-bottom:0.8rem; font-size:0.9rem;"></p>
+            <div id="questions-list"></div>
+            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.6rem; margin-top:1rem;">
+                <button class="btn btn-outline" onclick="resetAll()"><i class="fas fa-arrow-left"></i> Înapoi</button>
+                <button class="btn btn-success" onclick="startSolving()"><i class="fas fa-pencil-alt"></i> Începe rezolvarea</button>
+            </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="card hidden" id="step3-card">
+            <div class="stepper">
+                <div class="step done" id="step1-indicator3"><span class="num">1</span> Configurare</div>
+                <span class="step-arrow">→</span>
+                <div class="step done" id="step2-indicator3"><span class="num">2</span> Listează</div>
+                <span class="step-arrow">→</span>
+                <div class="step active" id="step3-indicator3"><span class="num">3</span> Rezolvă</div>
+            </div>
+            <div class="card-title"><i class="fas fa-edit"></i> Rezolvă exercițiul</div>
+
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+            <div class="flex" style="justify-content:space-between; margin-bottom:0.8rem;">
+                <span id="q-counter" style="font-weight:600; font-size:0.95rem;">Întrebarea 1 / 5</span>
+                <span id="q-points" class="text-muted" style="font-size:0.9rem;">0 puncte</span>
+            </div>
+
+            <div class="question-display">
+                <div class="flex" style="margin-bottom:0.3rem;">
+                    <span class="badge" id="q-badge">S1</span>
+                    <span id="q-subiect-label" style="font-size:0.8rem; color:var(--text-secondary);">Subiectul I</span>
+                    <span class="ai-eval-badge" id="ai-badge" style="display:none;">🤖 AI</span>
+                    <span class="badge badge-profesor" id="q-creator-badge" style="display:none;">👨‍🏫 Profesor</span>
+                    <div class="diff-dots" id="q-diff"></div>
+                </div>
+                <h3 id="q-text">Întrebarea va apărea aici.</h3>
+                <div id="q-subtitle" class="subtitle"></div>
+                <div class="hint-box hidden" id="hint-box"><i class="fas fa-lightbulb" style="color:var(--warning);"></i> <span id="hint-text"></span></div>
+                <div id="barem-display" style="display:none; margin-top:0.5rem; background:var(--primary-light); padding:0.5rem 1rem; border-radius:8px; border-left:4px solid var(--primary);">
+                    <strong><i class="fas fa-check-double"></i> Barem:</strong>
+                    <span id="barem-text"></span>
+                </div>
+            </div>
+
+            <!-- GRILĂ -->
+            <div id="grila-section" class="hidden">
+                <div class="options-list" id="grila-options"></div>
+            </div>
+
+            <!-- COD -->
+            <div id="cod-section" class="hidden">
+                <div class="form-group">
+                    <label><i class="fas fa-code"></i> Scrie codul soluției în C/C++:</label>
+                    <textarea class="form-control" id="cod-editor" rows="8" placeholder="#include <iostream>&#10;using namespace std;&#10;&#10;int main() {&#10;    // Scrie aici codul...&#10;    return 0;&#10;}"></textarea>
+                    <div class="code-requirements">
+                        <strong>📌 Cerințe pentru cod:</strong> 
+                        <span id="code-requirements-text">Program C/C++ complet, cu citire, prelucrare și afișare</span>
+                    </div>
+                    <button class="btn btn-outline" style="margin-top:0.4rem; align-self:flex-start;" onclick="runCode()" id="run-btn">
+                        <i class="fas fa-play" id="run-icon"></i> <span id="run-text">Rulează cod</span>
+                    </button>
+                    <div class="feedback-box" id="cod-output" style="margin-top:0.4rem;">Output-ul va apărea aici.</div>
+                </div>
+            </div>
+
+            <!-- SCRIS -->
+            <div id="scris-section" class="hidden">
+                <div class="form-group">
+                    <label><i class="fas fa-pen"></i> Scrie răspunsul tău (pseudocod sau explicație):</label>
+                    <textarea class="form-control" id="scris-answer" rows="5" placeholder="Scrie aici răspunsul, explicația sau pseudocodul..."></textarea>
+                </div>
+            </div>
+
+            <div class="feedback-box" id="feedback-box">Așteaptă răspunsul tău...</div>
+
+            <div class="nav-actions">
+                <button class="btn btn-outline" id="prev-btn" onclick="prevQuestion()"><i class="fas fa-chevron-left"></i> Anterior</button>
+                <div class="flex gap-1">
+                    <button class="btn btn-success" onclick="submitAnswer()" id="submit-btn"><i class="fas fa-check"></i> <span id="submit-text">Trimite</span></button>
+                    <button class="btn btn-primary" id="next-btn" onclick="nextQuestion()">Următor <i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-top:0.8rem;">
+                <button class="btn btn-outline" onclick="resetAll()"><i class="fas fa-home"></i> Meniu principal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TAB 2: CREEAZĂ EXERCIȚIU (DOAR PROFESORI) -->
+    <!-- ============================================================ -->
+    <div id="tab-creeaza-content" class="tab-content fade-in">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-plus-circle"></i> Creează un nou exercițiu</div>
+            
+            <!-- Conținut pentru profesor -->
+            <div id="profesor-content" style="display:none;">
+                <p class="text-muted" style="margin-bottom:1rem;">
+                    Completează toate câmpurile pentru a adăuga un exercițiu în biblioteca comunitară.
+                    <strong><i class="fas fa-check-circle" style="color:var(--success);"></i> Ai acces ca profesor!</strong>
+                </p>
+
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Capitol</label>
+                    <select class="form-control" id="nou-capitol">
+                        <option value="algoritmi">Algoritmi elementari</option>
+                        <option value="tablouri">Tablouri (vectori/matrice)</option>
+                        <option value="siruri">Șiruri de caractere</option>
+                        <option value="subprograme">Subprograme</option>
+                        <option value="recursivitate">Recursivitate</option>
+                        <option value="grafuri">Grafuri</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-layer-group"></i> Subiect</label>
+                    <select class="form-control" id="nou-subiect" onchange="toggleOptiuni()">
+                        <option value="s1">Subiectul I - Grilă</option>
+                        <option value="s2">Subiectul II - Pseudocod</option>
+                        <option value="s3">Subiectul III - Programare C++</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-question-circle"></i> Enunțul exercițiului</label>
+                    <textarea class="form-control" id="nou-text" rows="4" placeholder="Scrie aici enunțul exercițiului..."></textarea>
+                </div>
+
+                <div id="nou-optiuni-container">
+                    <div class="form-group">
+                        <label><i class="fas fa-list-ul"></i> Opțiuni (doar pentru Subiectul I - Grilă)</label>
+                        <div class="optiuni-grid">
+                            <div class="optiune-item"><span>A)</span> <input type="text" id="nou-optiune-0" placeholder="Opțiunea A" /></div>
+                            <div class="optiune-item"><span>B)</span> <input type="text" id="nou-optiune-1" placeholder="Opțiunea B" /></div>
+                            <div class="optiune-item"><span>C)</span> <input type="text" id="nou-optiune-2" placeholder="Opțiunea C" /></div>
+                            <div class="optiune-item"><span>D)</span> <input type="text" id="nou-optiune-3" placeholder="Opțiunea D" /></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-check-circle" style="color:var(--success);"></i> Răspuns corect (pentru grilă)</label>
+                        <select class="form-control" id="nou-corect" style="width:150px;">
+                            <option value="0">A</option>
+                            <option value="1">B</option>
+                            <option value="2">C</option>
+                            <option value="3">D</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-lightbulb" style="color:var(--warning);"></i> Hint (opțional)</label>
+                    <input class="form-control" id="nou-hint" placeholder="Scrie un hint pentru ajutor..." />
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-check-double" style="color:var(--success);"></i> Barem / Rezolvare corectă</label>
+                    <textarea class="form-control" id="nou-barem" rows="4" placeholder="Scrie aici rezolvarea corectă sau baremul..."></textarea>
+                </div>
+
+                <div style="display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:flex-end; margin-top:1rem;">
+                    <button class="btn btn-warning" onclick="publicaExercitiu()">
+                        <i class="fas fa-paper-plane"></i> Publică exercițiul
+                    </button>
+                </div>
+            </div>
+
+            <!-- Conținut pentru elev -->
+            <div id="elev-content">
+                <div class="restrictie-profesor">
+                    <i class="fas fa-lock"></i>
+                    <h3>Acces restricționat</h3>
+                    <p>Doar profesorii pot publica exerciții în această platformă.</p>
+                    <p style="font-size:0.9rem; margin-top:0.5rem;">
+                        <i class="fas fa-info-circle"></i> Rolul tău actual: <strong>Elev</strong>
+                    </p>
+                    <p style="font-size:0.85rem; margin-top:0.5rem; color:var(--text-secondary);">
+                        Poți rezolva exercițiile create de profesori în tab-ul "Rezolvă teste".
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TAB 3: BIBLIOTECA MEA -->
+    <!-- ============================================================ -->
+    <div id="tab-biblioteca-content" class="tab-content fade-in">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-book"></i> Exercițiile mele publicate</div>
+            <p class="text-muted" style="margin-bottom:1rem;">
+                Aici vezi toate exercițiile pe care le-ai publicat în comunitate.
+            </p>
+            <div id="biblioteca-container">
+                <div class="empty-state">
+                    <i class="fas fa-book"></i>
+                    <p>Nu ai publicat încă niciun exercițiu.</p>
+                    <p style="font-size:0.85rem;">Dacă ești profesor, mergi la tab-ul "Creează exercițiu" pentru a adăuga primul tău exercițiu!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- SCRIPT -->
+<!-- ============================================================ -->
+<script>
+// ============================================================
+// TOGGLE THEME
+// ============================================================
+function toggleTheme() {
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    document.getElementById('theme-icon').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    document.getElementById('theme-text').textContent = next === 'dark' ? 'Light' : 'Dark';
+    localStorage.setItem('theme', next);
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const saved = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
+    
+    await incarcaRolUtilizator();
+    incarcaExercitiiComunitate();
+    incarcaBiblioteca();
+});
+
+// ============================================================
+// VARIABILE GLOBALE
+// ============================================================
+let allExercitii = [];
+let currentTest = null;
+let currentQuestionIndex = 0;
+let answers = {};
+let isEvaluating = false;
+let rolUtilizator = 'student';
+let numeUtilizator = '';
+
+// ============================================================
+// ÎNCARCĂ ROLUL UTILIZATORULUI
+// ============================================================
+async function incarcaRolUtilizator() {
+    try {
+        const response = await fetch('/api/user', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            rolUtilizator = data.role || 'student';
+            numeUtilizator = data.name || '';
+        } else {
+            const savedRole = localStorage.getItem('rolUtilizator');
+            rolUtilizator = savedRole || 'student';
+        }
+    } catch (error) {
+        const savedRole = localStorage.getItem('rolUtilizator');
+        rolUtilizator = savedRole || 'student';
+    }
+    
+    actualizeazaUI();
+}
+
+// ============================================================
+// ACTUALIZEAZĂ UI
+// ============================================================
+function actualizeazaUI() {
+    const roleBadge = document.getElementById('role-badge');
+    const roleText = document.getElementById('role-text');
+    const profesorContent = document.getElementById('profesor-content');
+    const elevContent = document.getElementById('elev-content');
+    
+    if (rolUtilizator === 'teacher') {
+        roleBadge.className = 'role-badge teacher';
+        roleBadge.querySelector('i').className = 'fas fa-chalkboard-teacher';
+        roleText.textContent = 'Profesor';
+        profesorContent.style.display = 'block';
+        elevContent.style.display = 'none';
+    } else {
+        roleBadge.className = 'role-badge student';
+        roleBadge.querySelector('i').className = 'fas fa-user-graduate';
+        roleText.textContent = 'Elev';
+        profesorContent.style.display = 'none';
+        elevContent.style.display = 'block';
+    }
+}
+
+// ============================================================
+// TOGGLE OPTIUNI
+// ============================================================
+function toggleOptiuni() {
+    const subiect = document.getElementById('nou-subiect').value;
+    const container = document.getElementById('nou-optiuni-container');
+    if (subiect === 's1') {
+        container.style.display = 'block';
+    } else {
+        container.style.display = 'none';
+    }
+}
+
+// ============================================================
+// TAB-URI
+// ============================================================
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + tab + '-content').classList.add('active');
+    
+    if (tab === 'biblioteca') incarcaBiblioteca();
+    if (tab === 'creeaza') actualizeazaUI();
+}
+
+// ============================================================
+// ÎNCARCĂ EXERCIȚII COMUNITATE
+// ============================================================
+function incarcaExercitiiComunitate() {
+    const exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
+    allExercitii = [...exercitiiComunitate];
+    document.getElementById('ex-count').textContent = allExercitii.length;
+    return allExercitii;
+}
+
+// ============================================================
+// GENEREAZĂ TEST
+// ============================================================
+function genereazaTest() {
+    allExercitii = incarcaExercitiiComunitate();
+    
+    const topic = document.getElementById('topic-select').value;
+    const count = parseInt(document.getElementById('count-select').value);
+    const type = document.getElementById('type-select').value;
+    
+    let filtered = [...allExercitii];
+    
+    if (topic !== 'mixed') {
+        filtered = filtered.filter(ex => ex.capitol === topic);
+    }
+    
+    if (type !== 'toate') {
+        filtered = filtered.filter(ex => ex.subiect === type);
+    }
+    
+    if (filtered.length === 0) {
+        alert('Nu există exerciții pentru criteriile selectate. Încearcă alte filtre.');
+        return;
+    }
+    
+    const shuffled = filtered.sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, Math.min(count, shuffled.length));
+    
+    if (selected.length < count) {
+        alert(`Doar ${selected.length} exerciții disponibile pentru aceste filtre.`);
+    }
+    
+    currentTest = {
+        id: Date.now(),
+        questions: selected,
+        total: selected.length
+    };
+    
+    currentQuestionIndex = 0;
+    answers = {};
+    
+    displayTestList();
+    
+    document.getElementById('step1-indicator').classList.remove('active');
+    document.getElementById('step1-indicator').classList.add('done');
+    document.getElementById('step1-indicator2').classList.add('done');
+    document.getElementById('step2-indicator2').classList.add('active');
+    
+    document.getElementById('step1-card').style.display = 'none';
+    document.getElementById('step2-card').classList.remove('hidden');
+    document.getElementById('step3-card').classList.add('hidden');
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================================
+// DISPLAY TEST LIST
+// ============================================================
+function displayTestList() {
+    const container = document.getElementById('questions-list');
+    const title = document.getElementById('test-title');
+    const summary = document.getElementById('test-summary');
+    
+    const topicLabel = document.getElementById('topic-select');
+    const topicName = topicLabel.options[topicLabel.selectedIndex]?.text || 'Mixt';
+    
+    title.textContent = `Test: ${topicName}`;
+    summary.textContent = `${currentTest.questions.length} întrebări | ${getSubiecteCount()}`;
+    
+    container.innerHTML = currentTest.questions.map((q, index) => `
+        <div class="q-card" onclick="selectQuestion(${index})">
+            <div class="q-meta">
+                <span class="badge badge-${q.subiect}">${q.subiect.toUpperCase()}</span>
+                <span class="badge badge-${q.tip}">${q.tip}</span>
+                <span class="badge badge-profesor">👨‍🏫 Profesor</span>
+                <span>${q.puncte} puncte</span>
+                <div class="diff-dots">
+                    ${Array(10).fill(0).map((_, i) => 
+                        `<div class="diff-dot ${i < (q.dificultate || 3) ? 'filled' : ''}"></div>`
+                    ).join('')}
+                </div>
+            </div>
+            <p style="font-size:0.9rem;">${q.text.substring(0, 120)}${q.text.length > 120 ? '...' : ''}</p>
+        </div>
+    `).join('');
+}
+
+function getSubiecteCount() {
+    const s1 = currentTest.questions.filter(q => q.subiect === 's1').length;
+    const s2 = currentTest.questions.filter(q => q.subiect === 's2').length;
+    const s3 = currentTest.questions.filter(q => q.subiect === 's3').length;
+    return `S1: ${s1} | S2: ${s2} | S3: ${s3}`;
+}
+
+function selectQuestion(index) {
+    currentQuestionIndex = index;
+    if (document.getElementById('step3-card').classList.contains('hidden')) {
+        startSolving();
+    } else {
+        loadQuestion(index);
+    }
+}
+
+function startSolving() {
+    document.getElementById('step2-card').classList.add('hidden');
+    document.getElementById('step3-card').classList.remove('hidden');
+    
+    document.getElementById('step2-indicator2').classList.remove('active');
+    document.getElementById('step2-indicator2').classList.add('done');
+    document.getElementById('step3-indicator3').classList.add('active');
+    
+    loadQuestion(0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================================
+// LOAD QUESTION
+// ============================================================
+function loadQuestion(index) {
+    if (!currentTest || !currentTest.questions.length) return;
+    
+    const q = currentTest.questions[index];
+    const total = currentTest.questions.length;
+    
+    const progress = (index / total) * 100;
+    document.getElementById('progress-fill').style.width = progress + '%';
+    document.getElementById('q-counter').textContent = `Întrebarea ${index + 1} / ${total}`;
+    document.getElementById('q-points').textContent = `${q.puncte} puncte`;
+    
+    const badge = document.getElementById('q-badge');
+    badge.textContent = q.subiect.toUpperCase();
+    badge.className = `badge badge-${q.subiect}`;
+    
+    document.getElementById('q-subiect-label').textContent = q.subiectLabel || `Subiectul ${q.subiect.toUpperCase()}`;
+    
+    const creatorBadge = document.getElementById('q-creator-badge');
+    creatorBadge.style.display = 'inline-block';
+    creatorBadge.textContent = q.autor ? `👨‍🏫 ${q.autor}` : '👨‍🏫 Profesor';
+    
+    const aiBadge = document.getElementById('ai-badge');
+    if (q.useAI || q.subiect !== 's1') {
+        aiBadge.style.display = 'inline-block';
+    } else {
+        aiBadge.style.display = 'none';
+    }
+    
+    const diffDiv = document.getElementById('q-diff');
+    diffDiv.innerHTML = Array(10).fill(0).map((_, i) => 
+        `<div class="diff-dot ${i < (q.dificultate || 3) ? 'filled' : ''}"></div>`
+    ).join('');
+    
+    document.getElementById('q-text').textContent = q.text;
+    document.getElementById('q-subtitle').textContent = q.subtitle || '';
+    
+    const hintBox = document.getElementById('hint-box');
+    const hintText = document.getElementById('hint-text');
+    if (q.hint) {
+        hintBox.classList.remove('hidden');
+        hintText.textContent = q.hint;
+    } else {
+        hintBox.classList.add('hidden');
+    }
+    
+    const baremDisplay = document.getElementById('barem-display');
+    const baremText = document.getElementById('barem-text');
+    if (q.barem) {
+        baremDisplay.style.display = 'block';
+        baremText.textContent = q.barem;
+    } else {
+        baremDisplay.style.display = 'none';
+    }
+    
+    const reqText = document.getElementById('code-requirements-text');
+    if (q.cerinte) {
+        reqText.textContent = q.cerinte;
+    } else {
+        reqText.textContent = 'Program C/C++ complet, cu citire, prelucrare și afișare.';
+    }
+    
+    document.getElementById('grila-section').classList.add('hidden');
+    document.getElementById('cod-section').classList.add('hidden');
+    document.getElementById('scris-section').classList.add('hidden');
+    
+    if (q.tip === 'grila') {
+        document.getElementById('grila-section').classList.remove('hidden');
+        const optionsContainer = document.getElementById('grila-options');
+        if (q.optiuni && q.optiuni.length) {
+            const savedAnswer = answers[q.id];
+            optionsContainer.innerHTML = q.optiuni.map((opt, i) => `
+                <label class="option-item">
+                    <input type="radio" name="grila-answer" value="${i}" 
+                           ${savedAnswer == i ? 'checked' : ''}>
+                    <span>${opt}</span>
+                </label>
+            `).join('');
+        }
+    } else if (q.tip === 'cod') {
+        document.getElementById('cod-section').classList.remove('hidden');
+        document.getElementById('cod-editor').value = answers[q.id] || '';
+        document.getElementById('cod-output').textContent = 'Output-ul va apărea aici.';
+    } else if (q.tip === 'scris') {
+        document.getElementById('scris-section').classList.remove('hidden');
+        document.getElementById('scris-answer').value = answers[q.id] || '';
+    }
+    
+    document.getElementById('feedback-box').textContent = 'Așteaptă răspunsul tău...';
+    document.getElementById('feedback-box').className = 'feedback-box';
+    
+    document.getElementById('prev-btn').disabled = index === 0;
+    document.getElementById('next-btn').disabled = index === total - 1;
+}
+
+// ============================================================
+// SAVE CURRENT ANSWER
+// ============================================================
+function saveCurrentAnswer() {
+    const q = currentTest.questions[currentQuestionIndex];
+    let answer = null;
+    
+    if (q.tip === 'grila') {
+        const selected = document.querySelector('input[name="grila-answer"]:checked');
+        if (selected) answer = parseInt(selected.value);
+    } else if (q.tip === 'cod') {
+        answer = document.getElementById('cod-editor').value;
+    } else if (q.tip === 'scris') {
+        answer = document.getElementById('scris-answer').value;
+    }
+    
+    if (answer !== null && answer !== undefined && answer !== '') {
+        answers[q.id] = answer;
+    }
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function prevQuestion() {
+    if (currentQuestionIndex > 0) {
+        saveCurrentAnswer();
+        currentQuestionIndex--;
+        loadQuestion(currentQuestionIndex);
+    }
+}
+
+function nextQuestion() {
+    if (currentQuestionIndex < currentTest.questions.length - 1) {
+        saveCurrentAnswer();
+        currentQuestionIndex++;
+        loadQuestion(currentQuestionIndex);
+    }
+}
+
+// ============================================================
+// EVALUATE WITH AI
+// ============================================================
+async function evaluateWithAI(answer, question) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            const cleanAnswer = answer.trim().toLowerCase();
+            let score = 0;
+            let feedback = [];
+            let isCorrect = false;
+            
+            const hasMain = cleanAnswer.includes('main');
+            const hasReturn = cleanAnswer.includes('return');
+            const hasInclude = cleanAnswer.includes('#include');
+            const hasInput = cleanAnswer.includes('cin') || cleanAnswer.includes('scanf') || cleanAnswer.includes('fgets');
+            const hasOutput = cleanAnswer.includes('cout') || cleanAnswer.includes('printf');
+            const hasLoop = cleanAnswer.includes('for') || cleanAnswer.includes('while') || cleanAnswer.includes('do');
+            const hasCondition = cleanAnswer.includes('if') || cleanAnswer.includes('else') || cleanAnswer.includes('switch');
+            
+            const relevantWords = ['suma', 'produs', 'cmmdc', 'prim', 'par', 'impar', 'vector', 'șir', 'matrice', 
+                                   'fibonacci', 'factorial', 'palindrom', 'invers', 'divizor', 'cifre', 'media',
+                                   'graf', 'nod', 'muchie', 'conex', 'ciclu', 'arbore', 'adiacenta'];
+            
+            const hasRelevant = relevantWords.some(word => cleanAnswer.includes(word));
+            
+            if (hasInclude) score += 1;
+            if (hasMain) score += 1;
+            if (hasReturn) score += 1;
+            if (hasInput) score += 1;
+            if (hasOutput) score += 1;
+            if (hasLoop) score += 1;
+            if (hasCondition) score += 1;
+            if (hasRelevant) score += 2;
+            
+            if (hasInclude) feedback.push('✅ Header-e incluse corect');
+            else feedback.push('❌ Lipsește #include');
+            
+            if (hasMain) feedback.push('✅ Funcția main() este prezentă');
+            else feedback.push('❌ Lipsește funcția main()');
+            
+            if (hasReturn) feedback.push('✅ return 0 este prezent');
+            else feedback.push('⚠️ return 0 lipsește');
+            
+            if (hasInput) feedback.push('✅ Citirea datelor este implementată');
+            else feedback.push('⚠️ Nu se citește input-ul necesar');
+            
+            if (hasOutput) feedback.push('✅ Afișarea rezultatului este implementată');
+            else feedback.push('⚠️ Nu se afișează rezultatul');
+            
+            if (hasLoop) feedback.push('✅ Structuri repetitive utilizate corect');
+            else feedback.push('⚠️ Nu se folosesc structuri repetitive');
+            
+            if (hasRelevant) feedback.push('✅ Codul conține elemente relevante pentru cerință');
+            else feedback.push('⚠️ Codul pare generic, nu este specific cerinței');
+            
+            const maxScore = 10;
+            const percentage = (score / maxScore) * 100;
+            isCorrect = percentage >= 50;
+            
+            let feedbackText = isCorrect ? 
+                '✅ AI: Soluția pare corectă!\n' : 
+                '⚠️ AI: Soluția are nevoie de îmbunătățiri:\n';
+            
+            feedbackText += feedback.join('\n');
+            feedbackText += `\n\n📊 Scor AI: ${Math.round(percentage)}% (${score}/${maxScore})`;
+            
+            if (isCorrect) {
+                feedbackText += '\n✅ AI confirmă: codul este corect structural!';
+            } else {
+                feedbackText += '\n📝 Recomandări: ';
+                const missing = feedback.filter(f => f.includes('lipsește') || f.includes('lipsă'));
+                if (missing.length > 0) {
+                    feedbackText += missing.map(f => f.replace('❌ ', '').replace('⚠️ ', '')).join(', ');
+                } else {
+                    feedbackText += 'Adaugă elementele cheie pentru o soluție completă.';
+                }
+            }
+            
+            resolve({
+                isCorrect: isCorrect,
+                feedback: feedbackText,
+                score: Math.round(percentage),
+                details: feedback,
+                isRelevant: hasRelevant
+            });
+        }, 800);
+    });
+}
+
+// ============================================================
+// SUBMIT ANSWER
+// ============================================================
+async function submitAnswer() {
+    if (isEvaluating) return;
+    
+    saveCurrentAnswer();
+    
+    const q = currentTest.questions[currentQuestionIndex];
+    const answer = answers[q.id];
+    
+    if (answer === null || answer === undefined || answer === '') {
+        document.getElementById('feedback-box').textContent = '⚠️ Te rugăm să completezi răspunsul înainte de a trimite.';
+        document.getElementById('feedback-box').className = 'feedback-box wrong';
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submit-btn');
+    const submitText = document.getElementById('submit-text');
+    submitBtn.disabled = true;
+    submitText.textContent = 'Se evaluează...';
+    isEvaluating = true;
+    
+    let isCorrect = false;
+    let feedbackMsg = '';
+    
+    if (q.tip === 'grila' && q.raspuns_corect !== null && q.raspuns_corect !== undefined) {
+        isCorrect = (answer === q.raspuns_corect);
+        const letters = ['A', 'B', 'C', 'D'];
+        feedbackMsg = isCorrect ? 
+            `✅ Corect! Răspunsul corect este ${letters[q.raspuns_corect]}.` : 
+            `❌ Răspuns incorect. Răspunsul corect este ${letters[q.raspuns_corect]}.`;
+        
+        const options = document.querySelectorAll('.option-item');
+        options.forEach((opt, idx) => {
+            if (idx === q.raspuns_corect) {
+                opt.classList.add('correct');
+            } else if (idx === answer) {
+                opt.classList.add('wrong');
+            }
+        });
+        
+        if (q.barem) {
+            document.getElementById('barem-display').style.display = 'block';
+            document.getElementById('barem-text').textContent = q.barem;
+        }
+        
+    } else if (q.tip === 'cod' || q.tip === 'scris') {
+        const result = await evaluateWithAI(answer, q);
+        isCorrect = result.isCorrect;
+        feedbackMsg = result.feedback;
+        
+        if (!q.evaluation) q.evaluation = {};
+        q.evaluation[currentQuestionIndex] = result;
+        
+        if (q.barem) {
+            document.getElementById('barem-display').style.display = 'block';
+            document.getElementById('barem-text').textContent = q.barem;
+        }
+    }
+    
+    const feedbackBox = document.getElementById('feedback-box');
+    feedbackBox.textContent = feedbackMsg;
+    feedbackBox.className = `feedback-box ${isCorrect ? 'correct' : 'wrong'}`;
+    
+    const progress = ((currentQuestionIndex + 1) / currentTest.questions.length) * 100;
+    document.getElementById('progress-fill').style.width = progress + '%';
+    
+    const qCards = document.querySelectorAll('.q-card');
+    if (qCards[currentQuestionIndex]) {
+        qCards[currentQuestionIndex].style.borderLeftColor = isCorrect ? 'var(--success)' : 'var(--danger)';
+    }
+    
+    submitBtn.disabled = false;
+    submitText.textContent = 'Trimite';
+    isEvaluating = false;
+}
+
+// ============================================================
+// RUN CODE
+// ============================================================
+function runCode() {
+    const code = document.getElementById('cod-editor').value;
+    const runBtn = document.getElementById('run-btn');
+    const runIcon = document.getElementById('run-icon');
+    const runText = document.getElementById('run-text');
+    
+    if (!code.trim()) {
+        document.getElementById('cod-output').textContent = '⚠️ Nu există cod de executat.';
+        return;
+    }
+    
+    runBtn.disabled = true;
+    runIcon.className = 'fas fa-spinner fa-spin';
+    runText.textContent = 'Compilează...';
+    
+    setTimeout(() => {
+        const lines = code.split('\n');
+        let output = '';
+        
+        const brackets = { '(': 0, '{': 0, '[': 0 };
+        for (const line of lines) {
+            for (const char of line) {
+                if (char === '(') brackets['(']++;
+                else if (char === ')') brackets['(']--;
+                else if (char === '{') brackets['{']++;
+                else if (char === '}') brackets['{']--;
+                else if (char === '[') brackets['[']++;
+                else if (char === ']') brackets['[']--;
+            }
+        }
+        
+        let bracketError = false;
+        for (const [key, value] of Object.entries(brackets)) {
+            if (value !== 0) {
+                bracketError = true;
+                output = `⚠️ Paranteze ${key} neechilibrate (${value > 0 ? 'prea multe deschise' : 'prea multe închise'})`;
+                break;
+            }
+        }
+        
+        if (!bracketError) {
+            if (!code.includes('main')) {
+                output = '⚠️ Codul nu conține funcția main()!';
+            } else if (!code.includes('#include')) {
+                output = '⚠️ Codul nu conține include-uri (#include)!';
+            } else if (!code.includes('return')) {
+                output = '⚠️ Codul nu conține return (recomandat)';
+            } else {
+                output = '✅ Compilare reușită!\n';
+                output += '> Programul se execută fără erori sintactice.\n';
+                output += '\n📝 Pentru o evaluare completă, apasă "Trimite" - folosește AI pentru verificare.';
+            }
+        }
+        
+        document.getElementById('cod-output').textContent = output;
+        
+        runBtn.disabled = false;
+        runIcon.className = 'fas fa-play';
+        runText.textContent = 'Rulează cod';
+    }, 800);
+}
+
+// ============================================================
+// PUBLICĂ EXERCIȚIU
+// ============================================================
+function publicaExercitiu() {
+    if (rolUtilizator !== 'teacher') {
+        showToast('⚠️ Doar profesorii pot publica exerciții!');
+        return;
+    }
+    
+    const capitol = document.getElementById('nou-capitol').value;
+    const subiect = document.getElementById('nou-subiect').value;
+    const text = document.getElementById('nou-text').value.trim();
+    const hint = document.getElementById('nou-hint').value.trim();
+    const barem = document.getElementById('nou-barem').value.trim();
+    const autor = numeUtilizator || 'Profesor';
+    
+    if (!text) {
+        showToast('⚠️ Te rugăm să scrii enunțul exercițiului!');
+        return;
+    }
+    
+    if (subiect !== 's1' && !barem) {
+        showToast('⚠️ Te rugăm să adaugi un barem/rezolvare pentru Subiectul II sau III!');
+        return;
+    }
+    
+    let exercitiuNou = {
+        capitol: capitol,
+        subiect: subiect,
+        text: text,
+        hint: hint || '',
+        barem: barem || 'Răspuns corect: una dintre opțiunile de mai sus.',
+        autor: autor,
+        dificultate: 3,
+        puncte: subiect === 's1' ? 4 : (subiect === 's2' ? 10 : 15),
+        subiectLabel: subiect === 's1' ? 'Subiectul I (20p)' : (subiect === 's2' ? 'Subiectul II (40p)' : 'Subiectul III (30p)'),
+        cerinte: subiect === 's1' ? 'Alege varianta corectă.' : (subiect === 's2' ? 'Scrie algoritmul în pseudocod sau explică execuția.' : 'Program C/C++: citire, prelucrare, afișare.'),
+        sursa: 'comunitate',
+        useAI: subiect !== 's1'
+    };
+    
+    if (subiect === 's1') {
+        const optiuni = [];
+        for (let i = 0; i < 4; i++) {
+            const opt = document.getElementById(`nou-optiune-${i}`).value.trim();
+            if (opt) optiuni.push(`${String.fromCharCode(65 + i)}) ${opt}`);
+        }
+        if (optiuni.length < 4) {
+            showToast('⚠️ Completează toate cele 4 opțiuni pentru grilă!');
+            return;
+        }
+        exercitiuNou.optiuni = optiuni;
+        exercitiuNou.raspuns_corect = parseInt(document.getElementById('nou-corect').value);
+        exercitiuNou.tip = 'grila';
+    } else if (subiect === 's2') {
+        exercitiuNou.tip = 'scris';
+        exercitiuNou.optiuni = [];
+        exercitiuNou.raspuns_corect = null;
+    } else {
+        exercitiuNou.tip = 'cod';
+        exercitiuNou.optiuni = [];
+        exercitiuNou.raspuns_corect = null;
+    }
+    
+    let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
+    exercitiiComunitate.push(exercitiuNou);
+    localStorage.setItem('exercitiiComunitate', JSON.stringify(exercitiiComunitate));
+    
+    allExercitii = incarcaExercitiiComunitate();
+    document.getElementById('ex-count').textContent = allExercitii.length;
+    
+    document.getElementById('nou-text').value = '';
+    document.getElementById('nou-hint').value = '';
+    document.getElementById('nou-barem').value = '';
+    for (let i = 0; i < 4; i++) {
+        document.getElementById(`nou-optiune-${i}`).value = '';
+    }
+    
+    showToast('✅ Exercițiul a fost publicat în comunitate!');
+    incarcaBiblioteca();
+}
+
+// ============================================================
+// BIBLIOTECA MEA
+// ============================================================
+function incarcaBiblioteca() {
+    const container = document.getElementById('biblioteca-container');
+    const exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
+    
+    if (exercitiiComunitate.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-book"></i>
+                <p>Nu ai publicat încă niciun exercițiu.</p>
+                <p style="font-size:0.85rem;">Dacă ești profesor, mergi la tab-ul "Creează exercițiu" pentru a adăuga primul tău exercițiu!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    exercitiiComunitate.forEach((ex, idx) => {
+        const subiectNume = ex.subiect === 's1' ? 'Subiectul I - Grilă' : (ex.subiect === 's2' ? 'Subiectul II - Pseudocod' : 'Subiectul III - Programare');
+        html += `
+            <div class="exercitiu-item">
+                <div class="exercitiu-header">
+                    <span class="nr">#${idx + 1}</span>
+                    <span class="badge badge-${ex.subiect}">${subiectNume}</span>
+                    <span class="badge badge-public">Publicat</span>
+                    <span class="badge badge-profesor">👨‍🏫 Profesor</span>
+                    <button class="btn btn-danger btn-sm" onclick="stergeExercitiuComunitate(${idx})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <p style="font-weight:600;">${ex.text}</p>
+                ${ex.hint ? `<p style="font-size:0.85rem; color:var(--text-secondary);"><i class="fas fa-lightbulb" style="color:var(--warning);"></i> ${ex.hint}</p>` : ''}
+                <div style="margin-top:0.5rem; background:var(--bg-input); padding:0.5rem; border-radius:8px; border-left:3px solid var(--primary);">
+                    <strong><i class="fas fa-check-double" style="color:var(--success);"></i> Barem:</strong>
+                    <span style="font-size:0.9rem;">${ex.barem}</span>
+                </div>
+                <div style="margin-top:0.3rem; font-size:0.8rem; color:var(--text-secondary);">
+                    <i class="fas fa-user"></i> Publicat de: ${ex.autor || 'Profesor'}
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function stergeExercitiuComunitate(index) {
+    if (!confirm('Sigur dorești să ștergi acest exercițiu?')) return;
+    let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
+    exercitiiComunitate.splice(index, 1);
+    localStorage.setItem('exercitiiComunitate', JSON.stringify(exercitiiComunitate));
+    allExercitii = incarcaExercitiiComunitate();
+    document.getElementById('ex-count').textContent = allExercitii.length;
+    incarcaBiblioteca();
+    showToast('🗑️ Exercițiul a fost șters!');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.5s';
+        setTimeout(() => toast.remove(), 500);
+    }, 3000);
+}
+
+// ============================================================
+// RESET ALL
+// ============================================================
+function resetAll() {
+    currentTest = null;
+    currentQuestionIndex = 0;
+    answers = {};
+    isEvaluating = false;
+    
+    document.getElementById('step1-card').style.display = 'block';
+    document.getElementById('step2-card').classList.add('hidden');
+    document.getElementById('step3-card').classList.add('hidden');
+    
+    document.querySelectorAll('.step').forEach(s => {
+        s.classList.remove('active', 'done');
+    });
+    document.getElementById('step1-indicator').classList.add('active');
+    document.getElementById('step1-indicator2').classList.remove('done');
+    document.getElementById('step2-indicator2').classList.remove('active', 'done');
+    document.getElementById('step3-indicator3').classList.remove('active');
+    
+    document.getElementById('feedback-box').textContent = 'Așteaptă răspunsul tău...';
+    document.getElementById('feedback-box').className = 'feedback-box';
+    document.getElementById('cod-output').textContent = 'Output-ul va apărea aici.';
+    document.getElementById('barem-display').style.display = 'none';
+    
+    document.getElementById('submit-btn').disabled = false;
+    document.getElementById('submit-text').textContent = 'Trimite';
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>

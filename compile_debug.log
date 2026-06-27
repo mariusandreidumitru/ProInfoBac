@@ -1,0 +1,630 @@
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpzw0r2p5v\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpzw0r2p5v\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=6
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpa4mo4aos\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpa4mo4aos\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=6
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpq7cono68\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpq7cono68\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=34
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpx5x7rf6l\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpx5x7rf6l\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=33
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp5ow9565h\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp5ow9565h\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=3
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp_dkq2o0k\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp_dkq2o0k\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=20
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpct4xfrm4\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpct4xfrm4\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=6
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpcuru9_j3\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpcuru9_j3\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=34
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp2cqlxgz8\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp2cqlxgz8\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=5
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpgzu5iy0l\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpgzu5iy0l\\main.exe']
+compile_proc.returncode=1
+compile_proc.stderr=main.cpp:2:55: warning: missing terminating " character
+    2 | int main(){ int x; std::cin >> x; std::cout << x*2 << "
+      |                                                       ^
+main.cpp:2:55: error: missing terminating " character
+main.cpp:3:1: warning: missing terminating " character
+    3 | "; return 0; }
+      | ^
+main.cpp:3:1: error: missing terminating " character
+    3 | "; return 0; }
+      | ^~~~~~~~~~~~~~
+main.cpp: In function 'int main()':
+main.cpp:2:54: error: expected primary-
+compile failed
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpkw5e53t8\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpkw5e53t8\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=3
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpvgt24vq4\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpvgt24vq4\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=1
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpcx37c446\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpcx37c446\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=11
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpwje54f7b\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpwje54f7b\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=5
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpo5syd_z_\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpo5syd_z_\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=34
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpxtpx7r7e\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpxtpx7r7e\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=33
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmposstl9e5\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmposstl9e5\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=5
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp6trfishe\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp6trfishe\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=1
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmptj6vpr7a\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmptj6vpr7a\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=17
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp2e_hx9q8\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp2e_hx9q8\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=11
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpkegvc14x\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpkegvc14x\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=17
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpkyj6vsel\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpkyj6vsel\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=17
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp_ig1a1ze\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp_ig1a1ze\\main.exe']
+=== compile_and_run start
+calling piston
+compile_proc.returncode=0
+compile_proc.stderr=None
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpv4wj2ssb\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpv4wj2ssb\\main.exe']
+run_proc.returncode=0
+run_proc.stdout_len=17
+run_proc.stderr_len=0
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=17
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmplrlfbdcs\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmplrlfbdcs\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=17
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp0uldm_ju\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp0uldm_ju\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=17
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpku8ijg07\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpku8ijg07\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=17
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp1lk_8b6c\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp1lk_8b6c\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=17
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmppt80wpmu\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmppt80wpmu\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=17
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpreofx1vk\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpreofx1vk\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=0
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpl9lcqjw0\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpl9lcqjw0\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=0
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp36k_5x8_\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp36k_5x8_\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=0
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp2bxav3kv\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp2bxav3kv\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=0
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp77gpg9oe\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp77gpg9oe\\main.exe']
+compile_proc.returncode=1
+compile_proc.stderr=C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/16.1.0/../../../../x86_64-w64-mingw32/bin/ld.exe: C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/16.1.0/../../../../lib/libmingw32.a(lib64_libmingw32_a-crtexewin.o): in function `main':
+D:/W/B/src/mingw-w64/mingw-w64-crt/crt/crtexewin.c:62:(.text.startup+0xc6): undefined reference to `WinMain'
+collect2.exe: error: ld returned 1 exit status
+
+compile failed
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp9st465uz\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp9st465uz\\main.exe']
+compile_proc.returncode=1
+compile_proc.stderr=C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/16.1.0/../../../../x86_64-w64-mingw32/bin/ld.exe: C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/16.1.0/../../../../lib/libmingw32.a(lib64_libmingw32_a-crtexewin.o): in function `main':
+D:/W/B/src/mingw-w64/mingw-w64-crt/crt/crtexewin.c:62:(.text.startup+0xc6): undefined reference to `WinMain'
+collect2.exe: error: ld returned 1 exit status
+
+compile failed
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmps6ca7i48\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmps6ca7i48\\main.exe']
+compile_proc.returncode=1
+compile_proc.stderr=C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/16.1.0/../../../../x86_64-w64-mingw32/bin/ld.exe: C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/16.1.0/../../../../lib/libmingw32.a(lib64_libmingw32_a-crtexewin.o): in function `main':
+D:/W/B/src/mingw-w64/mingw-w64-crt/crt/crtexewin.c:62:(.text.startup+0xc6): undefined reference to `WinMain'
+collect2.exe: error: ld returned 1 exit status
+
+compile failed
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpwremov9u\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpwremov9u\\main.exe']
+compile_proc.returncode=1
+compile_proc.stderr=C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/16.1.0/../../../../x86_64-w64-mingw32/bin/ld.exe: C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/16.1.0/../../../../lib/libmingw32.a(lib64_libmingw32_a-crtexewin.o): in function `main':
+D:/W/B/src/mingw-w64/mingw-w64-crt/crt/crtexewin.c:62:(.text.startup+0xc6): undefined reference to `WinMain'
+collect2.exe: error: ld returned 1 exit status
+
+compile failed
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpcz3ks8z_\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpcz3ks8z_\\main.exe']
+compile_proc.returncode=1
+compile_proc.stderr=C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/16.1.0/../../../../x86_64-w64-mingw32/bin/ld.exe: C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/16.1.0/../../../../lib/libmingw32.a(lib64_libmingw32_a-crtexewin.o): in function `main':
+D:/W/B/src/mingw-w64/mingw-w64-crt/crt/crtexewin.c:62:(.text.startup+0xc6): undefined reference to `WinMain'
+collect2.exe: error: ld returned 1 exit status
+
+compile failed
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp766po0vq\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp766po0vq\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=46
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmph326f9jr\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmph326f9jr\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=17
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=None msys_gpp_exists=True
+compile args=['C:\\\\msys64\\\\mingw64\\\\bin\\\\g++.exe', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpgfo1y2e5\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpgfo1y2e5\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=17
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=C:\msys64\mingw64\bin\g++.EXE msys_gpp_exists=True
+compile args=['C:\\msys64\\mingw64\\bin\\g++.EXE', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpedhiybuk\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpedhiybuk\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=13
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=C:\msys64\mingw64\bin\g++.EXE msys_gpp_exists=True
+compile args=['C:\\msys64\\mingw64\\bin\\g++.EXE', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp57la7qjl\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp57la7qjl\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=13
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston status=401
+piston unusable or whitelist - falling back to local compile
+located gpp=C:\msys64\mingw64\bin\g++.EXE msys_gpp_exists=True
+compile args=['C:\\msys64\\mingw64\\bin\\g++.EXE', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp3a1krg0p\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp3a1krg0p\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=13
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston unexpected exception: Attempted to set connect timeout to 0, but the timeout cannot be set to a value less than or equal to 0.
+piston status=None
+piston unusable or whitelist - falling back to local compile
+located gpp=C:\msys64\mingw64\bin\g++.EXE msys_gpp_exists=True
+compile args=['C:\\msys64\\mingw64\\bin\\g++.EXE', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpawzeypx_\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpawzeypx_\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=13
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston unexpected exception: Attempted to set connect timeout to 0, but the timeout cannot be set to a value less than or equal to 0.
+piston status=None
+piston unusable or whitelist - falling back to local compile
+located gpp=C:\msys64\mingw64\bin\g++.EXE msys_gpp_exists=True
+compile args=['C:\\msys64\\mingw64\\bin\\g++.EXE', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp6ymngi3w\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp6ymngi3w\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=2
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston unexpected exception: Attempted to set connect timeout to 0, but the timeout cannot be set to a value less than or equal to 0.
+piston status=None
+piston unusable or whitelist - falling back to local compile
+located gpp=C:\msys64\mingw64\bin\g++.EXE msys_gpp_exists=True
+compile args=['C:\\msys64\\mingw64\\bin\\g++.EXE', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp94qy0i3s\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp94qy0i3s\\main.exe']
+=== compile_and_run start
+calling piston
+piston unexpected exception: Attempted to set connect timeout to 0, but the timeout cannot be set to a value less than or equal to 0.
+piston status=None
+piston unusable or whitelist - falling back to local compile
+located gpp=C:\msys64\mingw64\bin\g++.EXE msys_gpp_exists=True
+compile args=['C:\\msys64\\mingw64\\bin\\g++.EXE', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmps5lwubxo\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmps5lwubxo\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=13
+run_proc.stderr_len=0
+run_proc.returncode=0
+run_proc.stdout_len=13
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston unexpected exception: Attempted to set connect timeout to 0, but the timeout cannot be set to a value less than or equal to 0.
+piston status=None
+piston unusable or whitelist - falling back to local compile
+located gpp=C:\msys64\mingw64\bin\g++.EXE msys_gpp_exists=True
+compile args=['C:\\msys64\\mingw64\\bin\\g++.EXE', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpsf9hlyyu\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpsf9hlyyu\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=13
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston unexpected exception: Attempted to set connect timeout to 0, but the timeout cannot be set to a value less than or equal to 0.
+piston status=None
+piston unusable or whitelist - falling back to local compile
+located gpp=C:\msys64\mingw64\bin\g++.EXE msys_gpp_exists=True
+compile args=['C:\\msys64\\mingw64\\bin\\g++.EXE', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpvwvwygu0\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpvwvwygu0\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=13
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston unexpected exception: Attempted to set connect timeout to 0, but the timeout cannot be set to a value less than or equal to 0.
+piston status=None
+piston unusable or whitelist - falling back to local compile
+located gpp=C:\msys64\mingw64\bin\g++.EXE msys_gpp_exists=True
+compile args=['C:\\msys64\\mingw64\\bin\\g++.EXE', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp044wsoxh\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp044wsoxh\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=13
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston unexpected exception: Attempted to set connect timeout to 0, but the timeout cannot be set to a value less than or equal to 0.
+piston status=None
+piston unusable or whitelist - falling back to local compile
+located gpp=C:\msys64\mingw64\bin\g++.EXE msys_gpp_exists=True
+compile args=['C:\\msys64\\mingw64\\bin\\g++.EXE', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpx5kq34i1\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpx5kq34i1\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=12
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston unexpected exception: Attempted to set connect timeout to 0, but the timeout cannot be set to a value less than or equal to 0.
+piston status=None
+piston unusable or whitelist - falling back to local compile
+located gpp=C:\msys64\mingw64\bin\g++.EXE msys_gpp_exists=True
+compile args=['C:\\msys64\\mingw64\\bin\\g++.EXE', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp264c3o_q\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmp264c3o_q\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=13
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston unexpected exception: Attempted to set connect timeout to 0, but the timeout cannot be set to a value less than or equal to 0.
+piston status=None
+piston unusable or whitelist - falling back to local compile
+located gpp=C:\msys64\mingw64\bin\g++.EXE msys_gpp_exists=True
+compile args=['C:\\msys64\\mingw64\\bin\\g++.EXE', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpd6k0qi99\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpd6k0qi99\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=13
+run_proc.stderr_len=0
+=== compile_and_run start
+calling piston
+piston unexpected exception: Attempted to set connect timeout to 0, but the timeout cannot be set to a value less than or equal to 0.
+piston status=None
+piston unusable or whitelist - falling back to local compile
+located gpp=C:\msys64\mingw64\bin\g++.EXE msys_gpp_exists=True
+compile args=['C:\\msys64\\mingw64\\bin\\g++.EXE', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpmzbfmku1\\main.cpp', '-std=c++17', '-O2', '-o', 'C:\\Users\\dumit\\AppData\\Local\\Temp\\tmpmzbfmku1\\main.exe']
+compile_proc.returncode=0
+compile_proc.stderr=None
+run_proc.returncode=0
+run_proc.stdout_len=13
+run_proc.stderr_len=0

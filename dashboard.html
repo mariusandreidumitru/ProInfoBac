@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Bac Info</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== RESET & VARIABILE ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #f0f4ff;
+            --bg-card: #ffffff;
+            --bg-input: #f8f9fa;
+            --bg-question: #f8f9fa;
+            --bg-question-hover: #ffffff;
+            --bg-code: #1e1e2e;
+            --text-primary: #2d3748;
+            --text-secondary: #6c757d;
+            --text-code: #cdd6f4;
+            --border-color: #e9ecef;
+            --border-dark: #dee2e6;
+            --shadow: 0 8px 30px rgba(0,0,0,0.08);
+            --shadow-hover: 0 8px 30px rgba(0,0,0,0.12);
+            --primary: #4361ee;
+            --primary-light: #eef0ff;
+            --primary-dark: #3a56d4;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --radius: 12px;
+            --transition: all 0.3s ease;
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #0f0e17;
+            --bg-card: #16213e;
+            --bg-input: #1a1a2e;
+            --bg-question: #1a1a2e;
+            --bg-question-hover: #252547;
+            --bg-code: #0d0d1a;
+            --text-primary: #e8e8f0;
+            --text-secondary: #a0a0b8;
+            --text-code: #cdd6f4;
+            --border-color: #2a2a4a;
+            --border-dark: #3a3a5a;
+            --shadow: 0 8px 30px rgba(0,0,0,0.4);
+            --shadow-hover: 0 8px 30px rgba(0,0,0,0.6);
+            --primary: #6c8cff;
+            --primary-light: #1a2a4a;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 1.5rem;
+            min-height: 100vh;
+            transition: var(--transition);
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
+        
+        /* ===== HEADER ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .logo-area i { font-size: 1.8rem; color: var(--primary); }
+        .logo-area h1 { 
+            font-size: 1.4rem; 
+            font-weight: 700; 
+            color: var(--text-primary);
+        }
+        .logo-area span { color: var(--primary); }
+        .logo-area small { 
+            font-size: 0.75rem; 
+            color: var(--text-secondary); 
+            margin-left: 0.5rem; 
+        }
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        /* ===== BUTOANE ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+        .btn-primary { 
+            background: var(--primary); 
+            color: white; 
+            border-color: var(--primary);
+        }
+        .btn-primary:hover { 
+            background: var(--primary-dark); 
+            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.3);
+        }
+        .btn-outline { 
+            background: transparent; 
+            border: 2px solid var(--border-dark);
+            color: var(--text-primary);
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-success { 
+            background: var(--success); 
+            color: white;
+            border-color: var(--success);
+        }
+        .btn-success:hover { background: #27ae60; }
+        .btn-danger { 
+            background: var(--danger); 
+            color: white;
+            border-color: var(--danger);
+        }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-theme {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 0.8rem;
+        }
+        .btn-theme:hover { border-color: var(--primary); color: var(--primary); }
+        
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 1.5rem 1.8rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--text-primary);
+        }
+        .card-title i { color: var(--primary); }
+        
+        /* ===== ROLE GUIDANCE ===== */
+        .role-guidance {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            background: var(--bg-input);
+            padding: 1rem 1.2rem;
+            border-radius: var(--radius);
+            margin-top: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .role-guidance strong {
+            display: block;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+        .role-guidance p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin: 0.2rem 0 0 0;
+        }
+        .role-guidance i { 
+            color: var(--primary); 
+            margin-right: 0.3rem;
+        }
+        
+        /* ===== DASHBOARD GRID ===== */
+        .dashboard-link-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .dashboard-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .card-icon {
+            font-size: 2.5rem;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        
+        .card-title-dash {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0 0 0.25rem 0;
+            color: var(--text-primary);
+        }
+        
+        .card-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+        
+        /* Card special pentru Variante Bac */
+        .card-variante {
+            border-left: 4px solid var(--warning, #f39c12);
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(243, 156, 18, 0.05) 100%);
+        }
+        
+        .card-variante .card-icon {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .badge-nou {
+            display: inline-block;
+            background: var(--danger, #e74c3c);
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 0.5rem;
+            animation: blink 1.5s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        .badge-count {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 50px;
+            margin-left: 0.5rem;
+        }
+        
+        /* ===== BREADCRUMB ===== */
+        .breadcrumb {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin: 0 0 0.25rem 0;
+        }
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0 0 0.25rem 0;
+            color: var(--text-primary);
+        }
+        .page-description {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 0 0 0.75rem 0;
+        }
+        
+        /* Card special pentru Creator Variante */
+        .card-creator {
+            border-left: 4px solid var(--primary, #4361ee);
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(67, 97, 238, 0.05) 100%);
+        }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .role-guidance {
+                grid-template-columns: 1fr;
+            }
+            
+            .app-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .dashboard-link-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            body { padding: 0.8rem; }
+            .app-header { padding: 0.8rem 1rem; }
+            .card { padding: 1rem; }
+            .page-title { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== CONTAINER ===== -->
+    <div class="container">
+
+        <!-- ===== HEADER ===== -->
+        <header class="app-header">
+            <div class="logo-area">
+                <i class="fas fa-graduation-cap"></i>
+                <h1>Pro<span>InfoBAC</span></h1>
+                <small>· Dashboard</small>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-theme" onclick="toggleTheme()" id="theme-btn">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                    <span id="theme-text">Dark</span>
+                </button>
+                <button class="btn btn-outline" onclick="window.location.href='/'">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- ===== WELCOME SECTION ===== -->
+        <div class="card">
+            <div class="breadcrumb">Dashboard</div>
+            <h1 class="page-title">👋 Bun venit, elev și profesor!</h1>
+            <p class="page-description">Alege rapid unde vrei să lucrezi: cod, meeting online, teste, variante Bac sau creează-ți propria variantă.</p>
+            
+            <div class="role-guidance">
+                <div>
+                    <strong><i class="fas fa-user-graduate"></i> Elev</strong>
+                    <p>Începe cu <strong>Editor C/C++</strong> pentru cod, <strong>Teste Bac Info</strong> pentru exerciții și <strong>Variante Bac</strong> pentru simulări complete.</p>
+                </div>
+                <div>
+                    <strong><i class="fas fa-chalkboard-teacher"></i> Profesor</strong>
+                    <p>Folosește <strong>Meeting rapid</strong> pentru ore online, <strong>Teste Bac Info</strong> pentru evaluare, <strong>Variante Bac</strong> pentru simulări și <strong>Creator Variante</strong> pentru a-ți face propriile teste.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== DASHBOARD CARDS ===== -->
+        <div class="dashboard-link-grid">
+
+            <!-- Card 1: Editor C/C++ -->
+            <article class="dashboard-card">
+                <div class="card-top">
+                    <div class="card-icon">🧑‍💻</div>
+                    <div>
+                        <h2 class="card-title-dash">Editor C/C++</h2>
+                        <p class="card-description">Scrie cod, testează programe și vezi imediat rezultatele.</p>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="window.location.href='/editor'">
+                    <i class="fas fa-code"></i> Deschide editor
+                </button>
+            </article>
+
+            <!-- Card 2: Meeting rapid -->
+            <article class="dashboard-card">
+                <div class="card-top">
+                    <div class="card-icon">📅</div>
+                    <div>
+                        <h2 class="card-title-dash">Meeting rapid</h2>
+                        <p class="card-description">Generează un link de întâlnire online pentru meditații și discuții de grup.</p>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="window.location.href='/meeting'">
+                    <i class="fas fa-video"></i> Deschide meeting
+                </button>
+            </article>
+
+            <!-- Card 3: Teste Bac Info -->
+            <article class="dashboard-card">
+                <div class="card-top">
+                    <div class="card-icon">📝</div>
+                    <div>
+                        <h2 class="card-title-dash">Teste Bac Info</h2>
+                        <p class="card-description">Util pentru elevi și profesori: pregătește întrebări rapid și simplu.</p>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="window.location.href='/tests'">
+                    <i class="fas fa-tasks"></i> Deschide teste
+                </button>
+            </article>
+
+            <!-- Card 4: Variante Bac -->
+            <article class="dashboard-card card-variante">
+                <div class="card-top">
+                    <div class="card-icon">📄</div>
+                    <div>
+                        <h2 class="card-title-dash">
+                            Variante Bac
+                            <span class="badge-nou">Nou</span>
+                            <span class="badge-count">2020-2025</span>
+                        </h2>
+                        <p class="card-description">
+                            Accesează variante complete de examen Bacalaureat 2020-2025. 
+                            Simulări reale cu subiecte oficiale din ultimii 5 ani.
+                        </p>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="window.location.href='variante.html'">
+                    <i class="fas fa-book-open"></i> Vezi variantele
+                </button>
+            </article>
+
+            <!-- Card 5: Creator Variante -->
+            <article class="dashboard-card card-creator">
+                <div class="card-top">
+                    <div class="card-icon">✍️</div>
+                    <div>
+                        <h2 class="card-title-dash">
+                            Creator Variante
+                            <span class="badge-nou">Nou</span>
+                        </h2>
+                        <p class="card-description">
+                            Profesorii pot crea variante personalizate de Bacalaureat cu exerciții proprii și barem.
+                        </p>
+                    </div>
+                </div>
+                <!-- ⭐ LINK CORECTAT - folosește calea directă către fișier -->
+                <button class="btn btn-primary" onclick="window.location.href='creator.html'">
+                    <i class="fas fa-pen-fancy"></i> Creează variantă
+                </button>
+            </article>
+
+        </div>
+
+    </div>
+
+    <!-- ===== SCRIPT ===== -->
+    <script>
+        // ============================================================
+        // TOGGLE THEME
+        // ============================================================
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            document.getElementById('theme-icon').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            document.getElementById('theme-text').textContent = next === 'dark' ? 'Light' : 'Dark';
+            localStorage.setItem('theme', next);
+        }
+
+        // Încărcăm tema salvată
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+            document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
+        });
+    </script>
+
+</body>
+</html>

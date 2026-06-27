@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Înregistrare - Bac Info</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #f0f4ff;
+            --bg-card: #ffffff;
+            --bg-input: #f8f9fa;
+            --text-primary: #2d3748;
+            --text-secondary: #6c757d;
+            --border-color: #e9ecef;
+            --border-dark: #dee2e6;
+            --shadow: 0 8px 30px rgba(0,0,0,0.08);
+            --shadow-hover: 0 8px 30px rgba(0,0,0,0.12);
+            --primary: #4361ee;
+            --primary-light: #eef0ff;
+            --primary-dark: #3a56d4;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --radius: 12px;
+            --transition: all 0.3s ease;
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #0f0e17;
+            --bg-card: #16213e;
+            --bg-input: #1a1a2e;
+            --text-primary: #e8e8f0;
+            --text-secondary: #a0a0b8;
+            --border-color: #2a2a4a;
+            --border-dark: #3a3a5a;
+            --shadow: 0 8px 30px rgba(0,0,0,0.4);
+            --shadow-hover: 0 8px 30px rgba(0,0,0,0.6);
+            --primary: #6c8cff;
+            --primary-light: #1a2a4a;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            transition: var(--transition);
+        }
+        
+        .auth-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 2.5rem 2.8rem;
+            max-width: 440px;
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+        .auth-card:hover { box-shadow: var(--shadow-hover); }
+        
+        .brand-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .brand-icon { font-size: 2.2rem; line-height: 1; }
+        .brand-bar h1 { font-size: 1.6rem; font-weight: 700; color: var(--text-primary); }
+        .brand-bar h1 span { color: var(--primary); }
+        .brand-bar p { font-size: 0.85rem; color: var(--text-secondary); margin: 0.1rem 0 0 0; }
+        
+        .auth-card h2 { font-size: 1.4rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.3rem; }
+        .auth-card .subtitle { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
+        
+        .auth-card label { font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; color: var(--text-primary); margin-bottom: 0.3rem; }
+        .auth-card label i { color: var(--primary); width: 1.2rem; }
+        .auth-card input, .auth-card select {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-family: inherit;
+            margin-bottom: 1rem;
+        }
+        .auth-card input:focus, .auth-card select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--bg-card);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.15);
+        }
+        .auth-card input::placeholder { color: var(--text-secondary); }
+        .auth-card select { appearance: auto; cursor: pointer; }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            width: 100%;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+        .btn-primary { background: var(--primary); color: white; border-color: var(--primary); margin-top: 0.5rem; }
+        .btn-primary:hover { background: var(--primary-dark); box-shadow: 0 6px 20px rgba(67, 97, 238, 0.3); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+        
+        .theme-toggle-container { display: flex; justify-content: flex-end; margin-bottom: 1rem; }
+        .btn-theme {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.4rem 0.8rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn-theme:hover { border-color: var(--primary); color: var(--primary); }
+        
+        .page-link { text-align: center; margin-top: 1.2rem; font-size: 0.9rem; color: var(--text-secondary); }
+        .page-link a { color: var(--primary); text-decoration: none; font-weight: 600; }
+        .page-link a:hover { text-decoration: underline; }
+        
+        .error-message {
+            background: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--danger);
+            color: var(--danger);
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .error-message.show { display: block; }
+        
+        .success-message {
+            background: rgba(46, 204, 113, 0.1);
+            border-left: 4px solid var(--success);
+            color: var(--success);
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .success-message.show { display: block; }
+        
+        @media (max-width: 500px) {
+            .auth-card { padding: 1.8rem 1.5rem; }
+            .brand-bar h1 { font-size: 1.3rem; }
+            .brand-icon { font-size: 1.8rem; }
+            .auth-card h2 { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-card">
+        <div class="theme-toggle-container">
+            <button class="btn-theme" onclick="toggleTheme()" id="theme-btn">
+                <i class="fas fa-moon" id="theme-icon"></i>
+                <span id="theme-text">Dark</span>
+            </button>
+        </div>
+
+        <div class="brand-bar">
+            <span class="brand-icon">💡</span>
+            <div>
+                <h1>Pro<span>InfoBAC</span></h1>
+                <p>Crează contul tău pentru acces profesional la Bac Info.</p>
+            </div>
+        </div>
+
+        <h2>Înregistrare</h2>
+        <p class="subtitle">Alege rolul corect: elev sau profesor, și începe pregătirea.</p>
+
+        <div class="error-message" id="error-message">
+            <i class="fas fa-exclamation-circle"></i> <span id="error-text">Eroare la înregistrare.</span>
+        </div>
+
+        <div class="success-message" id="success-message">
+            <i class="fas fa-check-circle"></i> <span id="success-text">Cont creat cu succes!</span>
+        </div>
+
+        <label for="email"><i class="fas fa-envelope"></i> Email</label>
+        <input id="email" type="email" placeholder="nume@exemplu.com" autocomplete="username" />
+
+        <label for="password"><i class="fas fa-lock"></i> Parolă</label>
+        <input id="password" type="password" placeholder="Parola ta (minim 6 caractere)" autocomplete="new-password" />
+
+        <label for="role"><i class="fas fa-user-tag"></i> Rol</label>
+        <select id="role">
+            <option value="student">👨‍🎓 Elev</option>
+            <option value="teacher">👨‍🏫 Profesor</option>
+        </select>
+
+        <button class="btn btn-primary" onclick="registerUser()" id="register-btn">
+            <i class="fas fa-user-plus" id="register-icon"></i>
+            <span id="register-text">Înregistrează-te</span>
+        </button>
+
+        <p class="page-link">Ai deja cont? <a href="/">Loghează-te</a></p>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            document.getElementById('theme-icon').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            document.getElementById('theme-text').textContent = next === 'dark' ? 'Light' : 'Dark';
+            localStorage.setItem('theme', next);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+            document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
+        });
+
+        async function registerUser() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const role = document.getElementById('role').value;
+            
+            const errorMessage = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+            const successMessage = document.getElementById('success-message');
+            const successText = document.getElementById('success-text');
+            const registerBtn = document.getElementById('register-btn');
+            const registerIcon = document.getElementById('register-icon');
+            const registerText = document.getElementById('register-text');
+
+            if (!email || !password) {
+                errorMessage.classList.add('show');
+                errorText.textContent = 'Te rugăm să completezi toate câmpurile.';
+                successMessage.classList.remove('show');
+                return;
+            }
+
+            if (password.length < 6) {
+                errorMessage.classList.add('show');
+                errorText.textContent = 'Parola trebuie să aibă cel puțin 6 caractere.';
+                successMessage.classList.remove('show');
+                return;
+            }
+
+            registerBtn.disabled = true;
+            registerIcon.className = 'fas fa-spinner fa-spin';
+            registerText.textContent = 'Se înregistrează...';
+            errorMessage.classList.remove('show');
+            successMessage.classList.remove('show');
+
+            try {
+                const response = await fetch(`${window.location.origin}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, role })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const userRole = role;
+                    
+                    localStorage.setItem('rolUtilizator', userRole);
+                    localStorage.setItem('emailUtilizator', email);
+                    localStorage.setItem('numeUtilizator', email.split('@')[0]);
+                    
+                    console.log('✅ Cont creat ca:', userRole);
+                    
+                    successMessage.classList.add('show');
+                    successText.textContent = `✅ Cont creat cu succes ca ${userRole === 'teacher' ? 'Profesor' : 'Elev'}!`;
+                    registerIcon.className = 'fas fa-check-circle';
+                    registerText.textContent = '✅ Succes!';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else {
+                    errorMessage.classList.add('show');
+                    errorText.textContent = data.detail || 'Acest email este deja înregistrat sau a apărut o eroare.';
+                    registerBtn.disabled = false;
+                    registerIcon.className = 'fas fa-user-plus';
+                    registerText.textContent = 'Înregistrează-te';
+                }
+            } catch (error) {
+                errorMessage.classList.add('show');
+                errorText.textContent = 'Eroare de conexiune. Încearcă din nou.';
+                registerBtn.disabled = false;
+                registerIcon.className = 'fas fa-user-plus';
+                registerText.textContent = 'Înregistrează-te';
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const email = document.getElementById('email');
+                const password = document.getElementById('password');
+                const role = document.getElementById('role');
+                if (document.activeElement === email || 
+                    document.activeElement === password || 
+                    document.activeElement === role) {
+                    registerUser();
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

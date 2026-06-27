@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Bac Info</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== RESET & VARIABILE - DESIGN MODERN ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #f0f4ff;
+            --bg-card: #ffffff;
+            --bg-input: #f8f9fa;
+            --text-primary: #1a1a2e;
+            --text-secondary: #6c757d;
+            --border-color: #e9ecef;
+            --border-dark: #dee2e6;
+            --shadow: 0 8px 30px rgba(0,0,0,0.08);
+            --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
+            --primary: #4361ee;
+            --primary-light: #eef0ff;
+            --primary-dark: #3a56d4;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --bg-console: #0d0d1a;
+            --text-code: #cdd6f4;
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #0f0e17;
+            --bg-card: #1a1a2e;
+            --bg-input: #1a1a2e;
+            --text-primary: #e8e8f0;
+            --text-secondary: #a0a0b8;
+            --border-color: #2a2a4a;
+            --border-dark: #3a3a5a;
+            --shadow: 0 8px 30px rgba(0,0,0,0.4);
+            --shadow-hover: 0 12px 40px rgba(0,0,0,0.6);
+            --primary: #6c8cff;
+            --primary-light: #1a2a4a;
+            --bg-console: #0d0d1a;
+            --text-code: #cdd6f4;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 1.5rem;
+            min-height: 100vh;
+            transition: var(--transition);
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
+        
+        /* ===== HEADER ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            transition: var(--transition);
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+        }
+        .logo-area i { 
+            font-size: 2rem; 
+            color: var(--primary);
+            background: var(--primary-light);
+            padding: 0.5rem;
+            border-radius: 12px;
+        }
+        .logo-area h1 { 
+            font-size: 1.4rem; 
+            font-weight: 800; 
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+        .logo-area h1 span { 
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo-area small { 
+            font-size: 0.75rem; 
+            color: var(--text-secondary); 
+            margin-left: 0.5rem; 
+            font-weight: 500;
+        }
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        /* ===== ROLE BADGE ===== */
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 1rem 0.3rem 0.7rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 2px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        .role-badge i { font-size: 1rem; }
+        .role-badge.teacher {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .role-badge.student {
+            border-color: var(--warning);
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        /* ===== BUTOANE ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            text-decoration: none;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+        .btn-primary { 
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            color: white; 
+            border-color: transparent;
+        }
+        .btn-primary:hover { 
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.35);
+        }
+        .btn-outline { 
+            background: transparent; 
+            border: 2px solid var(--border-dark);
+            color: var(--text-primary);
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-success { 
+            background: linear-gradient(135deg, var(--success), #27ae60);
+            color: white;
+            border-color: transparent;
+        }
+        .btn-success:hover { 
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.35);
+        }
+        .btn-theme {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 0.8rem;
+        }
+        .btn-theme:hover { border-color: var(--primary); color: var(--primary); }
+        
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 1.5rem 1.8rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+        .card:hover { box-shadow: var(--shadow-hover); }
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--text-primary);
+        }
+        .card-title i { color: var(--primary); }
+        
+        .breadcrumb {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin: 0 0 0.25rem 0;
+            font-weight: 500;
+        }
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin: 0 0 0.25rem 0;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+        .page-description {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 0 0 0.75rem 0;
+        }
+        
+        /* ===== HELP PANEL ===== */
+        .help-panel {
+            background: var(--primary-light);
+            border-radius: var(--radius);
+            padding: 1rem 1.2rem;
+            margin-bottom: 1.2rem;
+            border-left: 4px solid var(--primary);
+            color: var(--text-primary);
+        }
+        .help-panel strong {
+            color: var(--primary);
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+        .help-panel ul {
+            margin: 0.3rem 0 0 1.2rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .help-panel ul li { margin-bottom: 0.2rem; }
+        
+        /* ===== FORM ===== */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-primary);
+        }
+        .form-group label i { color: var(--primary); width: 1.2rem; }
+        .form-control {
+            padding: 0.7rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--bg-card);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.15);
+        }
+        .form-control::placeholder { color: var(--text-secondary); }
+        
+        /* ===== CONSOLE OUTPUT ===== */
+        .console-output {
+            background: var(--bg-console);
+            border-radius: var(--radius);
+            padding: 1rem;
+            min-height: 80px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 2px solid var(--border-color);
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: var(--text-code);
+            white-space: pre-wrap;
+            margin-top: 1rem;
+        }
+        .console-output.success { color: #4ade80; }
+        .console-output.error { color: #f87171; }
+        .console-output.info { color: #60a5fa; }
+        
+        .console-output a {
+            color: #4ade80 !important;
+            text-decoration: underline;
+            font-weight: bold;
+        }
+        .console-output a:hover {
+            color: #86efac !important;
+        }
+        .console-output.info a {
+            color: #60a5fa !important;
+        }
+        .console-output.info a:hover {
+            color: #93bbfc !important;
+        }
+        
+        /* ===== CARD FOOTER ===== */
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        /* ===== STATS BADGE ===== */
+        .stats-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 0.2rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .app-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            .card { padding: 1rem; }
+            .card-footer { flex-direction: column; align-items: stretch; }
+            .card-footer .btn { justify-content: center; }
+        }
+        
+        @media (max-width: 600px) {
+            body { padding: 0.8rem; }
+            .app-header { padding: 0.8rem 1rem; }
+            .page-title { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== CONTAINER ===== -->
+    <div class="container">
+
+        <!-- ===== HEADER ===== -->
+        <header class="app-header">
+            <div class="logo-area" onclick="window.location.href='/dashboard'">
+                <i class="fas fa-video"></i>
+                <div>
+                    <h1>Pro<span>InfoBAC</span></h1>
+                    <small>· Meeting</small>
+                </div>
+            </div>
+            <div class="header-actions">
+                <span class="stats-badge"><i class="fas fa-calendar-plus"></i> Generare meeting</span>
+                <span class="role-badge teacher" id="role-badge">
+                    <i class="fas fa-chalkboard-teacher"></i> Profesor
+                </span>
+                <button class="btn btn-theme" onclick="toggleTheme()" id="theme-btn">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                    <span id="theme-text">Dark</span>
+                </button>
+                <button class="btn btn-outline" onclick="window.location.href='/'">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- ===== MAIN CARD ===== -->
+        <div class="card">
+            <div class="breadcrumb">Dashboard / Meeting</div>
+            <h1 class="page-title"><i class="fas fa-calendar-plus" style="color:var(--primary);"></i> Generează Meeting</h1>
+            <p class="page-description">Creează un link rapid pentru sesiuni de grup sau meditații.</p>
+
+            <!-- Help Panel -->
+            <div class="help-panel">
+                <strong><i class="fas fa-lightbulb" style="color:var(--warning);"></i> Ghid rapid:</strong>
+                <ul>
+                    <li>Scrie materia sau capitolul pentru întâlnire.</li>
+                    <li>Apasă <strong>Generează link</strong> pentru a crea o sală virtuală.</li>
+                    <li>Click pe link pentru a deschide întâlnirea.</li>
+                </ul>
+            </div>
+
+            <!-- Form -->
+            <div class="form-group">
+                <label for="meeting-subject"><i class="fas fa-book"></i> Materie / capitol</label>
+                <input id="meeting-subject" class="form-control" type="text" placeholder="Ex: Grafuri, Tablouri, Recursivitate..." />
+            </div>
+
+            <!-- Buttons -->
+            <div class="card-footer">
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="genereazaMeeting()">
+                        <i class="fas fa-link"></i> Generează link
+                    </button>
+                    <button class="btn btn-success" onclick="copyLink()" id="copy-btn" style="display:none;">
+                        <i class="fas fa-copy"></i> Copiază
+                    </button>
+                </div>
+                <button class="btn btn-outline" onclick="clearMeeting()">
+                    <i class="fas fa-eraser"></i> Curăță
+                </button>
+            </div>
+
+            <!-- Console Output cu link accesibil -->
+            <div class="console-output" id="meeting-output">
+                <span style="color:var(--text-secondary);">🔗 Linkul va apărea aici...</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===== SCRIPT ===== -->
+    <script>
+        // ============================================================
+        // TOGGLE THEME
+        // ============================================================
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            document.getElementById('theme-icon').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            document.getElementById('theme-text').textContent = next === 'dark' ? 'Light' : 'Dark';
+            localStorage.setItem('theme', next);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+            document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
+        });
+
+        // ============================================================
+        // VARIABILE
+        // ============================================================
+        let generatedLink = '';
+        let generatedRoom = '';
+
+        // ============================================================
+        // GENEREAZĂ MEETING
+        // ============================================================
+        async function genereazaMeeting() {
+            const outputElement = document.getElementById('meeting-output');
+            const subject = document.getElementById('meeting-subject').value.trim();
+            const copyBtn = document.getElementById('copy-btn');
+            
+            outputElement.textContent = '⏳ Se generează link...';
+            outputElement.className = 'console-output';
+
+            try {
+                const response = await fetch(`${window.location.origin}/generate-meeting`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nume_materie: subject || 'Informatica' })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Eroare la generarea link-ului.');
+                }
+                
+                generatedLink = data.link_intalnire || `https://meet.proinfobac.ro/${Date.now().toString(36)}`;
+                generatedRoom = data.nume_camera || `Sala-${Date.now().toString(36).toUpperCase()}`;
+                
+                // Afișăm link-ul direct în consolă cu culoare verde și clickabil
+                outputElement.innerHTML = `✅ Link generat cu succes!\n\n🔗 <a href="${generatedLink}" target="_blank">${generatedLink}</a>\n\n🏠 Sala: ${generatedRoom}\n📚 Materie: ${subject || 'Informatica'}\n\n💡 Click pe link pentru a deschide întâlnirea.`;
+                outputElement.className = 'console-output success';
+                
+                copyBtn.style.display = 'inline-flex';
+
+            } catch (error) {
+                // Fallback - generăm un link local pentru demonstrație
+                const fakeLink = `https://meet.proinfobac.ro/${Date.now().toString(36)}`;
+                generatedLink = fakeLink;
+                generatedRoom = `Sala-${Date.now().toString(36).toUpperCase()}`;
+                
+                outputElement.innerHTML = `⚠️ Serverul nu a răspuns. Folosim un link de test.\n\n🔗 <a href="${fakeLink}" target="_blank">${fakeLink}</a>\n\n📚 Materie: ${subject || 'Informatica'}\n🏠 Sala: ${generatedRoom}\n💡 Acesta este un link demonstrativ. Click pe el pentru a simula accesul.`;
+                outputElement.className = 'console-output info';
+                
+                copyBtn.style.display = 'inline-flex';
+            }
+        }
+
+        // ============================================================
+        // COPIAZĂ LINK
+        // ============================================================
+        function copyLink() {
+            if (!generatedLink) {
+                alert('Mai întâi generează un link!');
+                return;
+            }
+            
+            navigator.clipboard.writeText(generatedLink)
+                .then(() => {
+                    const output = document.getElementById('meeting-output');
+                    const originalHTML = output.innerHTML;
+                    output.innerHTML = '✅ Link copiat în clipboard!';
+                    output.className = 'console-output success';
+                    setTimeout(() => {
+                        output.innerHTML = originalHTML;
+                        output.className = 'console-output success';
+                    }, 2000);
+                })
+                .catch(() => {
+                    // Fallback
+                    const textArea = document.createElement('textarea');
+                    textArea.value = generatedLink;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    const output = document.getElementById('meeting-output');
+                    const originalHTML = output.innerHTML;
+                    output.innerHTML = '✅ Link copiat în clipboard!';
+                    output.className = 'console-output success';
+                    setTimeout(() => {
+                        output.innerHTML = originalHTML;
+                        output.className = 'console-output success';
+                    }, 2000);
+                });
+        }
+
+        // ============================================================
+        // CURĂȚĂ
+        // ============================================================
+        function clearMeeting() {
+            generatedLink = '';
+            generatedRoom = '';
+            document.getElementById('meeting-output').innerHTML = '🔗 Linkul va apărea aici...';
+            document.getElementById('meeting-output').className = 'console-output';
+            document.getElementById('copy-btn').style.display = 'none';
+            document.getElementById('meeting-subject').value = '';
+        }
+    </script>
+
+</body>
+</html>

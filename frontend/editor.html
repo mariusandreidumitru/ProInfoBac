@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor C/C++ - Bac Info</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ============================================================
+           STILURI MODERNE - BAC INFO (design-ul furnizat)
+           ============================================================ */
+
+        :root {
+            --bg-primary: #f0f4ff;
+            --bg-card: #ffffff;
+            --bg-input: #f8f9fa;
+            --text-primary: #1a1a2e;
+            --text-secondary: #6c757d;
+            --border-color: #e9ecef;
+            --border-dark: #dee2e6;
+            --shadow: 0 8px 30px rgba(0,0,0,0.08);
+            --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
+            --primary: #4361ee;
+            --primary-light: #eef0ff;
+            --primary-dark: #3a56d4;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --bg-code: #1e1e2e;
+            --bg-console: #0d0d1a;
+            --text-code: #cdd6f4;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f0e17;
+            --bg-card: #1a1a2e;
+            --bg-input: #1a1a2e;
+            --text-primary: #e8e8f0;
+            --text-secondary: #a0a0b8;
+            --border-color: #2a2a4a;
+            --border-dark: #3a3a5a;
+            --shadow: 0 8px 30px rgba(0,0,0,0.4);
+            --shadow-hover: 0 12px 40px rgba(0,0,0,0.6);
+            --primary: #6c8cff;
+            --primary-light: #1a2a4a;
+            --bg-code: #0d0d1a;
+            --bg-console: #0d0d1a;
+            --text-code: #cdd6f4;
+        }
+
+        /* ===== RESET ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 1.5rem;
+            min-height: 100vh;
+            transition: var(--transition);
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
+
+        /* ===== HEADER ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            transition: var(--transition);
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+        }
+
+        .logo-area i { 
+            font-size: 2rem; 
+            color: var(--primary);
+            background: var(--primary-light);
+            padding: 0.5rem;
+            border-radius: 12px;
+        }
+
+        .logo-area h1 { 
+            font-size: 1.4rem; 
+            font-weight: 800; 
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .logo-area h1 span { 
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-area small { 
+            font-size: 0.75rem; 
+            color: var(--text-secondary); 
+            margin-left: 0.5rem; 
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* ===== ROLE BADGE ===== */
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 1rem 0.3rem 0.7rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 2px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        .role-badge i { font-size: 1rem; }
+        .role-badge.teacher {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .role-badge.student {
+            border-color: var(--warning);
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+
+        /* ===== BUTOANE ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            text-decoration: none;
+        }
+
+        .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+
+        .btn-primary { 
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            color: white; 
+            border-color: transparent;
+        }
+        .btn-primary:hover { 
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.35);
+        }
+
+        .btn-outline { 
+            background: transparent; 
+            border: 2px solid var(--border-dark);
+            color: var(--text-primary);
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+        .btn-success { 
+            background: linear-gradient(135deg, var(--success), #27ae60);
+            color: white;
+            border-color: transparent;
+        }
+        .btn-success:hover { 
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.35);
+        }
+
+        .btn-theme {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 0.8rem;
+        }
+        .btn-theme:hover { border-color: var(--primary); color: var(--primary); }
+
+        .btn-run {
+            background: linear-gradient(135deg, var(--success), #27ae60);
+            color: white;
+            border-color: transparent;
+            padding: 0.7rem 2rem;
+            font-size: 1rem;
+        }
+        .btn-run:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.35);
+        }
+
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 1.5rem 1.8rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+        .card:hover { box-shadow: var(--shadow-hover); }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--text-primary);
+        }
+        .card-title i { color: var(--primary); }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* ===== FORM ===== */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-primary);
+        }
+        .form-group label i { color: var(--primary); width: 1.2rem; }
+
+        .form-control {
+            padding: 0.7rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--bg-card);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.15);
+        }
+
+        .form-control::placeholder { color: var(--text-secondary); }
+
+        textarea.form-control {
+            min-height: 100px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+
+        /* ===== BREADCRUMB & TITLE ===== */
+        .breadcrumb {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin: 0 0 0.25rem 0;
+            font-weight: 500;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin: 0 0 0.25rem 0;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .page-description {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 0 0 0.75rem 0;
+        }
+
+        /* ===== CODE EDITOR ===== */
+        .code-editor-wrapper {
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+            background: var(--bg-code);
+            transition: var(--transition);
+        }
+
+        .code-editor-wrapper:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.15);
+        }
+
+        .code-editor {
+            width: 100%;
+            min-height: 400px;
+            padding: 1rem;
+            background: var(--bg-code);
+            color: var(--text-code);
+            border: none;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+            tab-size: 4;
+        }
+
+        .code-editor:focus { outline: none; }
+        .code-editor::selection {
+            background: rgba(67, 97, 238, 0.3);
+        }
+
+        /* ===== CONSOLE ===== */
+        .console-container {
+            background: var(--bg-console);
+            border-radius: var(--radius);
+            padding: 1rem;
+            min-height: 120px;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 2px solid var(--border-color);
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: var(--text-code);
+            margin-top: 1rem;
+        }
+
+        .console-title {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .console-title i { color: var(--primary); }
+
+        .console-output {
+            padding: 0.5rem;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 40px;
+            color: var(--text-code);
+        }
+        .console-output.success { color: #4ade80; }
+        .console-output.error { color: #f87171; }
+        .console-output.info { color: #60a5fa; }
+
+        /* ===== HELP PANEL ===== */
+        .help-panel {
+            background: var(--primary-light);
+            border-radius: var(--radius);
+            padding: 1rem 1.2rem;
+            margin-bottom: 1.2rem;
+            border-left: 4px solid var(--primary);
+            color: var(--text-primary);
+        }
+
+        .help-panel strong {
+            color: var(--primary);
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        .help-panel ul {
+            margin: 0.3rem 0 0 1.2rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .help-panel ul li { margin-bottom: 0.2rem; }
+
+        /* ===== STATS BADGE ===== */
+        .stats-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 0.2rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .app-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            .card { padding: 1rem; }
+            .code-editor { min-height: 250px; }
+            .card-footer { flex-direction: column; align-items: stretch; }
+            .card-footer .btn { justify-content: center; }
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 0.8rem; }
+            .app-header { padding: 0.8rem 1rem; }
+            .page-title { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== CONTAINER ===== -->
+    <div class="container">
+
+        <!-- ===== HEADER ===== -->
+        <header class="app-header">
+            <div class="logo-area" onclick="window.location.href='/dashboard'">
+                <i class="fas fa-laptop-code"></i>
+                <h1>Pro<span>InfoBAC</span></h1>
+                <small>· Editor C/C++</small>
+            </div>
+            <div class="header-actions">
+                <span class="stats-badge"><i class="fas fa-code"></i> Editor activ</span>
+                <span class="role-badge teacher" id="role-badge">
+                    <i class="fas fa-user-graduate"></i> Profesor
+                </span>
+                <button class="btn btn-theme" onclick="toggleTheme()" id="theme-btn">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                    <span id="theme-text">Dark</span>
+                </button>
+                <button class="btn btn-outline" onclick="window.location.href='/'">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- ===== MAIN CARD ===== -->
+        <div class="card">
+            <div class="breadcrumb">Dashboard / Editor</div>
+            <h1 class="page-title"><i class="fas fa-code" style="color:var(--primary);"></i> Editor C/C++</h1>
+            <p class="page-description">Scrie, compilează și rulează codul direct din browser.</p>
+
+            <!-- Help Panel -->
+            <div class="help-panel">
+                <strong><i class="fas fa-lightbulb" style="color:var(--warning);"></i> Ghid rapid:</strong>
+                <ul>
+                    <li>Scrie codul în caseta mare.</li>
+                    <li>Introdu datele de test în câmpul <strong>Intrare (stdin)</strong>.</li>
+                    <li>Apasă <strong>Rulează cod</strong> pentru rezultat instant.</li>
+                </ul>
+            </div>
+
+            <!-- Code Editor -->
+            <div class="form-group">
+                <label for="code-editor"><i class="fas fa-file-code"></i> Cod sursă C/C++</label>
+                <div class="code-editor-wrapper">
+                    <textarea id="code-editor" class="code-editor" spellcheck="false">#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main() {
+    int a, b;
+    cin >> a >> b;
+    cout << "Suma este: " << a + b << endl;
+    return 0;
+}</textarea>
+                </div>
+            </div>
+
+            <!-- Stdin Input -->
+            <div class="form-group">
+                <label for="stdin-input"><i class="fas fa-arrow-right"></i> Intrare (stdin)</label>
+                <textarea id="stdin-input" class="form-control" rows="4" placeholder="Introdu datele de intrare aici...&#10;Ex: 3 5">3 5</textarea>
+            </div>
+
+            <!-- Buttons -->
+            <div class="card-footer">
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                    <button class="btn btn-outline" onclick="resetCode()">
+                        <i class="fas fa-undo"></i> Reset cod
+                    </button>
+                    <button class="btn btn-outline" onclick="clearOutput()">
+                        <i class="fas fa-eraser"></i> Curăță output
+                    </button>
+                </div>
+                <button class="btn btn-run" onclick="ruleazaCod()" id="run-btn">
+                    <i class="fas fa-play" id="run-icon"></i>
+                    <span id="run-text">Rulează cod</span>
+                </button>
+            </div>
+
+            <!-- Console Output -->
+            <div class="console-container">
+                <div class="console-title">
+                    <i class="fas fa-terminal"></i> Terminal:
+                    <span style="font-size:0.7rem; font-weight:400; color:var(--text-secondary);">ieșirea programului</span>
+                </div>
+                <div id="output" class="console-output">Rezultatul execuției va apărea aici...</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===== SCRIPT ===== -->
+    <script>
+        // ============================================================
+        // TOGGLE THEME
+        // ============================================================
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            document.getElementById('theme-icon').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            document.getElementById('theme-text').textContent = next === 'dark' ? 'Light' : 'Dark';
+            localStorage.setItem('theme', next);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+            document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
+        });
+
+        // ============================================================
+        // RULEAZĂ COD - CU LOADING STATE
+        // ============================================================
+        async function ruleazaCod() {
+            const outputElement = document.getElementById('output');
+            const runBtn = document.getElementById('run-btn');
+            const runIcon = document.getElementById('run-icon');
+            const runText = document.getElementById('run-text');
+
+            // Verifică dacă codul este gol
+            const codElev = document.getElementById('code-editor').value;
+            if (!codElev.trim()) {
+                outputElement.textContent = "⚠️ Te rugăm să scrii cod înainte de a rula.";
+                outputElement.className = 'console-output error';
+                return;
+            }
+
+            // Dezactivează butonul și arată loading
+            runBtn.disabled = true;
+            runIcon.className = 'fas fa-spinner fa-spin';
+            runText.textContent = 'Compilează...';
+            outputElement.textContent = "⏳ Compilare în curs...\n";
+            outputElement.className = 'console-output info';
+
+            const stdinValue = document.getElementById('stdin-input').value;
+
+            try {
+                // Setează timeout mai mic pentru Piston API (8 secunde)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+                const response = await fetch(`${window.location.origin}/compile`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    signal: controller.signal,
+                    body: JSON.stringify({ 
+                        code: codElev, 
+                        language: "cpp",
+                        stdin: stdinValue
+                    })
+                });
+
+                clearTimeout(timeoutId);
+                const data = await response.json();
+
+                if (data.output) {
+                    outputElement.textContent = data.output;
+                    outputElement.className = 'console-output success';
+                } else if (data.error) {
+                    outputElement.textContent = data.error;
+                    outputElement.className = 'console-output error';
+                } else {
+                    outputElement.textContent = JSON.stringify(data, null, 2);
+                    outputElement.className = 'console-output error';
+                }
+
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    outputElement.textContent = "⏰ Compilarea a durat prea mult (peste 8 secunde). Încearcă un cod mai simplu.";
+                    outputElement.className = 'console-output error';
+                } else {
+                    outputElement.textContent = "❌ Eroare de conexiune: " + error.message;
+                    outputElement.className = 'console-output error';
+                }
+            }
+
+            // Reactivează butonul
+            runBtn.disabled = false;
+            runIcon.className = 'fas fa-play';
+            runText.textContent = 'Rulează cod';
+        }
+
+        // ============================================================
+        // RESET COD
+        // ============================================================
+        function resetCode() {
+            const defaultCode = `#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int a, b;
+    cin >> a >> b;
+    cout << "Suma este: " << a + b << endl;
+    return 0;
+}`;
+            document.getElementById('code-editor').value = defaultCode;
+            document.getElementById('stdin-input').value = '3 5';
+            document.getElementById('output').textContent = '✅ Codul a fost resetat la exemplul implicit.';
+            document.getElementById('output').className = 'console-output success';
+        }
+
+        // ============================================================
+        // CURĂȚĂ OUTPUT
+        // ============================================================
+        function clearOutput() {
+            document.getElementById('output').textContent = '🧹 Output-ul a fost curățat.';
+            document.getElementById('output').className = 'console-output info';
+        }
+
+        // ============================================================
+        // SCURTĂTURI TASTATURĂ
+        // ============================================================
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+Enter sau Ctrl+Shift+Enter rulează codul
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                ruleazaCod();
+            }
+        });
+
+        // ============================================================
+        // TAB SUPPORT ÎN CODE EDITOR
+        // ============================================================
+        document.getElementById('code-editor').addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = e.target.selectionStart;
+                const end = e.target.selectionEnd;
+                e.target.value = e.target.value.substring(0, start) + '    ' + e.target.value.substring(end);
+                e.target.selectionStart = e.target.selectionEnd = start + 4;
+            }
+        });
+    </script>
+
+</body>
+</html>

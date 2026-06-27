@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bibliotecă Resurse - ProInfoBAC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #f0f4ff;
+            --bg-card: #ffffff;
+            --bg-input: #f8f9fa;
+            --text-primary: #1a1a2e;
+            --text-secondary: #6c757d;
+            --border-color: #e9ecef;
+            --border-dark: #dee2e6;
+            --shadow: 0 8px 30px rgba(0,0,0,0.08);
+            --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
+            --primary: #4361ee;
+            --primary-light: #eef0ff;
+            --primary-dark: #3a56d4;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --bg-code: #1e1e2e;
+            --text-code: #cdd6f4;
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #0f0e17;
+            --bg-card: #1a1a2e;
+            --bg-input: #1a1a2e;
+            --text-primary: #e8e8f0;
+            --text-secondary: #a0a0b8;
+            --border-color: #2a2a4a;
+            --border-dark: #3a3a5a;
+            --shadow: 0 8px 30px rgba(0,0,0,0.4);
+            --shadow-hover: 0 12px 40px rgba(0,0,0,0.6);
+            --primary: #6c8cff;
+            --primary-light: #1a2a4a;
+            --bg-code: #0d0d1a;
+            --text-code: #cdd6f4;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 1.5rem;
+            min-height: 100vh;
+            transition: var(--transition);
+        }
+        .container { max-width: 1300px; margin: 0 auto; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
+        
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            transition: var(--transition);
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+        }
+        .logo-area i { 
+            font-size: 2rem; 
+            color: var(--primary);
+            background: var(--primary-light);
+            padding: 0.5rem;
+            border-radius: 12px;
+        }
+        .logo-area h1 { 
+            font-size: 1.4rem; 
+            font-weight: 800; 
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+        .logo-area h1 span { 
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo-area small { 
+            font-size: 0.75rem; 
+            color: var(--text-secondary); 
+            margin-left: 0.5rem; 
+            font-weight: 500;
+        }
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            text-decoration: none;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+        .btn-primary { 
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            color: white; 
+            border-color: transparent;
+        }
+        .btn-primary:hover { 
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.35);
+        }
+        .btn-outline { 
+            background: transparent; 
+            border: 2px solid var(--border-dark);
+            color: var(--text-primary);
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-success { 
+            background: linear-gradient(135deg, var(--success), #27ae60);
+            color: white;
+            border-color: transparent;
+        }
+        .btn-success:hover { 
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.35);
+        }
+        .btn-danger { 
+            background: linear-gradient(135deg, var(--danger), #c0392b);
+            color: white;
+            border-color: transparent;
+        }
+        .btn-danger:hover { 
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.35);
+        }
+        .btn-theme {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 0.8rem;
+        }
+        .btn-theme:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+        
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 1.5rem 1.8rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+        .card:hover { box-shadow: var(--shadow-hover); }
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--text-primary);
+        }
+        .card-title i { color: var(--primary); }
+        
+        .breadcrumb {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin: 0 0 0.25rem 0;
+            font-weight: 500;
+        }
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin: 0 0 0.25rem 0;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+        .page-description {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin: 0 0 0.75rem 0;
+        }
+        
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 1rem 0.3rem 0.7rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 2px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        .role-badge i { font-size: 1rem; }
+        .role-badge.teacher {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .role-badge.student {
+            border-color: var(--warning);
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-primary);
+        }
+        .form-group label i { color: var(--primary); width: 1.2rem; }
+        .form-control {
+            padding: 0.7rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--bg-card);
+            box-shadow: 0 0 0 4px rgba(67,97,238,0.15);
+        }
+        .form-control::placeholder { color: var(--text-secondary); }
+        textarea.form-control {
+            min-height: 80px;
+            resize: vertical;
+        }
+        select.form-control { appearance: auto; cursor: pointer; }
+        
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius);
+            padding: 2rem;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            background: var(--bg-input);
+        }
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+        .upload-zone i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        .upload-zone p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .upload-zone .file-types {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.3rem;
+        }
+        .upload-zone input[type="file"] {
+            display: none;
+        }
+        
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .resource-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 1.2rem;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            position: relative;
+        }
+        .resource-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--primary);
+        }
+        
+        .resource-card .file-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        .resource-card .file-icon.pdf { color: #e74c3c; }
+        .resource-card .file-icon.word { color: #2b5797; }
+        .resource-card .file-icon.ppt { color: #d24726; }
+        .resource-card .file-icon.excel { color: #217346; }
+        .resource-card .file-icon.image { color: #e67e22; }
+        .resource-card .file-icon.txt { color: #7f8c8d; }
+        .resource-card .file-icon.code { color: #2ecc71; }
+        .resource-card .file-icon.zip { color: #f39c12; }
+        
+        .resource-card h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.2rem;
+        }
+        .resource-card .meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .resource-card .meta i { margin-right: 0.2rem; }
+        
+        .resource-card .actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.8rem;
+            flex-wrap: wrap;
+        }
+        
+        .resource-card .badge-capitol {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.1rem 0.6rem;
+            border-radius: 50px;
+            margin-top: 0.3rem;
+        }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; }
+        
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-hover);
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .modal-header h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .modal-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        .modal-header .close-btn:hover {
+            color: var(--danger);
+            transform: rotate(90deg);
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .modal-body .preview-pdf {
+            width: 100%;
+            height: 70vh;
+            border: none;
+            border-radius: 8px;
+        }
+        .modal-body .preview-image {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 8px;
+            display: block;
+            margin: 0 auto;
+        }
+        .modal-body .preview-text {
+            background: var(--bg-input);
+            padding: 1rem;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .modal-body .preview-code {
+            background: var(--bg-code);
+            color: var(--text-code);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            max-height: 70vh;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .modal-footer {
+            padding: 0.8rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+        
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            align-items: center;
+        }
+        .filter-bar .form-group {
+            margin-bottom: 0;
+            flex: 1;
+            min-width: 150px;
+        }
+        .filter-bar .form-group label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--border-dark);
+            margin-bottom: 1rem;
+        }
+        .empty-state h3 {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin-bottom: 0.3rem;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-hover);
+            border-left: 4px solid var(--success);
+            z-index: 99999;
+            font-weight: 600;
+            animation: fadeIn 0.3s ease;
+            border: 1px solid var(--border-color);
+            max-width: 400px;
+        }
+        .toast.error { border-left-color: var(--danger); }
+        .toast.warning { border-left-color: var(--warning); }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .stat-item {
+            background: var(--bg-input);
+            border-radius: var(--radius);
+            padding: 0.8rem 1rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+        .stat-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        .stat-item .number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .stat-item .label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .restrictie-profesor {
+            background: rgba(231, 76, 60, 0.08);
+            border: 2px solid var(--danger);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--danger);
+        }
+        .restrictie-profesor i { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+        .restrictie-profesor h3 { margin-bottom: 0.3rem; }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 2rem;
+        }
+        .loading-spinner i {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+        .loading-spinner p {
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+        }
+        
+        @media (max-width: 768px) {
+            .app-header { flex-direction: column; text-align: center; }
+            .header-actions { width: 100%; justify-content: center; }
+            .card { padding: 1rem; }
+            .resource-grid { grid-template-columns: 1fr; }
+            .filter-bar { flex-direction: column; }
+            .filter-bar .form-group { width: 100%; }
+            .modal-content { margin: 1rem; max-height: 95vh; }
+            .modal-body .preview-pdf { height: 50vh; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+        }
+        
+        @media (max-width: 600px) {
+            body { padding: 0.8rem; }
+            .app-header { padding: 0.8rem 1rem; }
+            .page-title { font-size: 1.4rem; }
+            .stats-row { grid-template-columns: 1fr; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .text-muted { color: var(--text-secondary); }
+        .mt-1 { margin-top: 1rem; }
+        .flex { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="logo-area" onclick="window.location.href='/dashboard'">
+                <i class="fas fa-graduation-cap"></i>
+                <div>
+                    <h1>Pro<span>InfoBAC</span></h1>
+                    <small>· Bibliotecă Resurse</small>
+                </div>
+            </div>
+            <div class="header-actions">
+                <span class="role-badge" id="role-badge">
+                    <i class="fas fa-user-graduate"></i>
+                    <span id="role-text">Elev</span>
+                </span>
+                <button class="btn btn-theme" onclick="toggleTheme()" id="theme-btn">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                    <span id="theme-text">Dark</span>
+                </button>
+                <button class="btn btn-outline" onclick="window.location.href='/dashboard'">
+                    <i class="fas fa-home"></i> Dashboard
+                </button>
+                <button class="btn btn-primary" onclick="window.location.href='/editor'">
+                    <i class="fas fa-code"></i> Editor
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN -->
+        <div class="card">
+            <div class="breadcrumb">📚 Bibliotecă / Resurse</div>
+            <h1 class="page-title"><i class="fas fa-book-open" style="color:var(--primary);"></i> Bibliotecă de Resurse</h1>
+            <p class="page-description">Profesorii pot încărca documente (PDF, imagini, cod, text). Elevii pot vizualiza resursele fără a le modifica.</p>
+            
+            <div class="stats-row">
+                <div class="stat-item">
+                    <div class="number" id="stat-resurse">0</div>
+                    <div class="label">Total resurse</div>
+                </div>
+                <div class="stat-item">
+                    <div class="number" id="stat-capitole">0</div>
+                    <div class="label">Capitole</div>
+                </div>
+                <div class="stat-item">
+                    <div class="number" id="stat-vizualizari">0</div>
+                    <div class="label">Vizualizări</div>
+                </div>
+                <div class="stat-item">
+                    <div class="number" id="stat-dimensiune">0 MB</div>
+                    <div class="label">Dimensiune totală</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- UPLOAD SECTION -->
+        <div id="upload-section" class="card">
+            <div class="card-title"><i class="fas fa-upload" style="color:var(--success);"></i> Încarcă resursă nouă</div>
+            
+            <div id="profesor-content">
+                <p class="text-muted" style="margin-bottom:1rem;">
+                    <i class="fas fa-info-circle"></i> Completează toate câmpurile pentru a adăuga o resursă în bibliotecă.
+                    <strong style="color:var(--success);"><i class="fas fa-check-circle"></i> Ai acces ca profesor!</strong>
+                </p>
+
+                <div class="filter-bar">
+                    <div class="form-group">
+                        <label><i class="fas fa-tag"></i> Capitol</label>
+                        <select class="form-control" id="resource-capitol">
+                            <option value="tipuri-date">Tipuri de date</option>
+                            <option value="operatori">Operatori</option>
+                            <option value="structuri-alternative">Structuri alternative</option>
+                            <option value="structuri-repetitive">Structuri repetitive</option>
+                            <option value="algoritmi-elementari">Algoritmi elementari</option>
+                            <option value="numere-speciale">Numere speciale</option>
+                            <option value="cifre">Operații cu cifre</option>
+                            <option value="vectori">Vectori</option>
+                            <option value="matrici">Matrici</option>
+                            <option value="subprograme">Subprograme</option>
+                            <option value="siruri-caractere">Șiruri de caractere</option>
+                            <option value="structuri">Structuri de date</option>
+                            <option value="grafuri">Grafuri</option>
+                            <option value="arbori">Arbori</option>
+                            <option value="variante-bac">Variante Bac</option>
+                            <option value="altele">Altele</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-file"></i> Tip resursă</label>
+                        <select class="form-control" id="resource-tip">
+                            <option value="pdf">PDF</option>
+                            <option value="image">Imagine</option>
+                            <option value="code">Cod C/C++</option>
+                            <option value="text">Text</option>
+                            <option value="word">Word</option>
+                            <option value="ppt">PowerPoint</option>
+                            <option value="excel">Excel</option>
+                            <option value="zip">Arhivă ZIP</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-heading"></i> Titlu resursă</label>
+                    <input class="form-control" id="resource-titlu" placeholder="Ex: Algoritmi elementari - rezumat" />
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Descriere (opțional)</label>
+                    <textarea class="form-control" id="resource-desc" rows="2" placeholder="Descrie pe scurt conținutul resursei..."></textarea>
+                </div>
+
+                <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p><strong>Click pentru a încărca un fișier</strong></p>
+                    <p>sau trage și plasează aici</p>
+                    <div class="file-types">Formate acceptate: PDF, JPG, PNG, GIF, TXT, DOC, PPT, XLS, ZIP, CPP, C, HTML</div>
+                    <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.gif,.txt,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.cpp,.c,.html" />
+                </div>
+
+                <div id="file-info" style="display:none; margin-top:0.5rem; padding:0.8rem; background:var(--primary-light); border-radius:8px; border-left:4px solid var(--primary);">
+                    <strong><i class="fas fa-file"></i> Fișier selectat:</strong>
+                    <span id="file-name"></span>
+                    <span style="font-size:0.85rem; color:var(--text-secondary); margin-left:0.5rem;" id="file-size"></span>
+                    <button class="btn btn-outline btn-sm" onclick="stergeFisierSelectat()" style="margin-left:0.5rem;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:1rem;">
+                    <button class="btn btn-success" onclick="uploadResource()" id="upload-btn">
+                        <i class="fas fa-cloud-upload-alt"></i> Încarcă resursa
+                    </button>
+                    <button class="btn btn-outline" onclick="reseteazaFormular()">
+                        <i class="fas fa-undo"></i> Resetează
+                    </button>
+                </div>
+            </div>
+
+            <div id="elev-content" style="display:none;">
+                <div class="restrictie-profesor">
+                    <i class="fas fa-lock"></i>
+                    <h3>Acces restricționat</h3>
+                    <p>Doar profesorii pot încărca resurse în această bibliotecă.</p>
+                    <p style="font-size:0.9rem; margin-top:0.5rem;">
+                        <i class="fas fa-info-circle"></i> Rolul tău actual: <strong>Elev</strong>
+                    </p>
+                    <p style="font-size:0.85rem; margin-top:0.5rem; color:var(--text-secondary);">
+                        Poți vizualiza toate resursele încărcate de profesori mai jos.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="card">
+            <div class="card-title"><i class="fas fa-filter"></i> Filtrează resursele</div>
+            <div class="filter-bar">
+                <div class="form-group">
+                    <label><i class="fas fa-search"></i> Caută</label>
+                    <input class="form-control" id="search-resource" placeholder="Caută după titlu..." oninput="filtreazaResurse()" />
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Capitol</label>
+                    <select class="form-control" id="filter-capitol" onchange="filtreazaResurse()">
+                        <option value="toate">Toate capitolele</option>
+                        <option value="tipuri-date">Tipuri de date</option>
+                        <option value="operatori">Operatori</option>
+                        <option value="structuri-alternative">Structuri alternative</option>
+                        <option value="structuri-repetitive">Structuri repetitive</option>
+                        <option value="algoritmi-elementari">Algoritmi elementari</option>
+                        <option value="numere-speciale">Numere speciale</option>
+                        <option value="cifre">Operații cu cifre</option>
+                        <option value="vectori">Vectori</option>
+                        <option value="matrici">Matrici</option>
+                        <option value="subprograme">Subprograme</option>
+                        <option value="siruri-caractere">Șiruri de caractere</option>
+                        <option value="structuri">Structuri de date</option>
+                        <option value="grafuri">Grafuri</option>
+                        <option value="arbori">Arbori</option>
+                        <option value="variante-bac">Variante Bac</option>
+                        <option value="altele">Altele</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-file"></i> Tip</label>
+                    <select class="form-control" id="filter-tip" onchange="filtreazaResurse()">
+                        <option value="toate">Toate tipurile</option>
+                        <option value="pdf">PDF</option>
+                        <option value="image">Imagine</option>
+                        <option value="code">Cod C/C++</option>
+                        <option value="text">Text</option>
+                        <option value="word">Word</option>
+                        <option value="ppt">PowerPoint</option>
+                        <option value="excel">Excel</option>
+                        <option value="zip">Arhivă ZIP</option>
+                    </select>
+                </div>
+                <div style="display:flex; align-items:flex-end; gap:0.5rem;">
+                    <button class="btn btn-outline" onclick="reseteazaFiltre()">
+                        <i class="fas fa-undo"></i> Resetează filtre
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESOURCE LIST -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-list"></i> Resurse disponibile
+                <span style="font-size:0.8rem; font-weight:400; color:var(--text-secondary); margin-left:0.5rem;" id="resurse-count">(0 resurse)</span>
+            </div>
+            <div id="loading-resurse" class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Se încarcă resursele...</p>
+            </div>
+            <div class="resource-grid" id="resource-grid"></div>
+        </div>
+
+    </div>
+
+    <!-- PREVIEW MODAL -->
+    <div class="modal-overlay" id="preview-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="preview-title">Previzualizare</h3>
+                <button class="close-btn" onclick="closePreview()">&times;</button>
+            </div>
+            <div class="modal-body" id="preview-body"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closePreview()">
+                    <i class="fas fa-times"></i> Închide
+                </button>
+                <button class="btn btn-primary" id="preview-download-btn" onclick="downloadResource()">
+                    <i class="fas fa-download"></i> Descarcă
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // VARIABILE
+        // ============================================================
+        let resurse = [];
+        let rolUtilizator = 'student';
+        let currentPreviewId = null;
+        let selectedFile = null;
+        let selectedFileName = '';
+        let selectedFileSize = '';
+
+        // ============================================================
+        // THEME
+        // ============================================================
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            document.getElementById('theme-icon').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            document.getElementById('theme-text').textContent = next === 'dark' ? 'Light' : 'Dark';
+            localStorage.setItem('theme', next);
+        }
+
+        // ============================================================
+        // AUTENTIFICARE
+        // ============================================================
+        async function verificaAutentificare() {
+            const token = localStorage.getItem('accessToken');
+            
+            if (!token) {
+                window.location.href = '/';
+                return false;
+            }
+            
+            try {
+                const response = await fetch('/api/user', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    rolUtilizator = data.role || 'student';
+                    localStorage.setItem('rolUtilizator', rolUtilizator);
+                    return true;
+                } else if (response.status === 401) {
+                    localStorage.clear();
+                    window.location.href = '/';
+                    return false;
+                }
+            } catch (error) {
+                console.error('Eroare autentificare:', error);
+                const role = localStorage.getItem('rolUtilizator');
+                if (role) {
+                    rolUtilizator = role;
+                    return true;
+                }
+                window.location.href = '/';
+                return false;
+            }
+        }
+
+        // ============================================================
+        // UI
+        // ============================================================
+        function actualizeazaUI() {
+            const badge = document.getElementById('role-badge');
+            const text = document.getElementById('role-text');
+            const profesorContent = document.getElementById('profesor-content');
+            const elevContent = document.getElementById('elev-content');
+            
+            if (rolUtilizator === 'teacher') {
+                badge.className = 'role-badge teacher';
+                badge.querySelector('i').className = 'fas fa-chalkboard-teacher';
+                text.textContent = 'Profesor';
+                profesorContent.style.display = 'block';
+                elevContent.style.display = 'none';
+                document.querySelector('.upload-zone').style.display = 'block';
+                document.querySelector('#profesor-content .filter-bar').style.display = 'flex';
+                document.getElementById('resource-titlu').style.display = 'block';
+                document.getElementById('resource-desc').style.display = 'block';
+                document.getElementById('upload-btn').style.display = 'inline-flex';
+            } else {
+                badge.className = 'role-badge student';
+                badge.querySelector('i').className = 'fas fa-user-graduate';
+                text.textContent = 'Elev';
+                profesorContent.style.display = 'none';
+                elevContent.style.display = 'block';
+                document.querySelector('.upload-zone').style.display = 'none';
+                document.querySelector('#profesor-content .filter-bar').style.display = 'none';
+                document.getElementById('resource-titlu').style.display = 'none';
+                document.getElementById('resource-desc').style.display = 'none';
+                document.getElementById('upload-btn').style.display = 'none';
+            }
+        }
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('accessToken');
+            return { 'Authorization': `Bearer ${token}` };
+        }
+
+        // ============================================================
+        // RESURSE CRUD
+        // ============================================================
+        async function incarcaResurse() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) { window.location.href = '/'; return; }
+            
+            document.getElementById('loading-resurse').style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/resurse', {
+                    headers: getAuthHeaders()
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resurse = data.resurse || [];
+                } else if (response.status === 401) {
+                    localStorage.clear();
+                    window.location.href = '/';
+                    return;
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                resurse = [];
+            }
+            
+            document.getElementById('loading-resurse').style.display = 'none';
+            afiseazaResurse();
+            actualizeazaStatistici();
+        }
+
+        function afiseazaResurse() {
+            const grid = document.getElementById('resource-grid');
+            const search = document.getElementById('search-resource').value.toLowerCase();
+            const filterCapitol = document.getElementById('filter-capitol').value;
+            const filterTip = document.getElementById('filter-tip').value;
+
+            let filtered = resurse.filter(r => {
+                const matchSearch = r.titlu.toLowerCase().includes(search) || 
+                                   (r.descriere && r.descriere.toLowerCase().includes(search));
+                const matchCapitol = filterCapitol === 'toate' || r.capitol === filterCapitol;
+                const matchTip = filterTip === 'toate' || r.tip === filterTip;
+                return matchSearch && matchCapitol && matchTip;
+            });
+
+            document.getElementById('resurse-count').textContent = `(${filtered.length} resurse)`;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column:1/-1;">
+                        <i class="fas fa-inbox"></i>
+                        <h3>Nu există resurse</h3>
+                        <p>${resurse.length === 0 ? 'Încarcă prima resursă folosind formularul de mai sus.' : 'Nicio resursă nu corespunde filtrelor selectate.'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const tipIconMap = {
+                'pdf': 'fa-file-pdf', 'image': 'fa-file-image', 'code': 'fa-file-code',
+                'text': 'fa-file-alt', 'word': 'fa-file-word', 'ppt': 'fa-file-powerpoint',
+                'excel': 'fa-file-excel', 'zip': 'fa-file-archive'
+            };
+
+            const tipClassMap = {
+                'pdf': 'pdf', 'image': 'image', 'code': 'code', 'text': 'txt',
+                'word': 'word', 'ppt': 'ppt', 'excel': 'excel', 'zip': 'zip'
+            };
+
+            grid.innerHTML = filtered.map(r => {
+                const iconClass = tipClassMap[r.tip] || '';
+                const icon = tipIconMap[r.tip] || 'fa-file';
+                const dataStr = new Date(r.data_incarcare).toLocaleDateString('ro-RO');
+                const sizeStr = r.dimensiune ? (r.dimensiune / 1024).toFixed(1) + ' KB' : 'N/A';
+                const numeCapitol = document.getElementById('resource-capitol').options[
+                    Array.from(document.getElementById('resource-capitol').options).findIndex(opt => opt.value === r.capitol)
+                ]?.text || r.capitol || 'Necategorisit';
+                
+                return `
+                    <div class="resource-card">
+                        <div class="file-icon ${iconClass}"><i class="fas ${icon}"></i></div>
+                        <h4>${r.titlu}</h4>
+                        ${r.descriere ? `<p style="font-size:0.85rem; color:var(--text-secondary);">${r.descriere}</p>` : ''}
+                        <div class="meta"><i class="fas fa-tag"></i> ${numeCapitol} <span style="margin-left:0.5rem;"><i class="fas fa-file"></i> ${r.original_name || 'document'}</span></div>
+                        <div class="meta"><i class="fas fa-calendar"></i> ${dataStr} <span style="margin-left:0.5rem;"><i class="fas fa-weight-hanging"></i> ${sizeStr}</span> ${r.vizualizari > 0 ? `<span style="margin-left:0.5rem;"><i class="fas fa-eye"></i> ${r.vizualizari}</span>` : ''}</div>
+                        <div class="badge-capitol">${r.tip.toUpperCase()}</div>
+                        <div class="actions">
+                            <button class="btn btn-primary btn-sm" onclick="previewResource(${r.id})"><i class="fas fa-eye"></i> Previzualizează</button>
+                            <button class="btn btn-success btn-sm" onclick="downloadResource(${r.id})"><i class="fas fa-download"></i></button>
+                            ${rolUtilizator === 'teacher' ? `<button class="btn btn-danger btn-sm" onclick="stergeResursa(${r.id})"><i class="fas fa-trash"></i></button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================================
+        // PREVIEW
+        // ============================================================
+        async function previewResource(id) {
+            const r = resurse.find(item => item.id === id);
+            if (!r) { showToast('⚠️ Resursa nu a fost găsită!', 'error'); return; }
+
+            currentPreviewId = id;
+            document.getElementById('preview-title').textContent = r.titlu;
+
+            const body = document.getElementById('preview-body');
+            document.getElementById('preview-download-btn').onclick = () => downloadResource(id);
+
+            const ext = r.original_name ? r.original_name.split('.').pop().toLowerCase() : '';
+            const downloadUrl = `/download-resource/${r.id}`;
+            
+            if (r.tip === 'pdf' || ext === 'pdf') {
+                body.innerHTML = `<embed src="${downloadUrl}" type="application/pdf" class="preview-pdf" />`;
+            } else if (r.tip === 'image' || ['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+                body.innerHTML = `<img src="${downloadUrl}" alt="${r.titlu}" class="preview-image" />`;
+            } else if (r.tip === 'text' || ext === 'txt') {
+                try {
+                    const textRes = await fetch(downloadUrl, { headers: getAuthHeaders() });
+                    const text = await textRes.text();
+                    body.innerHTML = `<div class="preview-text">${text}</div>`;
+                } catch {
+                    body.innerHTML = `<div style="text-align:center;padding:2rem;"><i class="fas fa-file-alt" style="font-size:4rem;color:var(--primary);"></i><p>Nu s-a putut încărca conținutul text.</p></div>`;
+                }
+            } else if (r.tip === 'code' || ['cpp', 'c', 'py', 'html'].includes(ext)) {
+                try {
+                    const codeRes = await fetch(downloadUrl, { headers: getAuthHeaders() });
+                    const code = await codeRes.text();
+                    body.innerHTML = `<div class="preview-code">${code}</div>`;
+                } catch {
+                    body.innerHTML = `<div style="text-align:center;padding:2rem;"><i class="fas fa-file-code" style="font-size:4rem;color:var(--primary);"></i><p>Nu s-a putut încărca codul.</p></div>`;
+                }
+            } else {
+                body.innerHTML = `<div style="text-align:center;padding:2rem;"><i class="fas ${tipIconMap[r.tip] || 'fa-file'}" style="font-size:4rem;color:var(--primary);"></i><h3 style="margin-top:1rem;">${r.titlu}</h3><p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p><p style="color:var(--text-secondary);font-size:0.85rem;">Folosește butonul "Descarcă" pentru a-l salva.</p></div>`;
+            }
+
+            document.getElementById('preview-modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePreview() {
+            document.getElementById('preview-modal').classList.remove('active');
+            document.body.style.overflow = '';
+            document.getElementById('preview-body').innerHTML = '';
+        }
+
+        // ============================================================
+        // DOWNLOAD
+        // ============================================================
+        function downloadResource(id) {
+            const downloadId = id || currentPreviewId;
+            if (!downloadId) { showToast('⚠️ Nicio resursă selectată!', 'warning'); return; }
+            window.open(`/download-resource/${downloadId}`, '_blank');
+            showToast('✅ Fișierul se descarcă...');
+        }
+
+        // ============================================================
+        // DELETE
+        // ============================================================
+        async function stergeResursa(id) {
+            if (rolUtilizator !== 'teacher') { showToast('⚠️ Doar profesorii pot șterge!', 'error'); return; }
+            if (!confirm('Sigur dorești să ștergi această resursă?')) return;
+
+            const token = localStorage.getItem('accessToken');
+            if (!token) { window.location.href = '/'; return; }
+
+            try {
+                const response = await fetch(`/api/resurse/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    showToast('🗑️ Resursa a fost ștearsă!');
+                    await incarcaResurse();
+                } else if (response.status === 401) {
+                    localStorage.clear();
+                    window.location.href = '/';
+                } else {
+                    const data = await response.json();
+                    showToast('⚠️ ' + (data.detail || 'Eroare la ștergere'), 'error');
+                }
+            } catch (error) {
+                showToast('⚠️ Eroare: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================================
+        // UPLOAD
+        // ============================================================
+        function handleFile(file) {
+            const validExts = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'txt', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'zip', 'cpp', 'c', 'html'];
+            const ext = file.name.split('.').pop().toLowerCase();
+            
+            if (!validExts.includes(ext)) { showToast('⚠️ Format neacceptat!', 'warning'); return; }
+            if (file.size > 10 * 1024 * 1024) { showToast('⚠️ Fișier prea mare! Maxim 10 MB.', 'error'); return; }
+
+            selectedFile = file;
+            selectedFileName = file.name;
+            selectedFileSize = (file.size / 1024).toFixed(1) + ' KB';
+            
+            document.getElementById('file-info').style.display = 'block';
+            document.getElementById('file-name').textContent = selectedFileName;
+            document.getElementById('file-size').textContent = selectedFileSize;
+        }
+
+        function stergeFisierSelectat() {
+            selectedFile = null;
+            selectedFileName = '';
+            selectedFileSize = '';
+            document.getElementById('file-info').style.display = 'none';
+            document.getElementById('file-input').value = '';
+        }
+
+        async function uploadResource() {
+            if (rolUtilizator !== 'teacher') { showToast('⚠️ Doar profesorii pot încărca!', 'error'); return; }
+
+            const titlu = document.getElementById('resource-titlu').value.trim();
+            const desc = document.getElementById('resource-desc').value.trim();
+            const capitol = document.getElementById('resource-capitol').value;
+            const tip = document.getElementById('resource-tip').value;
+
+            if (!titlu) { showToast('⚠️ Introdu un titlu!', 'warning'); return; }
+            if (!selectedFile) { showToast('⚠️ Selectează un fișier!', 'warning'); return; }
+
+            const token = localStorage.getItem('accessToken');
+            if (!token) { window.location.href = '/'; return; }
+
+            const formData = new FormData();
+            formData.append('titlu', titlu);
+            formData.append('descriere', desc);
+            formData.append('capitol', capitol);
+            formData.append('tip', tip);
+            formData.append('file', selectedFile);
+
+            const btn = document.getElementById('upload-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se încarcă...';
+
+            try {
+                const response = await fetch('/upload-resource', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast('✅ Resursa încărcată cu succes!');
+                    stergeFisierSelectat();
+                    document.getElementById('resource-titlu').value = '';
+                    document.getElementById('resource-desc').value = '';
+                    await incarcaResurse();
+                } else {
+                    showToast('⚠️ ' + (data.detail || 'Eroare la încărcare'), 'error');
+                }
+            } catch (error) {
+                showToast('⚠️ Eroare de conexiune: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Încarcă resursa';
+            }
+        }
+
+        // ============================================================
+        // FILTERE
+        // ============================================================
+        function filtreazaResurse() { afiseazaResurse(); }
+        function reseteazaFiltre() {
+            document.getElementById('search-resource').value = '';
+            document.getElementById('filter-capitol').value = 'toate';
+            document.getElementById('filter-tip').value = 'toate';
+            afiseazaResurse();
+        }
+        function reseteazaFormular() {
+            document.getElementById('resource-titlu').value = '';
+            document.getElementById('resource-desc').value = '';
+            document.getElementById('resource-capitol').value = 'tipuri-date';
+            document.getElementById('resource-tip').value = 'pdf';
+            stergeFisierSelectat();
+        }
+
+        // ============================================================
+        // STATISTICI
+        // ============================================================
+        function actualizeazaStatistici() {
+            document.getElementById('stat-resurse').textContent = resurse.length;
+            const capitoleUnice = new Set(resurse.map(r => r.capitol));
+            document.getElementById('stat-capitole').textContent = capitoleUnice.size;
+            const vizualizari = resurse.reduce((acc, r) => acc + (r.vizualizari || 0), 0);
+            document.getElementById('stat-vizualizari').textContent = vizualizari;
+            let totalSize = resurse.reduce((acc, r) => acc + (r.dimensiune || 0), 0);
+            document.getElementById('stat-dimensiune').textContent = (totalSize / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // ============================================================
+        // TOAST
+        // ============================================================
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            const saved = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+            document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
+
+            const autentificat = await verificaAutentificare();
+            if (autentificat) {
+                actualizeazaUI();
+                await incarcaResurse();
+            }
+
+            // Drag and drop
+            const uploadZone = document.querySelector('.upload-zone');
+            if (uploadZone) {
+                uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = 'var(--primary)'; });
+                uploadZone.addEventListener('dragleave', e => { e.preventDefault(); uploadZone.style.borderColor = ''; });
+                uploadZone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    uploadZone.style.borderColor = '';
+                    if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+                });
+            }
+
+            document.getElementById('file-input').addEventListener('change', e => {
+                if (e.target.files.length > 0) handleFile(e.target.files[0]);
+            });
+        });
+
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closePreview(); });
+        document.getElementById('preview-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closePreview(); });
+    </script>
+
+</body>
+</html>
