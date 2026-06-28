@@ -6,7 +6,7 @@
     <title>Bibliotecă Resurse - ProInfoBAC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ===== TOATE STILURILE (păstrează-le pe cele existente) ===== */
+        /* ===== TOATE STILURILE ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
@@ -559,17 +559,6 @@
             font-weight: 500;
         }
         
-        .restrictie-profesor {
-            background: rgba(231, 76, 60, 0.08);
-            border: 2px solid var(--danger);
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            text-align: center;
-            color: var(--danger);
-        }
-        .restrictie-profesor i { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
-        .restrictie-profesor h3 { margin-bottom: 0.3rem; }
-        
         .loading-spinner {
             text-align: center;
             padding: 2rem;
@@ -865,48 +854,48 @@
         }
 
         // ============================================================
-// VERIFICĂ TOKEN-UL LA ÎNCĂRCARE
-// ============================================================
-async function verificaToken() {
-    const token = localStorage.getItem('accessToken');
-    console.log('🔍 Verific token:', token ? 'Există' : 'Lipsește');
-    
-    if (!token) {
-        console.log('🔒 Token lipsă, redirecționez la login...');
-        window.location.href = '/';
-        return false;
-    }
-    
-    try {
-        console.log('📡 Trimit request la /api/verify-token...');
-        const response = await fetch('/api/verify-token', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+        // VERIFICĂ TOKEN-UL LA ÎNCĂRCARE
+        // ============================================================
+        async function verificaToken() {
+            const token = localStorage.getItem('accessToken');
+            console.log('🔍 Verific token:', token ? 'Există' : 'Lipsește');
+            
+            if (!token) {
+                console.log('🔒 Token lipsă, redirecționez la login...');
+                window.location.href = '/';
+                return false;
             }
-        });
-        
-        console.log('📥 Răspuns status:', response.status);
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log('✅ Token valid:', data);
-            return true;
-        } else if (response.status === 401) {
-            console.log('❌ Token invalid sau expirat');
-            localStorage.clear();
-            window.location.href = '/';
-            return false;
-        } else {
-            console.log('⚠️ Eroare la verificare token:', response.status);
-            return false;
+            
+            try {
+                console.log('📡 Trimit request la /api/verify-token...');
+                const response = await fetch('/api/verify-token', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📥 Răspuns status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Token valid:', data);
+                    return true;
+                } else if (response.status === 401) {
+                    console.log('❌ Token invalid sau expirat');
+                    localStorage.clear();
+                    window.location.href = '/';
+                    return false;
+                } else {
+                    console.log('⚠️ Eroare la verificare token:', response.status);
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Eroare la verificare token:', error);
+                return false;
+            }
         }
-    } catch (error) {
-        console.error('❌ Eroare la verificare token:', error);
-        return false;
-    }
-}
 
         // ============================================================
         // AUTENTIFICARE
@@ -976,8 +965,8 @@ async function verificaToken() {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
-    };
-}
+            };
+        }
 
         // ============================================================
         // RESURSE CRUD
@@ -996,13 +985,16 @@ async function verificaToken() {
                 if (response.ok) {
                     const data = await response.json();
                     resurse = data.resurse || [];
+                    console.log('✅ Resurse încărcate:', resurse.length);
                 } else if (response.status === 401) {
                     localStorage.clear();
                     window.location.href = '/';
                     return;
+                } else {
+                    console.error('❌ Eroare încărcare resurse:', response.status);
                 }
             } catch (error) {
-                console.error('Eroare:', error);
+                console.error('❌ Eroare:', error);
                 resurse = [];
             }
             
@@ -1095,12 +1087,11 @@ async function verificaToken() {
             const ext = r.original_name ? r.original_name.split('.').pop().toLowerCase() : '';
             const downloadUrl = `/download-resource/${r.id}`;
             
-            // Pentru toate tipurile de fișiere, trimite token-ul
             try {
                 if (r.tip === 'pdf' || ext === 'pdf') {
-                    body.innerHTML = `<embed src="${downloadUrl}?token=${token}" type="application/pdf" class="preview-pdf" />`;
+                    body.innerHTML = `<embed src="${downloadUrl}?token=${encodeURIComponent(token)}" type="application/pdf" class="preview-pdf" />`;
                 } else if (r.tip === 'image' || ['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
-                    body.innerHTML = `<img src="${downloadUrl}?token=${token}" alt="${r.titlu}" class="preview-image" />`;
+                    body.innerHTML = `<img src="${downloadUrl}?token=${encodeURIComponent(token)}" alt="${r.titlu}" class="preview-image" />`;
                 } else if (r.tip === 'text' || ext === 'txt') {
                     const textRes = await fetch(downloadUrl, { headers: getAuthHeaders() });
                     const text = await textRes.text();
@@ -1113,8 +1104,8 @@ async function verificaToken() {
                     body.innerHTML = `<div style="text-align:center;padding:2rem;"><i class="fas ${tipIconMap[r.tip] || 'fa-file'}" style="font-size:4rem;color:var(--primary);"></i><h3 style="margin-top:1rem;">${r.titlu}</h3><p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p><p style="color:var(--text-secondary);font-size:0.85rem;">Folosește butonul "Descarcă" pentru a-l salva.</p></div>`;
                 }
             } catch (error) {
-                body.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--danger);"><i class="fas fa-exclamation-circle" style="font-size:4rem;"></i><p>Eroare la încărcarea fișierului. Încearcă din nou.</p></div>`;
                 console.error('Preview error:', error);
+                body.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--danger);"><i class="fas fa-exclamation-circle" style="font-size:4rem;"></i><p>Eroare la încărcarea fișierului. Încearcă din nou.</p></div>`;
             }
 
             document.getElementById('preview-modal').classList.add('active');
@@ -1138,13 +1129,12 @@ async function verificaToken() {
             if (!token) { 
                 window.location.href = '/'; 
                 return; 
-    }
-    
-    // Folosește un link cu token în URL
-    const downloadUrl = `/download-resource/${downloadId}?token=${encodeURIComponent(token)}`;
-    window.open(downloadUrl, '_blank');
-    showToast('✅ Fișierul se descarcă...');
-}
+            }
+            
+            const downloadUrl = `/download-resource/${downloadId}?token=${encodeURIComponent(token)}`;
+            window.open(downloadUrl, '_blank');
+            showToast('✅ Fișierul se descarcă...');
+        }
 
         // ============================================================
         // DELETE
@@ -1310,13 +1300,16 @@ async function verificaToken() {
             document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
             document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
 
-            // ⚠️ IMPORTANT: Verifică token-ul MAI ÎNTÂI
+            // ⚠️ PASUL 1: Verifică token-ul MAI ÎNTÂI
+            console.log('🚀 Inițializare pagină resurse...');
             const tokenValid = await verificaToken();
             if (!tokenValid) return;  // Dacă token invalid, redirecționează la login
             
-            // Abia apoi verifică autentificarea și încarcă resursele
+            // ⚠️ PASUL 2: Verifică autentificarea
+            console.log('🔐 Verificare autentificare...');
             const autentificat = await verificaAutentificare();
             if (autentificat) {
+                console.log('✅ Autentificat ca:', rolUtilizator);
                 actualizeazaUI();
                 await incarcaResurse();
             }
@@ -1342,7 +1335,7 @@ async function verificaToken() {
             document.getElementById('file-input').addEventListener('change', e => {
                 if (e.target.files.length > 0) handleFile(e.target.files[0]);
             });
-});
+        });
 
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closePreview(); });
         document.getElementById('preview-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closePreview(); });
