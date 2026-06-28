@@ -1095,6 +1095,9 @@
 // ============================================================
 // PREVIEW - VERSIUNE CORECTATĂ
 // ============================================================
+// ============================================================
+// PREVIEW - VERSIUNE CORECTATĂ
+// ============================================================
 async function previewResource(id) {
     console.log('🔍 Preview resource:', id);
     
@@ -1118,6 +1121,7 @@ async function previewResource(id) {
     const body = document.getElementById('preview-body');
     document.getElementById('preview-download-btn').onclick = () => downloadResource(id);
 
+    // Arată loading
     body.innerHTML = `
         <div style="text-align:center;padding:2rem;">
             <i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--primary);"></i>
@@ -1131,6 +1135,8 @@ async function previewResource(id) {
     try {
         // Folosește endpoint-ul cu token în URL
         const downloadUrl = `/download-resource-token/${r.id}?token=${encodeURIComponent(token)}`;
+        console.log('📥 Preview URL:', downloadUrl);
+        
         const response = await fetch(downloadUrl);
         
         console.log('📥 Răspuns preview status:', response.status);
@@ -1143,7 +1149,9 @@ async function previewResource(id) {
         }
         
         if (!response.ok) {
-            throw new Error(`Status: ${response.status} - ${response.statusText}`);
+            const errorText = await response.text();
+            console.error('❌ Eroare:', errorText);
+            throw new Error(`Status: ${response.status} - ${errorText}`);
         }
         
         const blob = await response.blob();
@@ -1237,6 +1245,9 @@ async function previewResource(id) {
 // ============================================================
 // DOWNLOAD - VERSIUNE CORECTATĂ (folosește token în URL)
 // ============================================================
+// ============================================================
+// DOWNLOAD - VERSIUNE CORECTATĂ
+// ============================================================
 async function downloadResource(id) {
     const downloadId = id || currentPreviewId;
     if (!downloadId) { 
@@ -1257,9 +1268,9 @@ async function downloadResource(id) {
     console.log('📥 Download URL:', downloadUrl);
     
     try {
-        const response = await fetch(downloadUrl, {
-            method: 'GET'
-        });
+        const response = await fetch(downloadUrl);
+        
+        console.log('📥 Răspuns download status:', response.status);
         
         if (response.status === 401) {
             console.log('🔒 Token invalid la download');
@@ -1269,7 +1280,9 @@ async function downloadResource(id) {
         }
         
         if (!response.ok) {
-            throw new Error(`Status: ${response.status}`);
+            const errorText = await response.text();
+            console.error('❌ Eroare:', errorText);
+            throw new Error(`Status: ${response.status} - ${errorText}`);
         }
         
         // Descarcă fișierul

@@ -685,45 +685,15 @@ async def delete_resource(
 # ============================================================
 # DOWNLOAD RESURSĂ - CU AUTENTIFICARE
 # ============================================================
+# ============================================================
+# DOWNLOAD RESURSĂ - CU HEADER (pentru compatibilitate)
+# ============================================================
 @app.get("/download-resource/{file_id}")
 async def download_resource(
     file_id: int,
-    token: Optional[str] = None,  # Acceptă token din query params
-    authorization: Optional[str] = None  # Acceptă token din header
+    payload: dict = Depends(verify_token)
 ):
-    """Descarcă resursă - necesită autentificare"""
-    
-    # Verifică token-ul: mai întâi din header, apoi din query
-    final_token = None
-    
-    # Verifică header-ul Authorization
-    if authorization and authorization.startswith("Bearer "):
-        final_token = authorization.replace("Bearer ", "")
-    elif token:
-        final_token = token
-    
-    if not final_token:
-        # Verifică și în request headers direct
-        try:
-            from fastapi import Request
-            request = Request
-            auth_header = request.headers.get("Authorization")
-            if auth_header and auth_header.startswith("Bearer "):
-                final_token = auth_header.replace("Bearer ", "")
-        except:
-            pass
-    
-    if not final_token:
-        raise HTTPException(status_code=401, detail="Token lipsă")
-    
-    # Validează token-ul
-    try:
-        payload = jwt.decode(final_token, SECRET_KEY, algorithms=[ALGORITHM])
-        print(f"✅ Token valid pentru user: {payload.get('email')} cu rol {payload.get('role')}")
-    except jwt.PyJWTError as e:
-        print(f"❌ Token invalid: {e}")
-        raise HTTPException(status_code=401, detail="Token invalid sau expirat")
-    
+    """Descarcă resursă - necesită autentificare prin header"""
     try:
         metadata_file = UPLOAD_DIR / "metadata.json"
         if not metadata_file.exists():
@@ -829,6 +799,69 @@ def test_supabase():
     except Exception as e:
         return {"status": "❌ Eroare Supabase:", "error": str(e)}
 
+# ============================================================
+# DOWNLOAD RESURSĂ - CU TOKEN ÎN URL (SIMPLU)
+# ============================================================
+@app.get("/download-resource-token/{file_id}")
+async def download_resource_with_token(
+    file_id: int,
+    token: str
+):
+    """Descarcă resursă folosind token din URL"""
+    print(f"📥 Download request pentru ID: {file_id}")
+    print(f"🔑 Token primit: {token[:20]}..." if token else "❌ Token lipsă")
+    
+    # Verifică token-ul
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print(f"✅ Token valid pentru: {payload.get('email')} cu rol {payload.get('role')}")
+    except jwt.ExpiredSignatureError:
+        print("❌ Token expirat")
+        raise HTTPException(status_code=401, detail="Token expirat")
+    except jwt.InvalidTokenError as e:
+        print(f"❌ Token invalid: {e}")
+        raise HTTPException(status_code=401, detail="Token invalid")
+    
+    try:
+        metadata_file = UPLOAD_DIR / "metadata.json"
+        if not metadata_file.exists():
+            raise HTTPException(status_code=404, detail="Metadatele nu au fost găsite")
+        
+        with open(metadata_file, "r", encoding="utf-8") as f:
+            metadata = json.load(f)
+        
+        resource = None
+        for r in metadata:
+            if r["id"] == file_id:
+                resource = r
+                break
+        
+        if not resource:
+            raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
+        
+        file_path = UPLOAD_DIR / resource["filename"]
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit pe server")
+        
+        # Incrementează vizualizările
+        resource["vizualizari"] += 1
+        with open(metadata_file, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, ensure_ascii=False, indent=2)
+        
+        print(f"✅ Fișier găsit: {resource['original_name']}")
+        
+        return FileResponse(
+            path=file_path,
+            filename=resource["original_name"],
+            media_type="application/octet-stream"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Eroare download: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
 # ============================================================
 # PORNIRE APLICAȚIE
 # ============================================================
