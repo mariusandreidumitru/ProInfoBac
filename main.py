@@ -268,15 +268,28 @@ async def delete_resource(file_id: int, payload: dict = Depends(verify_token)):
 @app.get("/download-resource/{file_id}")
 async def download_resource(file_id: int, payload: dict = Depends(verify_token)):
     db = get_supabase()
-    resource = db.table("resources").select("file_url, original_name, vizualizari").eq("id", file_id).execute()
+    # Selectăm și file_data pentru resurse vechi (base64)
+    resource = db.table("resources").select("file_url, file_data, original_name, vizualizari").eq("id", file_id).execute()
     if not resource.data:
         raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
 
     r = resource.data[0]
     db.table("resources").update({"vizualizari": r.get("vizualizari", 0) + 1}).eq("id", file_id).execute()
 
-    # Redirect direct la URL-ul din Storage — instant, fără să treci prin server
-    return RedirectResponse(url=r["file_url"])
+    if r.get("file_url"):
+        # Resursă nouă — redirect direct la Storage (instant)
+        return RedirectResponse(url=r["file_url"])
+    elif r.get("file_data"):
+        # Resursă veche — decodifică base64 și trimite
+        file_bytes = base64.b64decode(r["file_data"])
+        media_type = get_mime_type(r.get("original_name", "file.bin"))
+        return StreamingResponse(
+            BytesIO(file_bytes),
+            media_type=media_type,
+            headers={"Content-Disposition": f"attachment; filename=\"{r.get('original_name', 'download')}\""}
+        )
+    else:
+        raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit (nici URL, nici date)")
 
 @app.get("/download-resource-token/{file_id}")
 async def download_resource_token(file_id: int, token: str):
@@ -288,13 +301,21 @@ async def download_resource_token(file_id: int, token: str):
         raise HTTPException(status_code=401, detail="Token invalid")
 
     db = get_supabase()
-    resource = db.table("resources").select("file_url, original_name, vizualizari").eq("id", file_id).execute()
+    resource = db.table("resources").select("file_url, file_data, original_name, vizualizari").eq("id", file_id).execute()
     if not resource.data:
         raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
 
     r = resource.data[0]
     db.table("resources").update({"vizualizari": r.get("vizualizari", 0) + 1}).eq("id", file_id).execute()
-    return RedirectResponse(url=r["file_url"])
+
+    if r.get("file_url"):
+        return RedirectResponse(url=r["file_url"])
+    elif r.get("file_data"):
+        file_bytes = base64.b64decode(r["file_data"])
+        return StreamingResponse(BytesIO(file_bytes), media_type=get_mime_type(r.get("original_name", "file.bin")),
+            headers={"Content-Disposition": f"attachment; filename=\"{r.get('original_name', 'download')}\""})
+    else:
+        raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit")
 
 @app.get("/view-pdf/{file_id}")
 async def view_pdf(file_id: int, token: str):
@@ -304,13 +325,21 @@ async def view_pdf(file_id: int, token: str):
         raise HTTPException(status_code=401, detail="Token invalid")
 
     db = get_supabase()
-    resource = db.table("resources").select("file_url, original_name, vizualizari").eq("id", file_id).execute()
+    resource = db.table("resources").select("file_url, file_data, original_name, vizualizari").eq("id", file_id).execute()
     if not resource.data:
         raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
 
     r = resource.data[0]
     db.table("resources").update({"vizualizari": r.get("vizualizari", 0) + 1}).eq("id", file_id).execute()
-    return RedirectResponse(url=r["file_url"])
+
+    if r.get("file_url"):
+        return RedirectResponse(url=r["file_url"])
+    elif r.get("file_data"):
+        file_bytes = base64.b64decode(r["file_data"])
+        return StreamingResponse(BytesIO(file_bytes), media_type="application/pdf",
+            headers={"Content-Disposition": f"inline; filename=\"{r.get('original_name', 'document.pdf')}\""})
+    else:
+        raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit")
 
 # ============================================================
 # COMPILE COD C++

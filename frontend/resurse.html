@@ -1086,7 +1086,7 @@
         async function previewResource(id) {
             console.log('🔍 Preview resource apelat cu ID:', id);
             
-            const r = resurse.find(item => item.id === id);
+            const r = resurse.find(item => item.id == id); // == în loc de ===
             if (!r) { 
                 showToast('⚠️ Resursa nu a fost găsită!', 'error'); 
                 return; 
@@ -1257,7 +1257,7 @@
                 a.href = url;
                 
                 let filename = 'download';
-                const r = resurse.find(item => item.id === downloadId);
+            const r = resurse.find(item => item.id == downloadId); // == în loc de === (int vs string)
                 if (r && r.original_name) filename = r.original_name;
                 
                 a.download = filename;
