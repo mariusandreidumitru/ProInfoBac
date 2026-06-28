@@ -565,28 +565,37 @@ async def download_resource_token(
 # ============================================================
 # DOWNLOAD RESURSĂ - ALTERNATIVĂ (CU HEADER)
 # ============================================================
+# ============================================================
+# DOWNLOAD RESURSĂ - CU HEADER
+# ============================================================
 @app.get("/download-resource/{file_id}")
 async def download_resource(
     file_id: int,
     payload: dict = Depends(verify_token)
 ):
-    """Descarcă resursă folosind token din header"""
+    """Descarcă resursă folosind token din header (Authorization: Bearer)"""
     print(f"📥 Download resource (header) pentru ID: {file_id}")
+    print(f"👤 Utilizator: {payload.get('email')} cu rol {payload.get('role')}")
     
     try:
+        # Caută resursa în Supabase
         response = supabase.table("resources").select("*").eq("id", file_id).execute()
         
         if not response.data or len(response.data) == 0:
             raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
         
         resource = response.data[0]
+        print(f"📄 Resursă găsită: {resource.get('original_name')}")
         
+        # Incrementează vizualizările
         supabase.table("resources").update({
             "vizualizari": resource.get("vizualizari", 0) + 1
         }).eq("id", file_id).execute()
         
+        # Decodifică din base64
         file_data = base64.b64decode(resource.get("file_data", ""))
         
+        # Determină tipul MIME
         ext = os.path.splitext(resource["original_name"])[1].lower()
         media_type = "application/octet-stream"
         if ext == ".pdf": media_type = "application/pdf"
@@ -595,6 +604,8 @@ async def download_resource(
         elif ext == ".gif": media_type = "image/gif"
         elif ext == ".txt": media_type = "text/plain"
         elif ext in [".cpp", ".c", ".py", ".js", ".html", ".css"]: media_type = "text/plain"
+        
+        print(f"✅ Returnare fișier: {resource['original_name']} ({len(file_data)} bytes)")
         
         return StreamingResponse(
             BytesIO(file_data),
