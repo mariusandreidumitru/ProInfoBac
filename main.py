@@ -383,10 +383,7 @@ def generate_meeting_link(request: MeetingRequest):
 # ============================================================
 @app.get("/resurse")
 def serve_resurse():
-    resurse_path = BASE_DIR / "frontend" / "resurse.html"
-    if resurse_path.exists():
-        return FileResponse(resurse_path, media_type="text/html")
-    raise HTTPException(status_code=404, detail="Pagina resurse.html nu a fost găsită")
+    return FileResponse(BASE_DIR / "frontend" / "resurse.html", media_type="text/html")
 
 # ============================================================
 # API - RESURSE (VERSIUNE SIMPLĂ CU BASE64)
@@ -573,9 +570,9 @@ async def download_resource(
     file_id: int,
     payload: dict = Depends(verify_token)
 ):
-    """Descarcă resursă folosind token din header (Authorization: Bearer)"""
+    """Descarcă resursă folosind token din header"""
     print(f"📥 Download resource (header) pentru ID: {file_id}")
-    print(f"👤 Utilizator: {payload.get('email')} cu rol {payload.get('role')}")
+    print(f"👤 Utilizator: {payload.get('email')}")
     
     try:
         # Caută resursa în Supabase
@@ -604,8 +601,6 @@ async def download_resource(
         elif ext == ".gif": media_type = "image/gif"
         elif ext == ".txt": media_type = "text/plain"
         elif ext in [".cpp", ".c", ".py", ".js", ".html", ".css"]: media_type = "text/plain"
-        
-        print(f"✅ Returnare fișier: {resource['original_name']} ({len(file_data)} bytes)")
         
         return StreamingResponse(
             BytesIO(file_data),
@@ -727,6 +722,21 @@ def test_supabase():
             return {"status": "❌ Supabase nu este conectat!"}
     except Exception as e:
         return {"status": "❌ Eroare Supabase:", "error": str(e)}
+    
+# ============================================================
+# DEBUG - VERIFICĂ TOKEN-UL
+# ============================================================
+@app.get("/debug-token")
+async def debug_token(token: str = None):
+    """Verifică dacă token-ul este valid"""
+    if not token:
+        return {"error": "Token lipsă", "suggestion": "Adaugă ?token=..."}
+    
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return {"valid": True, "payload": payload}
+    except Exception as e:
+        return {"valid": False, "error": str(e)}
 
 # ============================================================
 # PORNIRE APLICAȚIE
