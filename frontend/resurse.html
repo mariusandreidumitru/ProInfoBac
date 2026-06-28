@@ -1542,6 +1542,43 @@ function getMimeType(filename) {
             }, 3000);
         }
 
+        function closePreview() {
+    console.log('🔒 Închidere preview...');
+    
+    const modal = document.getElementById('preview-modal');
+    const body = document.getElementById('preview-body');
+    
+    // 1. Elimină class-ul active
+    modal.classList.remove('active');
+    
+    // 2. Eliberează scroll-ul
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    
+    // 3. Golește conținutul
+    body.innerHTML = '';
+    
+    // 4. Eliberează URL-urile Blob
+    if (currentPreviewBlobUrl) {
+        try {
+            URL.revokeObjectURL(currentPreviewBlobUrl);
+        } catch (e) {
+            console.warn('Eroare la revocarea URL:', e);
+        }
+        currentPreviewBlobUrl = null;
+    }
+    
+    // 5. Resetează ID-ul curent
+    currentPreviewId = null;
+    
+    // 6. Forțează garbage collection (opțional)
+    if (window.gc) {
+        window.gc();
+    }
+    
+    console.log('✅ Preview închis cu succes');
+}
+
         // ============================================================
         // INIT
         // ============================================================
@@ -1589,7 +1626,17 @@ function getMimeType(filename) {
         });
 
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closePreview(); });
-        document.getElementById('preview-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closePreview(); });
+        document.getElementById('preview-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closePreview();
+                }
+});
+
+            document.querySelector('#preview-modal .close-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                closePreview();
+            });
     </script>
 
 </body>
