@@ -1037,16 +1037,16 @@
             // ============================================================
 // MAPA ICONIȚELOR PENTRU TIPURI DE FIȘIERE
 // ============================================================
-            const tipIconMap = {
-                'pdf': 'fa-file-pdf',
-                'image': 'fa-file-image',
-                'code': 'fa-file-code',
-                'text': 'fa-file-alt',
-                'word': 'fa-file-word',
-                'ppt': 'fa-file-powerpoint',
-                'excel': 'fa-file-excel',
-                'zip': 'fa-file-archive'
-            };
+           const tipIconMap = {
+            'pdf': 'fa-file-pdf',
+            'image': 'fa-file-image',
+            'code': 'fa-file-code',
+            'text': 'fa-file-alt',
+            'word': 'fa-file-word',
+            'ppt': 'fa-file-powerpoint',
+            'excel': 'fa-file-excel',
+            'zip': 'fa-file-archive'
+};
 
             const tipClassMap = {
                 'pdf': 'pdf', 'image': 'image', 'code': 'code', 'text': 'txt',
@@ -1089,6 +1089,9 @@
 // ============================================================
 // PREVIEW - VERSIUNE CORECTATĂ
 // ============================================================
+// ============================================================
+// PREVIEW - VERSIUNE CU IFRAME
+// ============================================================
 async function previewResource(id) {
     console.log('🔍 Preview resource:', id);
     
@@ -1121,9 +1124,10 @@ async function previewResource(id) {
     `;
 
     const ext = r.original_name ? r.original_name.split('.').pop().toLowerCase() : '';
+    const fileType = r.tip || ext;
     
     try {
-        // ⚠️ IMPORTANT: Folosește fetch cu token în header
+        // Folosește fetch cu token în header
         const response = await fetch(`/download-resource/${r.id}`, {
             method: 'GET',
             headers: {
@@ -1132,34 +1136,37 @@ async function previewResource(id) {
             }
         });
         
-        console.log('📥 Răspuns status:', response.status);
+        console.log('📥 Răspuns preview status:', response.status);
+        
+        if (response.status === 401) {
+            console.log('🔒 Token invalid la preview');
+            localStorage.clear();
+            window.location.href = '/';
+            return;
+        }
         
         if (!response.ok) {
-            if (response.status === 401) {
-                console.log('🔒 Token invalid, redirecționez la login...');
-                localStorage.clear();
-                window.location.href = '/';
-                return;
-            }
             throw new Error(`Status: ${response.status} - ${response.statusText}`);
         }
         
         // Obține blob-ul
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
-        const fileType = r.tip || ext;
+        
+        // Salvează URL-ul pentru eliberare
+        body.dataset.blobUrl = url;
         
         // Afișează în funcție de tip
         if (fileType === 'pdf' || ext === 'pdf') {
             body.innerHTML = `
-                <embed src="${url}" type="application/pdf" class="preview-pdf" />
+                <iframe src="${url}" style="width:100%;height:70vh;border:none;border-radius:8px;"></iframe>
                 <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-secondary);text-align:center;">
                     📄 ${r.original_name || 'document.pdf'}
                 </div>
             `;
         } else if (fileType === 'image' || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
             body.innerHTML = `
-                <img src="${url}" alt="${r.titlu}" class="preview-image" />
+                <img src="${url}" alt="${r.titlu}" style="max-width:100%;max-height:70vh;border-radius:8px;display:block;margin:0 auto;" />
                 <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-secondary);text-align:center;">
                     🖼️ ${r.original_name || 'image'}
                 </div>
@@ -1167,7 +1174,7 @@ async function previewResource(id) {
         } else if (fileType === 'text' || ext === 'txt') {
             const text = await blob.text();
             body.innerHTML = `
-                <div class="preview-text">${text}</div>
+                <div style="background:var(--bg-input);padding:1rem;border-radius:8px;white-space:pre-wrap;font-family:'JetBrains Mono',monospace;font-size:0.85rem;max-height:70vh;overflow-y:auto;">${text}</div>
                 <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-secondary);text-align:center;">
                     📝 ${r.original_name || 'text.txt'}
                 </div>
@@ -1175,7 +1182,7 @@ async function previewResource(id) {
         } else if (fileType === 'code' || ['cpp', 'c', 'py', 'html', 'css', 'js', 'java', 'go', 'rs', 'php'].includes(ext)) {
             const code = await blob.text();
             body.innerHTML = `
-                <div class="preview-code">${code}</div>
+                <div style="background:var(--bg-code);color:var(--text-code);padding:1rem;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:0.85rem;max-height:70vh;overflow-y:auto;white-space:pre-wrap;">${code}</div>
                 <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-secondary);text-align:center;">
                     💻 ${r.original_name || 'code'}
                 </div>
@@ -1193,9 +1200,6 @@ async function previewResource(id) {
                 </div>
             `;
         }
-        
-        // Salvează URL-ul pentru a-l elibera mai târziu
-        body.dataset.blobUrl = url;
         
     } catch (error) {
         console.error('❌ Preview error:', error);
@@ -1217,8 +1221,7 @@ async function previewResource(id) {
     document.getElementById('preview-modal').classList.add('active');
     document.body.style.overflow = 'hidden';
 }
-
-       function closePreview() {
+    function closePreview() {
     const body = document.getElementById('preview-body');
     
     // Eliberează URL-ul obiect pentru a evita memory leaks
