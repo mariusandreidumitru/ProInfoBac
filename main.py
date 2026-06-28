@@ -25,6 +25,8 @@ app = FastAPI()
 
 # ============================================================
 # CORS MIDDLEWARE
+# FIX: Nu poți folosi "*" cu allow_credentials=True.
+#      Listează explicit originile permise.
 # ============================================================
 app.add_middleware(
     CORSMiddleware,
@@ -33,7 +35,6 @@ app.add_middleware(
         "http://localhost:8000",
         "https://proinfobac.vercel.app",
         "https://proinfobac.onrender.com",
-        "*"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -82,6 +83,12 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
         return payload
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Token invalid sau expirat")
+
+# FIX: Helper care aruncă eroare clară dacă Supabase nu e conectat
+def get_supabase():
+    if supabase is None:
+        raise HTTPException(status_code=500, detail="Supabase nu este conectat!")
+    return supabase
 
 # ============================================================
 # MODELE PYDANTIC
@@ -187,6 +194,27 @@ def get_question_bank() -> List[dict]:
     ]
 
 # ============================================================
+# HELPER MIME TYPE
+# ============================================================
+def get_mime_type(filename: str) -> str:
+    ext = os.path.splitext(filename)[1].lower()
+    mime_map = {
+        ".pdf": "application/pdf",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".gif": "image/gif",
+        ".txt": "text/plain",
+        ".cpp": "text/plain",
+        ".c": "text/plain",
+        ".py": "text/plain",
+        ".js": "text/plain",
+        ".html": "text/html",
+        ".css": "text/css",
+    }
+    return mime_map.get(ext, "application/octet-stream")
+
+# ============================================================
 # API - USER
 # ============================================================
 @app.get("/api/user")
@@ -195,24 +223,26 @@ def get_user(payload: dict = Depends(verify_token)):
         user_email = payload.get("email")
         user_role = payload.get("role")
         user_id = payload.get("sub")
-        
-        if supabase:
-            response = supabase.table("users").select("*").eq("id", user_id).execute()
-            if response.data and len(response.data) > 0:
-                user = response.data[0]
-                return {
-                    "id": user.get("id"),
-                    "email": user.get("email"),
-                    "role": user.get("role"),
-                    "name": user.get("name") or user.get("email").split('@')[0]
-                }
-        
+
+        db = get_supabase()
+        response = db.table("users").select("*").eq("id", user_id).execute()
+        if response.data and len(response.data) > 0:
+            user = response.data[0]
+            return {
+                "id": user.get("id"),
+                "email": user.get("email"),
+                "role": user.get("role"),
+                "name": user.get("name") or user.get("email").split('@')[0]
+            }
+
         return {
             "id": user_id,
             "email": user_email,
             "role": user_role,
             "name": user_email.split('@')[0]
         }
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"❌ Eroare la /api/user: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Eroare: {str(e)}")
@@ -222,29 +252,27 @@ def get_user(payload: dict = Depends(verify_token)):
 # ============================================================
 @app.post("/login")
 def login_user(login: UserLogin):
-    if supabase is None:
-        raise HTTPException(status_code=500, detail="Supabase nu este conectat!")
-    
+    db = get_supabase()
     try:
-        response = supabase.table("users").select("*").eq("email", login.email).eq("password_hash", login.password).execute()
-        
+        response = db.table("users").select("*").eq("email", login.email).eq("password_hash", login.password).execute()
+
         if not response.data or len(response.data) == 0:
             raise HTTPException(status_code=401, detail="Email sau parola incorecte!")
-        
+
         user = response.data[0]
         user_role = user.get("role", "student")
         user_email = user.get("email")
         user_id = user.get("id")
-        
+
         token_data = {
             "sub": str(user_id),
             "email": user_email,
             "role": user_role
         }
         access_token = create_access_token(token_data)
-        
+
         print(f"✅ Login: {user_email} cu rol {user_role}")
-        
+
         return {
             "status": "success",
             "message": "Autentificare reușită!",
@@ -267,34 +295,32 @@ def login_user(login: UserLogin):
 # ============================================================
 @app.post("/register")
 def register_user(user: UserRegister):
-    if supabase is None:
-        raise HTTPException(status_code=500, detail="Supabase nu este conectat!")
-    
+    db = get_supabase()
+
     if user.role not in ["student", "teacher"]:
         raise HTTPException(status_code=400, detail="Rolul trebuie sa fie 'student' sau 'teacher'!")
-    
+
     print(f"📝 Înregistrare: {user.email} cu rol {user.role}")
-    
+
     try:
-        check_response = supabase.table("users").select("*").eq("email", user.email).execute()
-        
+        check_response = db.table("users").select("*").eq("email", user.email).execute()
+
         if check_response.data and len(check_response.data) > 0:
             print(f"❌ Email deja existent: {user.email}")
             raise HTTPException(status_code=400, detail="Acest email este deja înregistrat!")
-        
+
         user_data = {
             "email": user.email,
-            "password_hash": user.password,
+            "password_hash": user.password,  # TODO: folosește bcrypt pentru hashing real
             "role": user.role,
             "created_at": datetime.now().isoformat()
         }
-        
-        response = supabase.table("users").insert(user_data).execute()
-        
+
+        response = db.table("users").insert(user_data).execute()
+
         if response.data and len(response.data) > 0:
             user_created = response.data[0]
             print(f"✅ Utilizator înregistrat: {user.email} cu rol {user.role}")
-            
             return {
                 "status": "success",
                 "message": "Cont creat cu succes!",
@@ -306,12 +332,63 @@ def register_user(user: UserRegister):
             }
         else:
             raise HTTPException(status_code=500, detail="Eroare la salvarea utilizatorului!")
-            
+
     except HTTPException:
         raise
     except Exception as e:
         print(f"❌ EROARE: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Eroare la înregistrare: {str(e)}")
+
+# ============================================================
+# API - COMPILARE COD C++
+# FIX: Endpoint-ul /compile lipsea complet — adăugat aici
+# ============================================================
+@app.post("/compile")
+async def compile_code(submission: CodeSubmission):
+    if submission.language != "cpp":
+        raise HTTPException(status_code=400, detail="Doar C++ este suportat momentan.")
+
+    tmp_dir = tempfile.mkdtemp()
+    try:
+        src_path = os.path.join(tmp_dir, "main.cpp")
+        bin_path = os.path.join(tmp_dir, "main")
+
+        with open(src_path, "w") as f:
+            f.write(submission.code)
+
+        # Compilare
+        compile_result = subprocess.run(
+            ["g++", "-o", bin_path, src_path, "-std=c++17"],
+            capture_output=True, text=True, timeout=15
+        )
+
+        if compile_result.returncode != 0:
+            return {
+                "success": False,
+                "error": compile_result.stderr,
+                "output": ""
+            }
+
+        # Execuție
+        run_result = subprocess.run(
+            [bin_path],
+            input=submission.stdin,
+            capture_output=True, text=True, timeout=10
+        )
+
+        return {
+            "success": True,
+            "output": run_result.stdout,
+            "error": run_result.stderr,
+            "returncode": run_result.returncode
+        }
+
+    except subprocess.TimeoutExpired:
+        return {"success": False, "error": "Timpul de execuție a depășit limita (10s).", "output": ""}
+    except Exception as e:
+        return {"success": False, "error": str(e), "output": ""}
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
 # ============================================================
 # API - GENERARE TEST
@@ -359,11 +436,6 @@ def generate_test(request: TestRequest):
     return {"questions": questions, "count": len(questions)}
 
 # ============================================================
-# API - COMPILARE COD (păstrează codul existent)
-# ============================================================
-# ... codul tău de compile ...
-
-# ============================================================
 # API - MEETING
 # ============================================================
 @app.post("/generate-meeting")
@@ -386,10 +458,6 @@ def serve_resurse():
     return FileResponse(BASE_DIR / "frontend" / "resurse.html", media_type="text/html")
 
 # ============================================================
-# API - RESURSE (VERSIUNE SIMPLĂ CU BASE64)
-# ============================================================
-
-# ============================================================
 # UPLOAD RESURSĂ
 # ============================================================
 @app.post("/upload-resource")
@@ -403,21 +471,23 @@ async def upload_resource(
 ):
     if payload.get("role") != "teacher":
         raise HTTPException(status_code=403, detail="Doar profesorii pot încărca resurse!")
-    
+
+    db = get_supabase()
+
     try:
-        valid_extensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.txt', '.doc', '.docx', 
-                           '.ppt', '.pptx', '.xls', '.xlsx', '.zip', '.cpp', '.c', '.html']
+        valid_extensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.txt', '.doc', '.docx',
+                            '.ppt', '.pptx', '.xls', '.xlsx', '.zip', '.cpp', '.c', '.html']
         ext = os.path.splitext(file.filename)[1].lower()
-        
+
         if ext not in valid_extensions:
             raise HTTPException(status_code=400, detail=f"Extensia {ext} nu este acceptată!")
-        
+
         content = await file.read()
         if len(content) > 10 * 1024 * 1024:
             raise HTTPException(status_code=400, detail="Fișierul este prea mare! Maxim 10 MB.")
-        
+
         file_data = base64.b64encode(content).decode('utf-8')
-        
+
         resource_data = {
             "titlu": titlu,
             "descriere": descriere or "",
@@ -430,9 +500,9 @@ async def upload_resource(
             "vizualizari": 0,
             "uploaded_at": datetime.now().isoformat()
         }
-        
-        response = supabase.table("resources").insert(resource_data).execute()
-        
+
+        response = db.table("resources").insert(resource_data).execute()
+
         if response.data and len(response.data) > 0:
             return {
                 "status": "success",
@@ -441,7 +511,7 @@ async def upload_resource(
             }
         else:
             raise HTTPException(status_code=500, detail="Eroare la salvarea resursei!")
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -453,16 +523,14 @@ async def upload_resource(
 # ============================================================
 @app.get("/api/resurse")
 async def get_resurse(payload: dict = Depends(verify_token)):
+    db = get_supabase()
     try:
-        print("📡 Interogare Supabase pentru resurse...")
         print(f"👤 Utilizator: {payload.get('email')} cu rol {payload.get('role')}")
-        
-        response = supabase.table("resources").select("*").order("uploaded_at", desc=True).execute()
-        
-        print(f"📊 Răspuns Supabase: {response}")
+        response = db.table("resources").select("*").order("uploaded_at", desc=True).execute()
         print(f"✅ Resurse găsite: {len(response.data) if response.data else 0}")
-        
         return {"resurse": response.data if response.data else []}
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"❌ Eroare la citirea resurselor: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -477,15 +545,16 @@ async def delete_resource(
 ):
     if payload.get("role") != "teacher":
         raise HTTPException(status_code=403, detail="Doar profesorii pot șterge resurse!")
-    
+
+    db = get_supabase()
     try:
-        check = supabase.table("resources").select("id").eq("id", file_id).execute()
+        check = db.table("resources").select("id").eq("id", file_id).execute()
         if not check.data or len(check.data) == 0:
             raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
-        
-        response = supabase.table("resources").delete().eq("id", file_id).execute()
+
+        db.table("resources").delete().eq("id", file_id).execute()
         return {"status": "success", "message": "Resursa a fost ștearsă"}
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -493,19 +562,13 @@ async def delete_resource(
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
-# DOWNLOAD RESURSĂ
+# DOWNLOAD RESURSĂ (token din URL)
 # ============================================================
 @app.get("/download-resource-token/{file_id}")
-async def download_resource_token(
-    file_id: int,
-    token: str
-):
-    """Descarcă resursă folosind token din URL"""
+async def download_resource_token(file_id: int, token: str):
     print(f"📥 Download request pentru ID: {file_id}")
-    print(f"🔑 Token primit: {token[:20]}..." if token else "❌ Token lipsă")
-    
+
     try:
-        # Verifică token-ul
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         print(f"✅ Token valid pentru: {payload.get('email')}")
     except jwt.ExpiredSignatureError:
@@ -513,104 +576,68 @@ async def download_resource_token(
     except jwt.InvalidTokenError as e:
         print(f"❌ Token invalid: {e}")
         raise HTTPException(status_code=401, detail="Token invalid")
-    
+
+    db = get_supabase()
     try:
-        # Caută resursa în Supabase
-        response = supabase.table("resources").select("*").eq("id", file_id).execute()
-        
+        response = db.table("resources").select("*").eq("id", file_id).execute()
+
         if not response.data or len(response.data) == 0:
             raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
-        
+
         resource = response.data[0]
-        print(f"📄 Resursă găsită: {resource.get('original_name')}")
-        
-        # Incrementează vizualizările
-        supabase.table("resources").update({
+        db.table("resources").update({
             "vizualizari": resource.get("vizualizari", 0) + 1
         }).eq("id", file_id).execute()
-        
-        # Decodifică din base64
-        file_data = base64.b64decode(resource.get("file_data", ""))
-        
-        # Determină tipul MIME
-        ext = os.path.splitext(resource["original_name"])[1].lower()
-        media_type = "application/octet-stream"
-        if ext == ".pdf": media_type = "application/pdf"
-        elif ext in [".jpg", ".jpeg"]: media_type = "image/jpeg"
-        elif ext == ".png": media_type = "image/png"
-        elif ext == ".gif": media_type = "image/gif"
-        elif ext == ".txt": media_type = "text/plain"
-        elif ext in [".cpp", ".c", ".py", ".js", ".html", ".css"]: media_type = "text/plain"
-        
-        print(f"✅ Returnare fișier: {resource['original_name']} ({len(file_data)} bytes)")
-        
+
+        file_bytes = base64.b64decode(resource.get("file_data", ""))
+        media_type = get_mime_type(resource["original_name"])
+
         return StreamingResponse(
-            BytesIO(file_data),
+            BytesIO(file_bytes),
             media_type=media_type,
             headers={
                 "Content-Disposition": f"inline; filename=\"{resource['original_name']}\"",
-                "Content-Length": str(len(file_data))
+                "Content-Length": str(len(file_bytes))
             }
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
         print(f"❌ Eroare download: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 # ============================================================
-# DOWNLOAD RESURSĂ - ALTERNATIVĂ (CU HEADER)
-# ============================================================
-# ============================================================
-# DOWNLOAD RESURSĂ - CU HEADER
+# DOWNLOAD RESURSĂ (token din header)
 # ============================================================
 @app.get("/download-resource/{file_id}")
-async def download_resource(
-    file_id: int,
-    payload: dict = Depends(verify_token)
-):
-    """Descarcă resursă folosind token din header"""
-    print(f"📥 Download resource (header) pentru ID: {file_id}")
-    print(f"👤 Utilizator: {payload.get('email')}")
-    
+async def download_resource(file_id: int, payload: dict = Depends(verify_token)):
+    print(f"📥 Download resource (header) pentru ID: {file_id}, utilizator: {payload.get('email')}")
+
+    db = get_supabase()
     try:
-        # Caută resursa în Supabase
-        response = supabase.table("resources").select("*").eq("id", file_id).execute()
-        
+        response = db.table("resources").select("*").eq("id", file_id).execute()
+
         if not response.data or len(response.data) == 0:
             raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
-        
+
         resource = response.data[0]
-        print(f"📄 Resursă găsită: {resource.get('original_name')}")
-        
-        # Incrementează vizualizările
-        supabase.table("resources").update({
+        db.table("resources").update({
             "vizualizari": resource.get("vizualizari", 0) + 1
         }).eq("id", file_id).execute()
-        
-        # Decodifică din base64
-        file_data = base64.b64decode(resource.get("file_data", ""))
-        
-        # Determină tipul MIME
-        ext = os.path.splitext(resource["original_name"])[1].lower()
-        media_type = "application/octet-stream"
-        if ext == ".pdf": media_type = "application/pdf"
-        elif ext in [".jpg", ".jpeg"]: media_type = "image/jpeg"
-        elif ext == ".png": media_type = "image/png"
-        elif ext == ".gif": media_type = "image/gif"
-        elif ext == ".txt": media_type = "text/plain"
-        elif ext in [".cpp", ".c", ".py", ".js", ".html", ".css"]: media_type = "text/plain"
-        
+
+        file_bytes = base64.b64decode(resource.get("file_data", ""))
+        media_type = get_mime_type(resource["original_name"])
+
         return StreamingResponse(
-            BytesIO(file_data),
+            BytesIO(file_bytes),
             media_type=media_type,
             headers={
                 "Content-Disposition": f"inline; filename=\"{resource['original_name']}\"",
-                "Content-Length": str(len(file_data))
+                "Content-Length": str(len(file_bytes))
             }
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -621,39 +648,35 @@ async def download_resource(
 # VIZUALIZARE PDF
 # ============================================================
 @app.get("/view-pdf/{file_id}")
-async def view_pdf(
-    file_id: int,
-    token: str
-):
+async def view_pdf(file_id: int, token: str):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        print(f"✅ Vizualizare PDF pentru: {payload.get('email')}")
-    except Exception as e:
+        jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except Exception:
         raise HTTPException(status_code=401, detail="Token invalid")
-    
+
+    db = get_supabase()
     try:
-        response = supabase.table("resources").select("*").eq("id", file_id).execute()
-        
+        response = db.table("resources").select("*").eq("id", file_id).execute()
+
         if not response.data or len(response.data) == 0:
             raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
-        
+
         resource = response.data[0]
-        
-        supabase.table("resources").update({
+        db.table("resources").update({
             "vizualizari": resource.get("vizualizari", 0) + 1
         }).eq("id", file_id).execute()
-        
-        file_data = base64.b64decode(resource.get("file_data", ""))
-        
+
+        file_bytes = base64.b64decode(resource.get("file_data", ""))
+
         return StreamingResponse(
-            BytesIO(file_data),
+            BytesIO(file_bytes),
             media_type="application/pdf",
             headers={
                 "Content-Disposition": f"inline; filename=\"{resource['original_name']}\"",
                 "Cache-Control": "no-cache, no-store, must-revalidate"
             }
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -666,7 +689,7 @@ async def view_pdf(
 @app.get("/api/verify-token")
 def verify_token_endpoint(payload: dict = Depends(verify_token)):
     return {
-        "valid": True, 
+        "valid": True,
         "user": {
             "id": payload.get("sub"),
             "email": payload.get("email"),
@@ -722,16 +745,14 @@ def test_supabase():
             return {"status": "❌ Supabase nu este conectat!"}
     except Exception as e:
         return {"status": "❌ Eroare Supabase:", "error": str(e)}
-    
+
 # ============================================================
 # DEBUG - VERIFICĂ TOKEN-UL
 # ============================================================
 @app.get("/debug-token")
 async def debug_token(token: str = None):
-    """Verifică dacă token-ul este valid"""
     if not token:
         return {"error": "Token lipsă", "suggestion": "Adaugă ?token=..."}
-    
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return {"valid": True, "payload": payload}
