@@ -1235,24 +1235,76 @@ async function previewResource(id) {
         // ============================================================
         // DOWNLOAD - TRIMITE TOKEN
         // ============================================================
-        function downloadResource(id) {
-            const downloadId = id || currentPreviewId;
-            if (!downloadId) { 
-                showToast('⚠️ Nicio resursă selectată!', 'warning'); 
-                return; 
+       // ============================================================
+// DOWNLOAD - VERSIUNE CORECTATĂ
+// ============================================================
+async function downloadResource(id) {
+    const downloadId = id || currentPreviewId;
+    if (!downloadId) { 
+        showToast('⚠️ Nicio resursă selectată!', 'warning'); 
+        return; 
+    }
+    
+    const token = localStorage.getItem('accessToken');
+    console.log('🔑 Token pentru download:', token ? 'Există' : 'Lipsește');
+    
+    if (!token) { 
+        window.location.href = '/'; 
+        return; 
+    }
+    
+    try {
+        const response = await fetch(`/download-resource/${downloadId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
-            
-            const token = localStorage.getItem('accessToken');
-            if (!token) { 
-                window.location.href = '/'; 
-                return; 
-            }
-            
-            // Folosește endpoint-ul special pentru token în URL
-            const downloadUrl = `/download-resource-token/${downloadId}?token=${encodeURIComponent(token)}`;
-            console.log('📥 Download URL:', downloadUrl);
-            window.open(downloadUrl, '_blank');
-            showToast('✅ Fișierul se descarcă...');
+        });
+        
+        console.log('📥 Răspuns download status:', response.status);
+        
+        if (response.status === 401) {
+            console.log('🔒 Token invalid la download');
+            localStorage.clear();
+            window.location.href = '/';
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error(`Status: ${response.status}`);
+        }
+        
+        // Descarcă fișierul
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        // Extrage numele fișierului din header sau folosește cel salvat
+        let filename = 'download';
+        const contentDisposition = response.headers.get('content-disposition');
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="(.+)"/);
+            if (match) filename = match[1];
+        } else {
+            // Folosește numele original din resursă
+            const r = resurse.find(item => item.id === downloadId);
+            if (r && r.original_name) filename = r.original_name;
+        }
+        
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        showToast('✅ Fișierul s-a descărcat!');
+        
+    } catch (error) {
+        console.error('❌ Download error:', error);
+        showToast('⚠️ Eroare la descărcare: ' + error.message, 'error');
+    }
 }
 
         // ============================================================
