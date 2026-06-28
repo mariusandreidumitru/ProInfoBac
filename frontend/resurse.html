@@ -1092,6 +1092,9 @@
 // ============================================================
 // PREVIEW - VERSIUNE CU IFRAME
 // ============================================================
+// ============================================================
+// PREVIEW - VERSIUNE CORECTATĂ
+// ============================================================
 async function previewResource(id) {
     console.log('🔍 Preview resource:', id);
     
@@ -1115,7 +1118,6 @@ async function previewResource(id) {
     const body = document.getElementById('preview-body');
     document.getElementById('preview-download-btn').onclick = () => downloadResource(id);
 
-    // Arată loading
     body.innerHTML = `
         <div style="text-align:center;padding:2rem;">
             <i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--primary);"></i>
@@ -1127,14 +1129,9 @@ async function previewResource(id) {
     const fileType = r.tip || ext;
     
     try {
-        // Folosește fetch cu token în header
-        const response = await fetch(`/download-resource/${r.id}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        // Folosește endpoint-ul cu token în URL
+        const downloadUrl = `/download-resource-token/${r.id}?token=${encodeURIComponent(token)}`;
+        const response = await fetch(downloadUrl);
         
         console.log('📥 Răspuns preview status:', response.status);
         
@@ -1149,14 +1146,10 @@ async function previewResource(id) {
             throw new Error(`Status: ${response.status} - ${response.statusText}`);
         }
         
-        // Obține blob-ul
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
-        
-        // Salvează URL-ul pentru eliberare
         body.dataset.blobUrl = url;
         
-        // Afișează în funcție de tip
         if (fileType === 'pdf' || ext === 'pdf') {
             body.innerHTML = `
                 <iframe src="${url}" style="width:100%;height:70vh;border:none;border-radius:8px;"></iframe>
@@ -1241,6 +1234,9 @@ async function previewResource(id) {
        // ============================================================
 // DOWNLOAD - VERSIUNE CORECTATĂ
 // ============================================================
+// ============================================================
+// DOWNLOAD - VERSIUNE CORECTATĂ (folosește token în URL)
+// ============================================================
 async function downloadResource(id) {
     const downloadId = id || currentPreviewId;
     if (!downloadId) { 
@@ -1256,16 +1252,14 @@ async function downloadResource(id) {
         return; 
     }
     
+    // Folosește endpoint-ul cu token în URL
+    const downloadUrl = `/download-resource-token/${downloadId}?token=${encodeURIComponent(token)}`;
+    console.log('📥 Download URL:', downloadUrl);
+    
     try {
-        const response = await fetch(`/download-resource/${downloadId}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
+        const response = await fetch(downloadUrl, {
+            method: 'GET'
         });
-        
-        console.log('📥 Răspuns download status:', response.status);
         
         if (response.status === 401) {
             console.log('🔒 Token invalid la download');
@@ -1291,7 +1285,6 @@ async function downloadResource(id) {
             const match = contentDisposition.match(/filename="(.+)"/);
             if (match) filename = match[1];
         } else {
-            // Folosește numele original din resursă
             const r = resurse.find(item => item.id === downloadId);
             if (r && r.original_name) filename = r.original_name;
         }
@@ -1309,7 +1302,6 @@ async function downloadResource(id) {
         showToast('⚠️ Eroare la descărcare: ' + error.message, 'error');
     }
 }
-
         // ============================================================
         // DELETE
         // ============================================================
