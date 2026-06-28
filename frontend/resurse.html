@@ -989,37 +989,59 @@
         // ============================================================
         // RESURSE CRUD
         // ============================================================
-        async function incarcaResurse() {
-            const token = localStorage.getItem('accessToken');
-            if (!token) { window.location.href = '/'; return; }
-            
-            document.getElementById('loading-resurse').style.display = 'block';
-            
-            try {
-                const response = await fetch('/api/resurse', {
-                    headers: getAuthHeaders()
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    resurse = data.resurse || [];
-                    console.log('✅ Resurse încărcate:', resurse.length);
-                } else if (response.status === 401) {
-                    localStorage.clear();
-                    window.location.href = '/';
-                    return;
-                } else {
-                    console.error('❌ Eroare încărcare resurse:', response.status);
-                }
-            } catch (error) {
-                console.error('❌ Eroare:', error);
-                resurse = [];
+       // ============================================================
+// ÎNCARCĂ RESURSELE DIN API
+// ============================================================
+async function incarcaResurse() {
+    const token = localStorage.getItem('accessToken');
+    if (!token) { 
+        window.location.href = '/'; 
+        return; 
+    }
+    
+    document.getElementById('loading-resurse').style.display = 'block';
+    
+    try {
+        const response = await fetch('/api/resurse', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
+        });
+        
+        console.log('📥 Răspuns resurse status:', response.status);
+        
+        if (response.ok) {
+            const data = await response.json();
+            resurse = data.resurse || [];
+            console.log('✅ Resurse încărcate din Supabase:', resurse.length);
             
-            document.getElementById('loading-resurse').style.display = 'none';
-            afiseazaResurse();
-            actualizeazaStatistici();
+            // Salvează și în localStorage ca backup
+            localStorage.setItem('bibliotecaResurse', JSON.stringify(resurse));
+        } else if (response.status === 401) {
+            console.log('🔒 Token invalid');
+            localStorage.clear();
+            window.location.href = '/';
+            return;
+        } else {
+            console.error('❌ Eroare încărcare resurse:', response.status);
+            // Fallback la localStorage
+            const savedResurse = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
+            resurse = savedResurse;
+            console.log('📦 Folosesc resurse din localStorage:', resurse.length);
         }
+    } catch (error) {
+        console.error('❌ Eroare la încărcarea resurselor:', error);
+        // Fallback la localStorage
+        const savedResurse = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
+        resurse = savedResurse;
+        console.log('📦 Folosesc resurse din localStorage (fallback):', resurse.length);
+    }
+    
+    document.getElementById('loading-resurse').style.display = 'none';
+    afiseazaResurse();
+    actualizeazaStatistici();
+}
 
         function afiseazaResurse() {
             const grid = document.getElementById('resource-grid');
@@ -1079,7 +1101,46 @@
                 `;
             }).join('');
         }
+        // ============================================================
+// STERGE RESURSĂ - DIN SUPABASE
+// ============================================================
+async function stergeResursa(id) {
+    if (rolUtilizator !== 'teacher') { 
+        showToast('⚠️ Doar profesorii pot șterge!', 'error'); 
+        return; 
+    }
+    if (!confirm('Sigur dorești să ștergi această resursă?')) return;
 
+    const token = localStorage.getItem('accessToken');
+    if (!token) { 
+        window.location.href = '/'; 
+        return; 
+    }
+
+    try {
+        const response = await fetch(`/api/resurse/${id}`, {
+            method: 'DELETE',
+            headers: { 
+                'Authorization': `Bearer ${token}`, 
+                'Content-Type': 'application/json' 
+            }
+        });
+
+        if (response.ok) {
+            showToast('🗑️ Resursa a fost ștearsă!');
+            await incarcaResurse(); // Reîncarcă resursele din API
+        } else if (response.status === 401) {
+            localStorage.clear();
+            window.location.href = '/';
+        } else {
+            const data = await response.json();
+            showToast('⚠️ ' + (data.detail || 'Eroare la ștergere'), 'error');
+        }
+    } catch (error) {
+        console.error('❌ Delete error:', error);
+        showToast('⚠️ Eroare: ' + error.message, 'error');
+    }
+}
         // ============================================================
         // PREVIEW - VERSIUNE CORECTĂ
         // ============================================================
@@ -1330,56 +1391,74 @@
             document.getElementById('file-input').value = '';
         }
 
-        async function uploadResource() {
-            if (rolUtilizator !== 'teacher') { showToast('⚠️ Doar profesorii pot încărca!', 'error'); return; }
+      // ============================================================
+// UPLOAD RESURSĂ - LA SERVER (SUPABASE)
+// ============================================================
+async function uploadResource() {
+    if (rolUtilizator !== 'teacher') {
+        showToast('⚠️ Doar profesorii pot încărca!', 'error'); 
+        return; 
+    }
 
-            const titlu = document.getElementById('resource-titlu').value.trim();
-            const desc = document.getElementById('resource-desc').value.trim();
-            const capitol = document.getElementById('resource-capitol').value;
-            const tip = document.getElementById('resource-tip').value;
+    const titlu = document.getElementById('resource-titlu').value.trim();
+    const desc = document.getElementById('resource-desc').value.trim();
+    const capitol = document.getElementById('resource-capitol').value;
+    const tip = document.getElementById('resource-tip').value;
 
-            if (!titlu) { showToast('⚠️ Introdu un titlu!', 'warning'); return; }
-            if (!selectedFile) { showToast('⚠️ Selectează un fișier!', 'warning'); return; }
+    if (!titlu) { 
+        showToast('⚠️ Introdu un titlu!', 'warning'); 
+        return; 
+    }
+    if (!selectedFile) { 
+        showToast('⚠️ Selectează un fișier!', 'warning'); 
+        return; 
+    }
 
-            const token = localStorage.getItem('accessToken');
-            if (!token) { window.location.href = '/'; return; }
+    const token = localStorage.getItem('accessToken');
+    if (!token) { 
+        window.location.href = '/'; 
+        return; 
+    }
 
-            const formData = new FormData();
-            formData.append('titlu', titlu);
-            formData.append('descriere', desc);
-            formData.append('capitol', capitol);
-            formData.append('tip', tip);
-            formData.append('file', selectedFile);
+    const formData = new FormData();
+    formData.append('titlu', titlu);
+    formData.append('descriere', desc);
+    formData.append('capitol', capitol);
+    formData.append('tip', tip);
+    formData.append('file', selectedFile);
 
-            const btn = document.getElementById('upload-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se încarcă...';
+    const btn = document.getElementById('upload-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se încarcă...';
 
-            try {
-                const response = await fetch('/upload-resource', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
-                });
+    try {
+        const response = await fetch('/upload-resource', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
 
-                const data = await response.json();
+        const data = await response.json();
 
-                if (response.ok) {
-                    showToast('✅ Resursa încărcată cu succes!');
-                    stergeFisierSelectat();
-                    document.getElementById('resource-titlu').value = '';
-                    document.getElementById('resource-desc').value = '';
-                    await incarcaResurse();
-                } else {
-                    showToast('⚠️ ' + (data.detail || 'Eroare la încărcare'), 'error');
-                }
-            } catch (error) {
-                showToast('⚠️ Eroare de conexiune: ' + error.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Încarcă resursa';
-            }
+        if (response.ok) {
+            showToast('✅ Resursa încărcată cu succes în Supabase!');
+            stergeFisierSelectat();
+            document.getElementById('resource-titlu').value = '';
+            document.getElementById('resource-desc').value = '';
+            await incarcaResurse(); // Reîncarcă resursele din API
+        } else {
+            showToast('⚠️ ' + (data.detail || 'Eroare la încărcare'), 'error');
         }
+    } catch (error) {
+        console.error('❌ Upload error:', error);
+        showToast('⚠️ Eroare de conexiune: ' + error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Încarcă resursa';
+    }
+}
 
         // ============================================================
         // FILTERE
