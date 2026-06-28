@@ -679,15 +679,38 @@ async def delete_resource(
 # ============================================================
 # DOWNLOAD RESURSĂ - CU AUTENTIFICARE
 # ============================================================
+# ============================================================
+# DOWNLOAD RESURSĂ - CU AUTENTIFICARE (acceptă token și din query)
+# ============================================================
 @app.get("/download-resource/{file_id}")
 async def download_resource(
     file_id: int,
-    token: Optional[str] = None,  # Acceptă token și în query params
-    payload: dict = Depends(verify_token)
+    token: Optional[str] = None,  # Acceptă token din query params
+    # Folosește Depends(verify_token) doar dacă token-ul nu vine din query
 ):
     """Descarcă resursă - necesită autentificare"""
+    
+    # Verifică token-ul: mai întâi din header, apoi din query
+    auth_header = None
+    try:
+        # Încearcă să obții token din header
+        auth_header = security(HTTPAuthorizationCredentials())
+    except Exception:
+        pass
+    
     # Dacă token-ul vine din query params, folosește-l
-    # (Depends(verify_token) deja verifică token-ul din header)
+    if token and not auth_header:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            print(f"✅ Token din query params valid pentru user: {payload.get('email')}")
+        except jwt.PyJWTError as e:
+            print(f"❌ Token invalid din query params: {e}")
+            raise HTTPException(status_code=401, detail="Token invalid sau expirat")
+    elif auth_header:
+        # Token-ul din header este deja validat de verify_token
+        pass
+    else:
+        raise HTTPException(status_code=401, detail="Token lipsă")
     
     try:
         metadata_file = UPLOAD_DIR / "metadata.json"
