@@ -928,11 +928,12 @@
 
         function getAuthHeaders() {
             const token = localStorage.getItem('accessToken');
-            return { 
+            return {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            };
-        }
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+    };
+}
 
         // ============================================================
         // RESURSE CRUD
@@ -1090,11 +1091,16 @@
             if (!downloadId) { showToast('⚠️ Nicio resursă selectată!', 'warning'); return; }
             
             const token = localStorage.getItem('accessToken');
-            if (!token) { window.location.href = '/'; return; }
-            
-            window.open(`/download-resource/${downloadId}?token=${token}`, '_blank');
-            showToast('✅ Fișierul se descarcă...');
-        }
+            if (!token) { 
+                window.location.href = '/'; 
+                return; 
+    }
+    
+    // Folosește un link cu token în URL
+    const downloadUrl = `/download-resource/${downloadId}?token=${encodeURIComponent(token)}`;
+    window.open(downloadUrl, '_blank');
+    showToast('✅ Fișierul se descarcă...');
+}
 
         // ============================================================
         // DELETE

@@ -26,10 +26,17 @@ app = FastAPI()
 # ============================================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "https://proinfobac.vercel.app",  # URL-ul tău Vercel
+        "https://proinfobac.onrender.com",  # URL-ul tău Render
+        "*"  # Pentru testare, dar în producție pune URL-urile exacte
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # ============================================================
@@ -377,34 +384,22 @@ def compile_and_run(submission: CodeSubmission):
     try:
         response = None
         data = None
-        
-        # ÎNCERCĂ MAI ÎNTÂI PISTON
         try:
             dbg('calling piston')
-            # Crește timeout-ul la 15 secunde
-            response = requests.post("https://emkc.org/api/v2/piston/execute", json=payload, timeout=15)
+            response = requests.post("https://emkc.org/api/v2/piston/execute", json=payload, timeout=0)
             try:
                 data = response.json()
             except ValueError:
                 data = None
                 dbg('piston returned invalid json')
-        except requests.Timeout:
-            dbg('piston timeout - falling back to local compile')
-            data = None
-            response = None
         except requests.RequestException as exc:
             dbg(f'piston request failed: {exc}')
-            data = None
-            response = None
         except Exception as exc:
             dbg(f'piston unexpected exception: {exc}')
-            data = None
-            response = None
 
         response_status = response.status_code if response is not None else None
         dbg(f'piston status={response_status}')
 
-        # Dacă Piston funcționează, folosește-l
         if response is not None and response.ok and data and "run" in data:
             run_info = data["run"]
             if run_info.get("code", 0) != 0 and not run_info.get("stdout") and not run_info.get("stderr"):
@@ -416,69 +411,77 @@ def compile_and_run(submission: CodeSubmission):
                     "exit_code": run_info.get("code", 0)
                 }
 
-        # FALLBACK: Compilează local (dacă e posibil)
-        dbg('piston unusable - falling back to local compile')
-        import shutil, subprocess, tempfile, os
+        if response is None or response_status == 401 or (data and isinstance(data.get("message"), str) and "whitelist" in data.get("message").lower()) or (response is not None and not response.ok):
+            dbg('piston unusable or whitelist - falling back to local compile')
+            import shutil, subprocess, tempfile, os
 
-        gpp = shutil.which("g++")
-        
-        # Pe Render, de obicei nu există g++, dar încercăm
-        if not gpp:
-            dbg('g++ not found - trying alternative')
-            # Încearcă să folosești GCC online sau returnează eroare prietenoasă
-            return {
-                "output": "",
-                "error": "⚠️ Serviciul de compilare nu este disponibil momentan.\nTe rugăm să încerci din nou mai târziu.\n\n💡 Sugestie: Verifică sintaxa codului și încearcă din nou.",
-                "exit_code": 1,
-                "fallback": True
-            }
+            gpp = shutil.which("g++")
+            msys_gpp = r"C:\\msys64\\mingw64\\bin\\g++.exe"
+            dbg(f'located gpp={gpp} msys_gpp_exists={os.path.exists(msys_gpp)}')
+            if not gpp and os.path.exists(msys_gpp):
+                gpp = msys_gpp
+            msys_bin = os.path.dirname(gpp) if gpp and os.path.isabs(gpp) else None
 
-        with tempfile.TemporaryDirectory() as td:
-            cpp_file = os.path.join(td, "main.cpp")
-            exe_file = os.path.join(td, "main.exe")
-            with open(cpp_file, "w", encoding="utf-8") as f:
-                f.write(submission.code)
+            if not gpp:
+                raise HTTPException(status_code=502, detail="Piston API refuză accesul și nu a fost găsit 'g++' local.")
 
-            compile_env = os.environ.copy()
-            src_name = os.path.basename(cpp_file)
-            out_name = os.path.basename(exe_file)
-            
-            try:
-                compile_proc = subprocess.run(
-                    [gpp, src_name, "-std=c++17", "-O2", "-o", out_name], 
-                    capture_output=True, text=True, timeout=30, env=compile_env, cwd=td
-                )
-            except subprocess.TimeoutExpired:
-                return {"output": "", "error": "⏰ Compilarea a durat prea mult!", "exit_code": 1}
+            with tempfile.TemporaryDirectory() as td:
+                cpp_file = os.path.join(td, "main.cpp")
+                exe_file = os.path.join(td, "main.exe")
+                with open(cpp_file, "w", encoding="utf-8") as f:
+                    f.write(submission.code)
+
+                compile_env = os.environ.copy()
+                if msys_bin:
+                    compile_env['PATH'] = msys_bin + os.pathsep + compile_env.get('PATH', '')
+                src_name = os.path.basename(cpp_file)
+                out_name = os.path.basename(exe_file)
+                compile_proc = subprocess.run([gpp, src_name, "-std=c++17", "-O2", "-o", out_name], capture_output=True, text=True, timeout=30, env=compile_env, cwd=td)
                 
-            if compile_proc.returncode != 0:
-                dbg('compile failed')
-                return {"output": "", "error": compile_proc.stderr, "exit_code": compile_proc.returncode}
+                if compile_proc.returncode != 0:
+                    dbg('compile failed')
+                    return {"output": "", "error": compile_proc.stderr, "exit_code": compile_proc.returncode}
 
-            try:
-                run_proc = subprocess.run(
-                    [exe_file], 
-                    input=submission.stdin or "", 
-                    capture_output=True, text=True, timeout=10, env=compile_env, cwd=td
-                )
-                return {"output": run_proc.stdout, "error": run_proc.stderr, "exit_code": run_proc.returncode}
-            except subprocess.TimeoutExpired:
-                return {"output": "", "error": "⏰ Execuția a durat prea mult!", "exit_code": 1}
-            except OSError as oe:
-                dbg(f'OSError: {oe}')
-                return {
-                    "output": "",
-                    "error": f"⚠️ Eroare la execuție: {str(oe)}\n\n💡 Pe Render, compilarea C++ poate să nu funcționeze. Recomandăm:\n1. Verifică sintaxa codului\n2. Încearcă un cod mai simplu\n3. Folosește editorul local pentru testare",
-                    "exit_code": 1
-                }
+                run_env = os.environ.copy()
+                msys_bin = os.path.dirname(gpp) if os.path.isabs(gpp) else None
+                if msys_bin and msys_bin not in run_env.get('PATH', ''):
+                    run_env['PATH'] = msys_bin + os.pathsep + run_env.get('PATH', '')
 
+                try:
+                    run_proc = subprocess.run([exe_file], input=submission.stdin or "", capture_output=True, text=True, timeout=10, env=run_env, cwd=td)
+                    return {"output": run_proc.stdout, "error": run_proc.stderr, "exit_code": run_proc.returncode}
+                except OSError as oe:
+                    try:
+                        wsl = shutil.which('wsl') or os.path.exists(r'C:\\Windows\\System32\\wsl.exe')
+                    except Exception:
+                        wsl = None
+
+                    if wsl:
+                        def win_to_wsl(p: str) -> str:
+                            drive, rest = os.path.splitdrive(p)
+                            if not drive:
+                                return p.replace('\\\\', '/')
+                            drive_letter = drive.rstrip(':').lower()
+                            rest = rest.replace('\\', '/')
+                            return f"/mnt/{drive_letter}{rest}"
+
+                        wsl_cpp = win_to_wsl(cpp_file)
+                        wsl_out = win_to_wsl(os.path.join(td, "main.out"))
+                        wsl_cmd = f'g++ "{wsl_cpp}" -std=c++17 -O2 -o "{wsl_out}" && "{wsl_out}"'
+                        try:
+                            wproc = subprocess.run(["wsl", "bash", "-lc", wsl_cmd], capture_output=True, text=True, timeout=30)
+                            return {"output": wproc.stdout, "error": wproc.stderr, "exit_code": wproc.returncode}
+                        except Exception as wex:
+                            raise HTTPException(status_code=502, detail=f"Exec blocked on Windows (OSError: {oe}) and WSL fallback failed: {str(wex)}")
+
+                    raise HTTPException(status_code=502, detail=f"Exec blocked on Windows (OSError: {oe}).")
+
+        raise HTTPException(status_code=502, detail={"status_code": response.status_code, "response": data or response.text})
+
+    except HTTPException:
+        raise
     except Exception as e:
-        dbg(f'Exception: {str(e)}')
-        return {
-            "output": "",
-            "error": f"⚠️ Eroare la compilare: {str(e)}",
-            "exit_code": 1
-        }
+        raise HTTPException(status_code=500, detail=f"Eroare la comunicarea cu compilatorul: {str(e)}")
 
 # ============================================================
 # API - MEETING
@@ -679,9 +682,13 @@ async def delete_resource(
 @app.get("/download-resource/{file_id}")
 async def download_resource(
     file_id: int,
+    token: Optional[str] = None,  # Acceptă token și în query params
     payload: dict = Depends(verify_token)
 ):
     """Descarcă resursă - necesită autentificare"""
+    # Dacă token-ul vine din query params, folosește-l
+    # (Depends(verify_token) deja verifică token-ul din header)
+    
     try:
         metadata_file = UPLOAD_DIR / "metadata.json"
         if not metadata_file.exists():
@@ -690,7 +697,6 @@ async def download_resource(
         with open(metadata_file, "r", encoding="utf-8") as f:
             metadata = json.load(f)
         
-        # Găsește resursa
         resource = None
         for r in metadata:
             if r["id"] == file_id:
@@ -704,12 +710,10 @@ async def download_resource(
         if not file_path.exists():
             raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit pe server")
         
-        # Incrementează vizualizările
         resource["vizualizari"] += 1
         with open(metadata_file, "w", encoding="utf-8") as f:
             json.dump(metadata, f, ensure_ascii=False, indent=2)
         
-        # Returnează fișierul
         return FileResponse(
             path=file_path,
             filename=resource["original_name"],
@@ -721,6 +725,11 @@ async def download_resource(
     except Exception as e:
         print(f"❌ Eroare download: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/api/verify-token")
+def verify_token_endpoint(payload: dict = Depends(verify_token)):
+    """Verifică dacă token-ul este valid"""
+    return {"valid": True, "user": payload}
 
 # ============================================================
 # RUTE PENTRU PAGINI HTML (NEPROTEJATE)
