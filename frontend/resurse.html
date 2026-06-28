@@ -1096,7 +1096,7 @@ async function previewResource(id) {
     const fileType = r.tip || ext;
     
     try {
-        const viewUrl = `/download-resource-token/${r.id}?token=${encodeURIComponent(token)}`;
+        const viewUrl = `/download-resource/${r.id}`;
         console.log('📥 Preview URL:', viewUrl);
         
         const response = await fetch(viewUrl);
@@ -1201,7 +1201,7 @@ async function previewResource(id) {
         return; 
     }
     
-    const downloadUrl = `/download-resource-token/${downloadId}?token=${encodeURIComponent(token)}`;
+    const downloadUrl = `/download-resource/${downloadId}`;
     console.log('📥 Download URL:', downloadUrl);
     
     try {

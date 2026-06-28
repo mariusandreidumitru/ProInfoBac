@@ -496,7 +496,7 @@ async def delete_resource(
 @app.get("/download-resource-token/{file_id}")
 async def download_resource_with_token(
     file_id: int,
-    token: str
+    token: str = Query(...)  # ← Trebuie să aibă Query
 ):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
