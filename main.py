@@ -136,60 +136,94 @@ async def upload_resource(
 ):
     if payload.get("role") != "teacher":
         raise HTTPException(status_code=403, detail="Doar profesorii pot încărca resurse!")
-
+ 
     db = get_supabase()
-
+ 
     valid_extensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.txt', '.doc',
                         '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.zip', '.cpp', '.c', '.html']
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in valid_extensions:
         raise HTTPException(status_code=400, detail=f"Extensia {ext} nu este acceptată!")
-
+ 
     content = await file.read()
+    print(f"📁 Fișier primit: {file.filename}, dimensiune: {len(content)} bytes")
+ 
     if len(content) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="Fișierul este prea mare! Maxim 10 MB.")
-
+ 
+    file_url = None
+    storage_path = None
+ 
+    # Încearcă upload în Supabase Storage
     try:
-        # Nume unic în Storage ca să evităm coliziuni
-        unique_name = f"{uuid.uuid4()}_{file.filename}"
-
-        # Încarcă în Supabase Storage
-        db.storage.from_(STORAGE_BUCKET).upload(
+        unique_name = f"{uuid.uuid4()}{ext}"
+        print(f"📤 Încerc upload în Storage: {unique_name}")
+ 
+        mime = get_mime_type(file.filename)
+ 
+        response = db.storage.from_(STORAGE_BUCKET).upload(
             path=unique_name,
             file=content,
-            file_options={"content-type": get_mime_type(file.filename)}
+            file_options={"content-type": mime, "upsert": "false"}
         )
-
-        # Obține URL-ul public (funcționează dacă bucket-ul e public)
+ 
+        print(f"✅ Storage response: {response}")
+ 
+        storage_path = unique_name
         file_url = db.storage.from_(STORAGE_BUCKET).get_public_url(unique_name)
-
-        # Salvează metadatele în tabel (fără file_data!)
-        resource_data = {
-            "titlu": titlu,
-            "descriere": descriere or "",
-            "capitol": capitol,
-            "tip": tip,
-            "original_name": file.filename,
-            "storage_path": unique_name,   # calea în bucket
-            "file_url": file_url,           # URL public direct
-            "dimensiune": len(content),
-            "uploaded_by": payload.get("email", "unknown"),
-            "vizualizari": 0,
-            "uploaded_at": datetime.now().isoformat()
-        }
-
-        response = db.table("resources").insert(resource_data).execute()
-
-        if response.data:
-            return {"status": "success", "message": "Fișierul a fost încărcat cu succes!", "resource": response.data[0]}
+        print(f"🔗 URL public: {file_url}")
+ 
+    except Exception as storage_err:
+        print(f"⚠️ Storage upload eșuat: {storage_err}")
+        print(f"   Tip eroare: {type(storage_err).__name__}")
+        # Fallback: salvează ca base64 în DB (metoda veche)
+        file_url = None
+        storage_path = None
+ 
+    # Construiește datele pentru tabel
+    resource_data = {
+        "titlu": titlu,
+        "descriere": descriere or "",
+        "capitol": capitol,
+        "tip": tip,
+        "original_name": file.filename,
+        "dimensiune": len(content),
+        "uploaded_by": payload.get("email", "unknown"),
+        "vizualizari": 0,
+        "uploaded_at": datetime.now().isoformat()
+    }
+ 
+    if storage_path and file_url:
+        # Calea fericită: fișierul e în Storage
+        resource_data["storage_path"] = storage_path
+        resource_data["file_url"] = file_url
+        print("✅ Salvez metadate cu file_url în DB")
+    else:
+        # Fallback: salvează base64 în DB
+        resource_data["file_data"] = base64.b64encode(content).decode('utf-8')
+        print("⚠️ Salvez ca base64 în DB (fallback)")
+ 
+    try:
+        print(f"💾 Insert în tabel resources...")
+        insert_response = db.table("resources").insert(resource_data).execute()
+        print(f"✅ Insert OK: {insert_response.data}")
+ 
+        if insert_response.data:
+            return {
+                "status": "success",
+                "message": "Fișierul a fost încărcat cu succes!",
+                "resource": insert_response.data[0],
+                "storage_used": storage_path is not None
+            }
         else:
-            raise HTTPException(status_code=500, detail="Eroare la salvarea metadatelor!")
-
+            raise HTTPException(status_code=500, detail="Eroare la salvarea în baza de date!")
+ 
     except HTTPException:
         raise
-    except Exception as e:
-        print(f"❌ Eroare upload: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as db_err:
+        print(f"❌ Eroare DB insert: {db_err}")
+        print(f"   Tip eroare: {type(db_err).__name__}")
+        raise HTTPException(status_code=500, detail=f"Eroare DB: {str(db_err)}")
 
 # ============================================================
 # LISTEAZĂ RESURSE
