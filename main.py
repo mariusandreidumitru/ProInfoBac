@@ -499,18 +499,79 @@ async def delete_resource(
 # DOWNLOAD RESURSĂ
 # ============================================================
 @app.get("/download-resource-token/{file_id}")
-async def download_resource_with_token(
+async def download_resource_token(
     file_id: int,
-    token: str = Query(...)  # ← Trebuie să aibă Query
+    token: str
 ):
+    """Descarcă resursă folosind token din URL"""
+    print(f"📥 Download request pentru ID: {file_id}")
+    print(f"🔑 Token primit: {token[:20]}..." if token else "❌ Token lipsă")
+    
     try:
+        # Verifică token-ul
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        print(f"✅ Download pentru: {payload.get('email')}")
+        print(f"✅ Token valid pentru: {payload.get('email')}")
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expirat")
     except jwt.InvalidTokenError as e:
         print(f"❌ Token invalid: {e}")
         raise HTTPException(status_code=401, detail="Token invalid")
+    
+    try:
+        # Caută resursa în Supabase
+        response = supabase.table("resources").select("*").eq("id", file_id).execute()
+        
+        if not response.data or len(response.data) == 0:
+            raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
+        
+        resource = response.data[0]
+        print(f"📄 Resursă găsită: {resource.get('original_name')}")
+        
+        # Incrementează vizualizările
+        supabase.table("resources").update({
+            "vizualizari": resource.get("vizualizari", 0) + 1
+        }).eq("id", file_id).execute()
+        
+        # Decodifică din base64
+        file_data = base64.b64decode(resource.get("file_data", ""))
+        
+        # Determină tipul MIME
+        ext = os.path.splitext(resource["original_name"])[1].lower()
+        media_type = "application/octet-stream"
+        if ext == ".pdf": media_type = "application/pdf"
+        elif ext in [".jpg", ".jpeg"]: media_type = "image/jpeg"
+        elif ext == ".png": media_type = "image/png"
+        elif ext == ".gif": media_type = "image/gif"
+        elif ext == ".txt": media_type = "text/plain"
+        elif ext in [".cpp", ".c", ".py", ".js", ".html", ".css"]: media_type = "text/plain"
+        
+        print(f"✅ Returnare fișier: {resource['original_name']} ({len(file_data)} bytes)")
+        
+        return StreamingResponse(
+            BytesIO(file_data),
+            media_type=media_type,
+            headers={
+                "Content-Disposition": f"inline; filename=\"{resource['original_name']}\"",
+                "Content-Length": str(len(file_data))
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Eroare download: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# ============================================================
+# DOWNLOAD RESURSĂ - ALTERNATIVĂ (CU HEADER)
+# ============================================================
+@app.get("/download-resource/{file_id}")
+async def download_resource(
+    file_id: int,
+    payload: dict = Depends(verify_token)
+):
+    """Descarcă resursă folosind token din header"""
+    print(f"📥 Download resource (header) pentru ID: {file_id}")
     
     try:
         response = supabase.table("resources").select("*").eq("id", file_id).execute()

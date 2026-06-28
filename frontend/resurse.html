@@ -1063,18 +1063,13 @@ async function previewResource(id) {
     console.log('🔍 Preview resource apelat cu ID:', id);
     
     const r = resurse.find(item => item.id === id);
-    console.log('📦 Resursa găsită:', r);
-    
     if (!r) { 
         showToast('⚠️ Resursa nu a fost găsită!', 'error'); 
         return; 
     }
 
     const token = localStorage.getItem('accessToken');
-    console.log('🔑 Token pentru preview:', token ? 'Există' : 'Lipsește');
-    
     if (!token) { 
-        console.log('❌ Token lipsă, redirecționez la login...');
         window.location.href = '/'; 
         return; 
     }
@@ -1096,14 +1091,17 @@ async function previewResource(id) {
     const fileType = r.tip || ext;
     
     try {
-        const viewUrl = `/download-resource/${r.id}`;
-        console.log('📥 Preview URL:', viewUrl);
+        // Folosește ruta cu header (Authorization: Bearer token)
+        const response = await fetch(`/download-resource/${r.id}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
         
-        const response = await fetch(viewUrl);
         console.log('📥 Răspuns status:', response.status);
         
         if (response.status === 401) {
-            console.log('❌ Token invalid, redirecționez...');
             localStorage.clear();
             window.location.href = '/';
             return;
@@ -1114,9 +1112,7 @@ async function previewResource(id) {
         }
         
         const blob = await response.blob();
-        console.log('📦 Blob primit, dimensiune:', blob.size);
         const url = URL.createObjectURL(blob);
-        console.log('🔗 URL creat:', url);
         
         if (fileType === 'pdf' || ext === 'pdf') {
             body.innerHTML = `
@@ -1153,8 +1149,6 @@ async function previewResource(id) {
             `;
         }
         
-        console.log('✅ Previzualizare completă');
-        
     } catch (error) {
         console.error('❌ Preview error:', error);
         body.innerHTML = `
@@ -1172,6 +1166,7 @@ async function previewResource(id) {
     document.getElementById('preview-modal').classList.add('active');
     document.body.style.overflow = 'hidden';
 }
+
         function closePreview() {
             document.getElementById('preview-modal').classList.remove('active');
             document.body.style.overflow = '';
@@ -1181,35 +1176,30 @@ async function previewResource(id) {
         // ============================================================
         // DOWNLOAD
         // ============================================================
-       async function downloadResource(id) {
-    console.log('🔽 Download resource apelat cu ID:', id);
-    
+     async function downloadResource(id) {
     const downloadId = id || currentPreviewId;
-    console.log('🔽 Download ID:', downloadId);
-    
     if (!downloadId) { 
         showToast('⚠️ Nicio resursă selectată!', 'warning'); 
         return; 
     }
     
     const token = localStorage.getItem('accessToken');
-    console.log('🔑 Token pentru download:', token ? 'Există' : 'Lipsește');
-    
     if (!token) { 
-        console.log('❌ Token lipsă, redirecționez...');
         window.location.href = '/'; 
         return; 
     }
     
-    const downloadUrl = `/download-resource/${downloadId}`;
-    console.log('📥 Download URL:', downloadUrl);
-    
     try {
-        const response = await fetch(downloadUrl);
+        const response = await fetch(`/download-resource/${downloadId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
         console.log('📥 Răspuns download status:', response.status);
         
         if (response.status === 401) {
-            console.log('❌ Token invalid');
             localStorage.clear();
             window.location.href = '/';
             return;
@@ -1220,7 +1210,6 @@ async function previewResource(id) {
         }
         
         const blob = await response.blob();
-        console.log('📦 Blob primit, dimensiune:', blob.size);
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -1228,7 +1217,6 @@ async function previewResource(id) {
         let filename = 'download';
         const r = resurse.find(item => item.id === downloadId);
         if (r && r.original_name) filename = r.original_name;
-        console.log('📄 Nume fișier:', filename);
         
         a.download = filename;
         document.body.appendChild(a);
@@ -1236,7 +1224,6 @@ async function previewResource(id) {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
         
-        console.log('✅ Download complet');
         showToast('✅ Fișierul s-a descărcat!');
         
     } catch (error) {
