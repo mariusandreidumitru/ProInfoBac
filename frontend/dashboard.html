@@ -645,381 +645,342 @@
     </div>
 
     <!-- ===== SCRIPT ===== -->
-    <script>
-        // ============================================================
-        // TOGGLE THEME
-        // ============================================================
-        function toggleTheme() {
-            const html = document.documentElement;
-            const current = html.getAttribute('data-theme');
-            const next = current === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', next);
-            document.getElementById('theme-icon').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-            document.getElementById('theme-text').textContent = next === 'dark' ? 'Light' : 'Dark';
-            localStorage.setItem('theme', next);
-        }
+   <script>
+    // ============================================================
+    // TOGGLE THEME
+    // ============================================================
+    function toggleTheme() {
+        const html = document.documentElement;
+        const current = html.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        document.getElementById('theme-icon').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        document.getElementById('theme-text').textContent = next === 'dark' ? 'Light' : 'Dark';
+        localStorage.setItem('theme', next);
+    }
 
-        // ============================================================
-        // GET EXERCIȚII COUNT
-        // ============================================================
-        function getExercitiiCount() {
-            const exercitii = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
-            return exercitii.length;
+    // ============================================================
+    // SHOW TOAST
+    // ============================================================
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        if (type === 'error') {
+            toast.style.borderLeftColor = 'var(--danger)';
         }
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.5s';
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
+    }
 
-        // ============================================================
-        // GET RESURSE COUNT
-        // ============================================================
-        function getResurseCount() {
-            const resurse = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
-            return resurse.length;
-        }
-
-        // ============================================================
-        // ÎNCARCĂ STATISTICI DIN localStorage
-        // ============================================================
-       // ============================================================
-// ÎNCARCĂ STATISTICI DIN API ȘI localStorage
-// ============================================================
-// ============================================================
-// ÎNCARCĂ STATISTICI DIN API ȘI localStorage
-// ============================================================
-async function incarcaStatistici() {
-    try {
-        // EXERCIȚII - din localStorage
-        const exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
-        const varianteBac = JSON.parse(localStorage.getItem('varianteBac')) || [];
-        const rezultateElevi = JSON.parse(localStorage.getItem('rezultateElevi')) || {};
-        
-        // RESURSE - din API (Supabase)
-        let totalResurse = 0;
+    // ============================================================
+    // VERIFICĂ TOKEN-UL LA ÎNCĂRCARE
+    // ============================================================
+    async function verificaToken() {
         const token = localStorage.getItem('accessToken');
         
-        if (token) {
-            try {
-                const response = await fetch('/api/resurse', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    totalResurse = data.resurse ? data.resurse.length : 0;
-                    console.log('✅ Resurse încărcate din API:', totalResurse);
-                    
-                    // Salvează și în localStorage ca backup
-                    localStorage.setItem('bibliotecaResurse', JSON.stringify(data.resurse || []));
-                } else if (response.status === 401) {
-                    console.log('🔒 Token invalid la încărcare statistici');
-                } else {
-                    console.warn('⚠️ Răspuns API resurse:', response.status);
-                    // Fallback la localStorage
-                    const resurse = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
-                    totalResurse = resurse.length;
-                }
-            } catch (error) {
-                console.warn('⚠️ Nu s-au putut încărca resursele din API:', error);
-                // Fallback la localStorage
-                const resurse = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
-                totalResurse = resurse.length;
-            }
-        } else {
-            // Fallback la localStorage
-            const resurse = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
-            totalResurse = resurse.length;
-        }
-        
-        // Număr real de exerciții
-        const totalExercitii = exercitiiComunitate.length;
-        document.getElementById('stat-exercitii').textContent = totalExercitii;
-        
-        // Actualizează badge-ul de pe cardul "Teste Bac Info"
-        const badgeExercitii = document.getElementById('badge-exercitii');
-        if (badgeExercitii) {
-            badgeExercitii.textContent = totalExercitii + '+';
-        }
-        
-        // Actualizează badge-ul de pe cardul "Resurse" cu numărul real
-        const badgeResurse = document.getElementById('badge-resurse');
-        if (badgeResurse) {
-            badgeResurse.textContent = totalResurse;
-        }
-        
-        // Variante create
-        const totalVariante = varianteBac.length;
-        document.getElementById('stat-variante').textContent = totalVariante;
-        
-        // Rezolvări trimise
-        let totalRezolvari = 0;
-        let totalNote = 0;
-        let noteCount = 0;
-        
-        for (const variantaId in rezultateElevi) {
-            const rezultate = rezultateElevi[variantaId];
-            if (Array.isArray(rezultate)) {
-                totalRezolvari += rezultate.length;
-                rezultate.forEach(r => {
-                    if (r.nota !== null && r.nota !== undefined) {
-                        totalNote += r.nota;
-                        noteCount++;
-                    }
-                });
-            }
-        }
-        
-        document.getElementById('stat-rezolvate').textContent = totalRezolvari;
-        
-        const medie = noteCount > 0 ? (totalNote / noteCount) : 0;
-        document.getElementById('stat-medie').textContent = medie.toFixed(2);
-        
-    } catch (e) {
-        console.warn('Nu s-au putut încărca statisticile:', e);
-    }
-}
-
-        // ============================================================
-        // ADĂUGARE EXERCIȚII DE TEST (dacă nu există)
-        // ============================================================
-        function adaugaExercitiiTest() {
-            const exercitiiExistente = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
-            
-            if (exercitiiExistente.length > 0) {
-                return; // Există deja exerciții
-            }
-            
-            const exercitiiTest = [
-                {
-                    capitol: 'algoritmi',
-                    subiect: 's1',
-                    text: 'Care este rezultatul expresiei 20*23/(2*2)?',
-                    optiuni: ['A) 115', 'B) 230', 'C) 460', 'D) 57.5'],
-                    raspuns_corect: 0,
-                    tip: 'grila',
-                    hint: 'Calculează mai întâi paranteza',
-                    barem: 'Răspuns corect: A) 115',
-                    autor: 'Sistem',
-                    dificultate: 2,
-                    puncte: 4,
-                    subiectLabel: 'Subiectul I (20p)',
-                    cerinte: 'Alege varianta corectă.',
-                    sursa: 'comunitate',
-                    useAI: false
-                },
-                {
-                    capitol: 'tablouri',
-                    subiect: 's3',
-                    text: 'Scrie un program C++ care citește un vector de n numere și afișează suma elementelor pare.',
-                    tip: 'cod',
-                    hint: 'Folosește un for și verifică paritatea cu % 2 == 0',
-                    barem: 'Programul trebuie să: 1) Citească n, 2) Citească vectorul, 3) Calculeze suma elementelor pare, 4) Afișeze rezultatul',
-                    autor: 'Sistem',
-                    dificultate: 3,
-                    puncte: 15,
-                    subiectLabel: 'Subiectul III (30p)',
-                    cerinte: 'Program C/C++: citire, prelucrare, afișare.',
-                    sursa: 'comunitate',
-                    useAI: true
-                },
-                {
-                    capitol: 'siruri',
-                    subiect: 's2',
-                    text: 'Scrie un algoritm în pseudocod care verifică dacă un cuvânt este palindrom.',
-                    tip: 'scris',
-                    hint: 'Compară primul caracter cu ultimul, apoi al doilea cu penultimul...',
-                    barem: 'Algoritmul trebuie să: 1) Citească cuvântul, 2) Verifice simetria, 3) Afișeze DA/NU',
-                    autor: 'Sistem',
-                    dificultate: 3,
-                    puncte: 10,
-                    subiectLabel: 'Subiectul II (40p)',
-                    cerinte: 'Scrie algoritmul în pseudocod sau explică execuția.',
-                    sursa: 'comunitate',
-                    useAI: true
-                },
-                {
-                    capitol: 'recursivitate',
-                    subiect: 's3',
-                    text: 'Scrie o funcție recursivă în C++ care calculează factorialul unui număr n.',
-                    tip: 'cod',
-                    hint: 'Cazul de bază: factorial(0) = 1',
-                    barem: 'Funcția trebuie să fie recursivă și să returneze factorialul corect.',
-                    autor: 'Sistem',
-                    dificultate: 4,
-                    puncte: 15,
-                    subiectLabel: 'Subiectul III (30p)',
-                    cerinte: 'Program C/C++: funcție recursivă pentru factorial.',
-                    sursa: 'comunitate',
-                    useAI: true
-                }
-            ];
-            
-            const toateExercitiile = [...exercitiiExistente, ...exercitiiTest];
-            localStorage.setItem('exercitiiComunitate', JSON.stringify(toateExercitiile));
-            
-            showToast(`✅ S-au adăugat ${exercitiiTest.length} exerciții de test în comunitate!`);
-            incarcaStatistici();
-        }
-
-        // ============================================================
-        // SHOW TOAST
-        // ============================================================
-        function showToast(message) {
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.5s';
-                setTimeout(() => toast.remove(), 500);
-            }, 3000);
-        }
-
-
-// ============================================================
-// VERIFICĂ TOKEN-UL LA ÎNCĂRCARE
-// ============================================================
-async function verificaToken() {
-    const token = localStorage.getItem('accessToken');
-    console.log('🔍 Verific token:', token ? 'Există' : 'Lipsește');
-    
-    if (!token) {
-        console.log('🔒 Token lipsă, redirecționez la login...');
-        window.location.href = '/';
-        return false;
-    }
-    
-    try {
-        console.log('📡 Trimit request la /api/verify-token...');
-        const response = await fetch('/api/verify-token', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        console.log('📥 Răspuns status:', response.status);
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log('✅ Token valid:', data);
-            return true;
-        } else if (response.status === 401) {
-            console.log('❌ Token invalid sau expirat');
-            localStorage.clear();
-            window.location.href = '/';
-            return false;
-        } else {
-            console.log('⚠️ Eroare la verificare token:', response.status);
-            return false;
-        }
-    } catch (error) {
-        console.error('❌ Eroare la verificare token:', error);
-        return false;
-    }
-}
-  // ============================================================
-// VERIFICĂ ROLUL UTILIZATORULUI
-// ============================================================
-// ============================================================
-// VERIFICĂ ROLUL UTILIZATORULUI
-// ============================================================
-async function verificaRol() {
-    const token = localStorage.getItem('accessToken');
-    
-    if (!token) {
-        window.location.href = '/login';
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/user', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            const role = data.role || 'student';
-            const name = data.name || 'Utilizator';
-            
-            localStorage.setItem('rolUtilizator', role);
-            localStorage.setItem('numeUtilizator', name);
-            
-            const badge = document.getElementById('role-badge');
-            const roleText = document.getElementById('role-text');
-            const welcomeName = document.getElementById('welcome-name');
-            
-            if (role === 'teacher') {
-                badge.className = 'role-badge teacher';
-                badge.querySelector('i').className = 'fas fa-chalkboard-teacher';
-                roleText.textContent = 'Profesor';
-                welcomeName.textContent = name || 'profesor';
-            } else {
-                badge.className = 'role-badge student';
-                badge.querySelector('i').className = 'fas fa-user-graduate';
-                roleText.textContent = 'Elev';
-                welcomeName.textContent = name || 'elev';
-            }
-        } else if (response.status === 401) {
+        if (!token) {
+            console.log('🔒 Token lipsă, redirecționez la login...');
             localStorage.clear();
             window.location.href = '/login';
+            return false;
         }
-    } catch (error) {
-        console.error('Eroare la verificare rol:', error);
-        const role = localStorage.getItem('rolUtilizator') || 'student';
-        const name = localStorage.getItem('numeUtilizator') || '';
         
+        try {
+            const response = await fetch('/api/verify-token', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                console.log('✅ Token valid');
+                return true;
+            } else {
+                console.log('❌ Token invalid sau expirat');
+                localStorage.clear();
+                window.location.href = '/login';
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ Eroare la verificare token:', error);
+            // Nu redirecționa imediat, poate fi o eroare de rețea temporară
+            return true; // Presupunem că token-ul e valid, continuăm
+        }
+    }
+
+    // ============================================================
+    // VERIFICĂ ROLUL UTILIZATORULUI
+    // ============================================================
+    async function verificaRol() {
+        const token = localStorage.getItem('accessToken');
+        
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/user', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const role = data.role || 'student';
+                const name = data.name || data.email || 'Utilizator';
+                
+                localStorage.setItem('rolUtilizator', role);
+                localStorage.setItem('numeUtilizator', name);
+                
+                actualizeazaUI(role, name);
+            } else if (response.status === 401) {
+                localStorage.clear();
+                window.location.href = '/login';
+            } else {
+                // Folosește datele din localStorage ca fallback
+                const role = localStorage.getItem('rolUtilizator') || 'student';
+                const name = localStorage.getItem('numeUtilizator') || 'Utilizator';
+                actualizeazaUI(role, name);
+            }
+        } catch (error) {
+            console.error('Eroare la verificare rol:', error);
+            // Fallback la localStorage
+            const role = localStorage.getItem('rolUtilizator') || 'student';
+            const name = localStorage.getItem('numeUtilizator') || 'Utilizator';
+            actualizeazaUI(role, name);
+        }
+    }
+
+    // ============================================================
+    // ACTUALIZEAZĂ UI-UL CU ROL ȘI NUME
+    // ============================================================
+    function actualizeazaUI(role, name) {
         const badge = document.getElementById('role-badge');
         const roleText = document.getElementById('role-text');
         const welcomeName = document.getElementById('welcome-name');
+        const icon = badge.querySelector('i');
         
         if (role === 'teacher') {
             badge.className = 'role-badge teacher';
-            badge.querySelector('i').className = 'fas fa-chalkboard-teacher';
+            icon.className = 'fas fa-chalkboard-teacher';
             roleText.textContent = 'Profesor';
             welcomeName.textContent = name || 'profesor';
         } else {
             badge.className = 'role-badge student';
-            badge.querySelector('i').className = 'fas fa-user-graduate';
+            icon.className = 'fas fa-user-graduate';
             roleText.textContent = 'Elev';
             welcomeName.textContent = name || 'elev';
         }
     }
-}
 
-        // ============================================================
-        // INIȚIALIZARE
-        // ============================================================
-      document.addEventListener('DOMContentLoaded', async () => {
-    // Theme
-    const saved = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', saved);
-    document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-    document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
-    
-    // ⚠️ IMPORTANT: Verifică token-ul MAI ÎNTÂI
-    const tokenValid = await verificaToken();
-    if (!tokenValid) return;
-    
-    // Abia apoi verifică rolul
-    await verificaRol();
-    
-    // Adaugă exerciții de test dacă nu există
-    adaugaExercitiiTest();
-    
-    // 🔥 Încarcă statistici (acum async)
-    await incarcaStatistici();
-    
-    // Actualizează statisticile la fiecare 30 de secunde
-    setInterval(incarcaStatistici, 30000);
-});
-    </script>
+    // ============================================================
+    // ÎNCARCĂ STATISTICI DIN API ȘI localStorage
+    // ============================================================
+    async function incarcaStatistici() {
+        try {
+            // EXERCIȚII - din localStorage
+            const exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
+            const varianteBac = JSON.parse(localStorage.getItem('varianteBac')) || [];
+            const rezultateElevi = JSON.parse(localStorage.getItem('rezultateElevi')) || {};
+            
+            // RESURSE - din API (Supabase)
+            let totalResurse = 0;
+            const token = localStorage.getItem('accessToken');
+            
+            if (token) {
+                try {
+                    const response = await fetch('/api/resurse', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        totalResurse = data.resurse ? data.resurse.length : 0;
+                        console.log('✅ Resurse încărcate din API:', totalResurse);
+                        localStorage.setItem('bibliotecaResurse', JSON.stringify(data.resurse || []));
+                    } else {
+                        console.warn('⚠️ Răspuns API resurse:', response.status);
+                        const resurse = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
+                        totalResurse = resurse.length;
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Nu s-au putut încărca resursele din API:', error);
+                    const resurse = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
+                    totalResurse = resurse.length;
+                }
+            } else {
+                const resurse = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
+                totalResurse = resurse.length;
+            }
+            
+            // Actualizează statisticile
+            const totalExercitii = exercitiiComunitate.length;
+            document.getElementById('stat-exercitii').textContent = totalExercitii;
+            
+            const badgeExercitii = document.getElementById('badge-exercitii');
+            if (badgeExercitii) {
+                badgeExercitii.textContent = totalExercitii + '+';
+            }
+            
+            const badgeResurse = document.getElementById('badge-resurse');
+            if (badgeResurse) {
+                badgeResurse.textContent = totalResurse;
+            }
+            
+            document.getElementById('stat-variante').textContent = varianteBac.length;
+            
+            // Rezolvări și medie
+            let totalRezolvari = 0;
+            let totalNote = 0;
+            let noteCount = 0;
+            
+            for (const variantaId in rezultateElevi) {
+                const rezultate = rezultateElevi[variantaId];
+                if (Array.isArray(rezultate)) {
+                    totalRezolvari += rezultate.length;
+                    rezultate.forEach(r => {
+                        if (r.nota !== null && r.nota !== undefined) {
+                            totalNote += r.nota;
+                            noteCount++;
+                        }
+                    });
+                }
+            }
+            
+            document.getElementById('stat-rezolvate').textContent = totalRezolvari;
+            const medie = noteCount > 0 ? (totalNote / noteCount) : 0;
+            document.getElementById('stat-medie').textContent = medie.toFixed(2);
+            
+        } catch (e) {
+            console.warn('Nu s-au putut încărca statisticile:', e);
+        }
+    }
+
+    // ============================================================
+    // ADĂUGARE EXERCIȚII DE TEST (dacă nu există)
+    // ============================================================
+    function adaugaExercitiiTest() {
+        const exercitiiExistente = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
+        
+        if (exercitiiExistente.length > 0) {
+            return;
+        }
+        
+        const exercitiiTest = [
+            {
+                capitol: 'algoritmi',
+                subiect: 's1',
+                text: 'Care este rezultatul expresiei 20*23/(2*2)?',
+                optiuni: ['A) 115', 'B) 230', 'C) 460', 'D) 57.5'],
+                raspuns_corect: 0,
+                tip: 'grila',
+                hint: 'Calculează mai întâi paranteza',
+                barem: 'Răspuns corect: A) 115',
+                autor: 'Sistem',
+                dificultate: 2,
+                puncte: 4,
+                subiectLabel: 'Subiectul I (20p)',
+                cerinte: 'Alege varianta corectă.',
+                sursa: 'comunitate',
+                useAI: false
+            },
+            {
+                capitol: 'tablouri',
+                subiect: 's3',
+                text: 'Scrie un program C++ care citește un vector de n numere și afișează suma elementelor pare.',
+                tip: 'cod',
+                hint: 'Folosește un for și verifică paritatea cu % 2 == 0',
+                barem: 'Programul trebuie să: 1) Citească n, 2) Citească vectorul, 3) Calculeze suma elementelor pare, 4) Afișeze rezultatul',
+                autor: 'Sistem',
+                dificultate: 3,
+                puncte: 15,
+                subiectLabel: 'Subiectul III (30p)',
+                cerinte: 'Program C/C++: citire, prelucrare, afișare.',
+                sursa: 'comunitate',
+                useAI: true
+            },
+            {
+                capitol: 'siruri',
+                subiect: 's2',
+                text: 'Scrie un algoritm în pseudocod care verifică dacă un cuvânt este palindrom.',
+                tip: 'scris',
+                hint: 'Compară primul caracter cu ultimul, apoi al doilea cu penultimul...',
+                barem: 'Algoritmul trebuie să: 1) Citească cuvântul, 2) Verifice simetria, 3) Afișeze DA/NU',
+                autor: 'Sistem',
+                dificultate: 3,
+                puncte: 10,
+                subiectLabel: 'Subiectul II (40p)',
+                cerinte: 'Scrie algoritmul în pseudocod sau explică execuția.',
+                sursa: 'comunitate',
+                useAI: true
+            },
+            {
+                capitol: 'recursivitate',
+                subiect: 's3',
+                text: 'Scrie o funcție recursivă în C++ care calculează factorialul unui număr n.',
+                tip: 'cod',
+                hint: 'Cazul de bază: factorial(0) = 1',
+                barem: 'Funcția trebuie să fie recursivă și să returneze factorialul corect.',
+                autor: 'Sistem',
+                dificultate: 4,
+                puncte: 15,
+                subiectLabel: 'Subiectul III (30p)',
+                cerinte: 'Program C/C++: funcție recursivă pentru factorial.',
+                sursa: 'comunitate',
+                useAI: true
+            }
+        ];
+        
+        const toateExercitiile = [...exercitiiExistente, ...exercitiiTest];
+        localStorage.setItem('exercitiiComunitate', JSON.stringify(toateExercitiile));
+        
+        showToast(`✅ S-au adăugat ${exercitiiTest.length} exerciții de test în comunitate!`);
+        incarcaStatistici();
+    }
+
+    // ============================================================
+    // INIȚIALIZARE
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Tema
+        const saved = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', saved);
+        document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
+        
+        // Token
+        const tokenValid = await verificaToken();
+        if (!tokenValid) {
+            return; // Redirecționat deja în verificaToken()
+        }
+        
+        // Rol
+        await verificaRol();
+        
+        // Exerciții de test
+        adaugaExercitiiTest();
+        
+        // Statistici
+        await incarcaStatistici();
+        
+        // Refresh la fiecare 30 de secunde
+        setInterval(incarcaStatistici, 30000);
+    });
+</script>
 
 </body>
 </html>
