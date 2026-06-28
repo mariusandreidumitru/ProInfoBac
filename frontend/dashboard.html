@@ -617,7 +617,7 @@
                         <p class="card-description">Bibliotecă de resurse cu PDF-uri, imagini, cod și materiale didactice pentru pregătirea examenului.</p>
                     </div>
                 </div>
-                <button class="btn btn-success" onclick="window.location.href='/resurse.html'">
+                <button class="btn btn-success" onclick="window.location.href='/resurse'">
                     <i class="fas fa-book-open"></i> Accesează resursele
                 </button>
             </article>
@@ -681,14 +681,17 @@
        // ============================================================
 // ÎNCARCĂ STATISTICI DIN API ȘI localStorage
 // ============================================================
+// ============================================================
+// ÎNCARCĂ STATISTICI DIN API ȘI localStorage
+// ============================================================
 async function incarcaStatistici() {
     try {
-        // 🔥 EXERCIȚII - din localStorage
+        // EXERCIȚII - din localStorage
         const exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
         const varianteBac = JSON.parse(localStorage.getItem('varianteBac')) || [];
         const rezultateElevi = JSON.parse(localStorage.getItem('rezultateElevi')) || {};
         
-        // 🔥 RESURSE - din API (server)
+        // RESURSE - din API (Supabase)
         let totalResurse = 0;
         const token = localStorage.getItem('accessToken');
         
@@ -705,6 +708,16 @@ async function incarcaStatistici() {
                     const data = await response.json();
                     totalResurse = data.resurse ? data.resurse.length : 0;
                     console.log('✅ Resurse încărcate din API:', totalResurse);
+                    
+                    // Salvează și în localStorage ca backup
+                    localStorage.setItem('bibliotecaResurse', JSON.stringify(data.resurse || []));
+                } else if (response.status === 401) {
+                    console.log('🔒 Token invalid la încărcare statistici');
+                } else {
+                    console.warn('⚠️ Răspuns API resurse:', response.status);
+                    // Fallback la localStorage
+                    const resurse = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
+                    totalResurse = resurse.length;
                 }
             } catch (error) {
                 console.warn('⚠️ Nu s-au putut încărca resursele din API:', error);
@@ -728,7 +741,7 @@ async function incarcaStatistici() {
             badgeExercitii.textContent = totalExercitii + '+';
         }
         
-        // 🔥 Actualizează badge-ul de pe cardul "Resurse" cu numărul real
+        // Actualizează badge-ul de pe cardul "Resurse" cu numărul real
         const badgeResurse = document.getElementById('badge-resurse');
         if (badgeResurse) {
             badgeResurse.textContent = totalResurse;
