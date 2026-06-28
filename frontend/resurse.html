@@ -658,7 +658,7 @@
             </div>
         </div>
 
-        <!-- UPLOAD SECTION - ASCUNS PENTRU ELEVI -->
+        <!-- UPLOAD SECTION -->
         <div id="upload-section" class="card" style="display:none;">
             <div class="card-title"><i class="fas fa-upload" style="color:var(--success);"></i> Încarcă resursă nouă</div>
             
@@ -841,6 +841,20 @@
         let selectedFileSize = '';
 
         // ============================================================
+        // MAPA ICONIȚELOR
+        // ============================================================
+        const tipIconMap = {
+            'pdf': 'fa-file-pdf',
+            'image': 'fa-file-image',
+            'code': 'fa-file-code',
+            'text': 'fa-file-alt',
+            'word': 'fa-file-word',
+            'ppt': 'fa-file-powerpoint',
+            'excel': 'fa-file-excel',
+            'zip': 'fa-file-archive'
+        };
+
+        // ============================================================
         // THEME
         // ============================================================
         function toggleTheme() {
@@ -854,7 +868,7 @@
         }
 
         // ============================================================
-        // VERIFICĂ TOKEN-UL LA ÎNCĂRCARE
+        // VERIFICĂ TOKEN-UL
         // ============================================================
         async function verificaToken() {
             const token = localStorage.getItem('accessToken');
@@ -939,7 +953,7 @@
         }
 
         // ============================================================
-        // UI - ASCUNDE UPLOAD PENTRU ELEVI
+        // UI
         // ============================================================
         function actualizeazaUI() {
             const badge = document.getElementById('role-badge');
@@ -960,17 +974,17 @@
         }
 
         function getAuthHeaders() {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-        console.warn('⚠️ Token lipsă în getAuthHeaders()');
-        return {};
-    }
-    return {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    };
-}
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                console.warn('⚠️ Token lipsă în getAuthHeaders()');
+                return {};
+            }
+            return {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
+        }
 
         // ============================================================
         // RESURSE CRUD
@@ -1034,20 +1048,6 @@
                 return;
             }
 
-            // ============================================================
-// MAPA ICONIȚELOR PENTRU TIPURI DE FIȘIERE
-// ============================================================
-           const tipIconMap = {
-            'pdf': 'fa-file-pdf',
-            'image': 'fa-file-image',
-            'code': 'fa-file-code',
-            'text': 'fa-file-alt',
-            'word': 'fa-file-word',
-            'ppt': 'fa-file-powerpoint',
-            'excel': 'fa-file-excel',
-            'zip': 'fa-file-archive'
-};
-
             const tipClassMap = {
                 'pdf': 'pdf', 'image': 'image', 'code': 'code', 'text': 'txt',
                 'word': 'word', 'ppt': 'ppt', 'excel': 'excel', 'zip': 'zip'
@@ -1081,164 +1081,197 @@
         }
 
         // ============================================================
-        // PREVIEW - TRIMITE TOKEN
+        // PREVIEW - VERSIUNE CORECTĂ
         // ============================================================
-        // ============================================================
-// PREVIEW - FOLOSEȘTE BLOB PENTRU PREVIZUALIZARE
-// ============================================================
-// ============================================================
-// PREVIEW - VERSIUNE CORECTATĂ
-// ============================================================
-// ============================================================
-// PREVIEW - VERSIUNE CU IFRAME
-// ============================================================
-// ============================================================
-// PREVIEW - VERSIUNE CORECTATĂ
-// ============================================================
-// ============================================================
-// PREVIEW - VERSIUNE CORECTATĂ
-// ============================================================
-// ============================================================
-// PREVIEW - VERSIUNE CU BLOB PENTRU PDF
-// ============================================================
-@app.get("/view-pdf/{file_id}")
-async def view_pdf(
-    file_id: int,
-    token: str
-):
-    """Vizualizează PDF inline"""
-    try:
-        # Verifică token-ul
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except:
-        raise HTTPException(status_code=401, detail="Token invalid")
-    
-    try:
-        metadata_file = UPLOAD_DIR / "metadata.json"
-        if not metadata_file.exists():
-            raise HTTPException(status_code=404, detail="Metadatele nu au fost găsite")
-        
-        with open(metadata_file, "r", encoding="utf-8") as f:
-            metadata = json.load(f)
-        
-        resource = None
-        for r in metadata:
-            if r["id"] == file_id:
-                resource = r
-                break
-        
-        if not resource:
-            raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
-        
-        file_path = UPLOAD_DIR / resource["filename"]
-        if not file_path.exists():
-            raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit pe server")
-        
-        return FileResponse(
-            path=file_path,
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": "inline",
-                "Cache-Control": "no-cache"
+        async function previewResource(id) {
+            console.log('🔍 Preview resource:', id);
+            
+            const r = resurse.find(item => item.id === id);
+            if (!r) { 
+                showToast('⚠️ Resursa nu a fost găsită!', 'error'); 
+                return; 
             }
-        )
-        
-    except Exception as e:
-        print(f"❌ Eroare: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-   function closePreview() {
-    const body = document.getElementById('preview-body');
-    
-    // Eliberează URL-ul obiect
-    if (body.dataset.blobUrl) {
-        URL.revokeObjectURL(body.dataset.blobUrl);
-        body.dataset.blobUrl = '';
-    }
-    
-    document.getElementById('preview-modal').classList.remove('active');
-    document.body.style.overflow = '';
-    document.getElementById('preview-body').innerHTML = '';
-}
+
+            const token = localStorage.getItem('accessToken');
+            console.log('🔑 Token pentru preview:', token ? 'Există' : 'Lipsește');
+            
+            if (!token) { 
+                window.location.href = '/'; 
+                return; 
+            }
+
+            currentPreviewId = id;
+            document.getElementById('preview-title').textContent = r.titlu;
+
+            const body = document.getElementById('preview-body');
+            document.getElementById('preview-download-btn').onclick = () => downloadResource(id);
+
+            // Arată loading
+            body.innerHTML = `
+                <div style="text-align:center;padding:2rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--primary);"></i>
+                    <p style="margin-top:1rem;color:var(--text-secondary);">Se încarcă fișierul...</p>
+                </div>
+            `;
+
+            const ext = r.original_name ? r.original_name.split('.').pop().toLowerCase() : '';
+            const fileType = r.tip || ext;
+            
+            try {
+                if (fileType === 'pdf' || ext === 'pdf') {
+                    // Pentru PDF - folosește iframe cu view-pdf
+                    const viewUrl = `/view-pdf/${r.id}?token=${encodeURIComponent(token)}`;
+                    body.innerHTML = `
+                        <div style="width:100%;height:70vh;border-radius:8px;overflow:hidden;border:1px solid var(--border-color);">
+                            <iframe src="${viewUrl}" style="width:100%;height:100%;border:none;"></iframe>
+                        </div>
+                        <div style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;align-items:center;">
+                            <span style="font-size:0.85rem;color:var(--text-secondary);">
+                                📄 ${r.original_name || 'document.pdf'}
+                            </span>
+                            <button onclick="window.open('${viewUrl}', '_blank')" class="btn btn-primary btn-sm">
+                                <i class="fas fa-external-link-alt"></i> Deschide în fereastră nouă
+                            </button>
+                            <button onclick="downloadResource(${r.id})" class="btn btn-success btn-sm">
+                                <i class="fas fa-download"></i> Descarcă
+                            </button>
+                        </div>
+                    `;
+                } else if (fileType === 'image' || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
+                    const imageUrl = `/download-resource-token/${r.id}?token=${encodeURIComponent(token)}`;
+                    body.innerHTML = `
+                        <img src="${imageUrl}" alt="${r.titlu}" style="max-width:100%;max-height:70vh;border-radius:8px;display:block;margin:0 auto;" />
+                        <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary);text-align:center;">
+                            🖼️ ${r.original_name || 'image'}
+                        </div>
+                    `;
+                } else if (fileType === 'text' || ext === 'txt') {
+                    const downloadUrl = `/download-resource-token/${r.id}?token=${encodeURIComponent(token)}`;
+                    const response = await fetch(downloadUrl);
+                    const text = await response.text();
+                    body.innerHTML = `
+                        <div style="background:var(--bg-input);padding:1rem;border-radius:8px;white-space:pre-wrap;font-family:'JetBrains Mono',monospace;font-size:0.85rem;max-height:70vh;overflow-y:auto;border:1px solid var(--border-color);">${text}</div>
+                        <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary);text-align:center;">
+                            📝 ${r.original_name || 'text.txt'}
+                        </div>
+                    `;
+                } else if (fileType === 'code' || ['cpp', 'c', 'py', 'html', 'css', 'js', 'java', 'go', 'rs', 'php'].includes(ext)) {
+                    const downloadUrl = `/download-resource-token/${r.id}?token=${encodeURIComponent(token)}`;
+                    const response = await fetch(downloadUrl);
+                    const code = await response.text();
+                    body.innerHTML = `
+                        <div style="background:var(--bg-code);color:var(--text-code);padding:1rem;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:0.85rem;max-height:70vh;overflow-y:auto;white-space:pre-wrap;border:1px solid var(--border-color);">${code}</div>
+                        <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary);text-align:center;">
+                            💻 ${r.original_name || 'code'}
+                        </div>
+                    `;
+                } else {
+                    body.innerHTML = `
+                        <div style="text-align:center;padding:2rem;">
+                            <i class="fas ${tipIconMap[r.tip] || 'fa-file'}" style="font-size:4rem;color:var(--primary);"></i>
+                            <h3 style="margin-top:1rem;">${r.titlu}</h3>
+                            <p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p>
+                            <p style="color:var(--text-secondary);font-size:0.85rem;">Folosește butonul "Descarcă" pentru a-l salva.</p>
+                            <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:0.5rem;">
+                                📄 ${r.original_name || 'document'} (${r.tip || ext || 'necunoscut'})
+                            </p>
+                            <button class="btn btn-success" onclick="downloadResource(${r.id})" style="margin-top:1rem;">
+                                <i class="fas fa-download"></i> Descarcă
+                            </button>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('❌ Preview error:', error);
+                body.innerHTML = `
+                    <div style="text-align:center;padding:2rem;color:var(--danger);">
+                        <i class="fas fa-exclamation-circle" style="font-size:4rem;"></i>
+                        <p style="margin-top:1rem;font-weight:600;">Eroare la încărcarea fișierului</p>
+                        <p style="font-size:0.85rem;color:var(--text-secondary);">${error.message}</p>
+                        <button class="btn btn-primary" onclick="previewResource(${id})" style="margin-top:1rem;">
+                            <i class="fas fa-redo"></i> Încearcă din nou
+                        </button>
+                    </div>
+                `;
+            }
+
+            document.getElementById('preview-modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePreview() {
+            document.getElementById('preview-modal').classList.remove('active');
+            document.body.style.overflow = '';
+            document.getElementById('preview-body').innerHTML = '';
+        }
 
         // ============================================================
-        // DOWNLOAD - TRIMITE TOKEN
+        // DOWNLOAD
         // ============================================================
-       // ============================================================
-// DOWNLOAD - VERSIUNE CORECTATĂ
-// ============================================================
-// ============================================================
-// DOWNLOAD - VERSIUNE CORECTATĂ (folosește token în URL)
-// ============================================================
-// ============================================================
-// DOWNLOAD - VERSIUNE CORECTATĂ
-// ============================================================
-async function downloadResource(id) {
-    const downloadId = id || currentPreviewId;
-    if (!downloadId) { 
-        showToast('⚠️ Nicio resursă selectată!', 'warning'); 
-        return; 
-    }
-    
-    const token = localStorage.getItem('accessToken');
-    console.log('🔑 Token pentru download:', token ? 'Există' : 'Lipsește');
-    
-    if (!token) { 
-        window.location.href = '/'; 
-        return; 
-    }
-    
-    // Folosește endpoint-ul cu token în URL
-    const downloadUrl = `/download-resource-token/${downloadId}?token=${encodeURIComponent(token)}`;
-    console.log('📥 Download URL:', downloadUrl);
-    
-    try {
-        const response = await fetch(downloadUrl);
-        
-        console.log('📥 Răspuns download status:', response.status);
-        
-        if (response.status === 401) {
-            console.log('🔒 Token invalid la download');
-            localStorage.clear();
-            window.location.href = '/';
-            return;
+        async function downloadResource(id) {
+            const downloadId = id || currentPreviewId;
+            if (!downloadId) { 
+                showToast('⚠️ Nicio resursă selectată!', 'warning'); 
+                return; 
+            }
+            
+            const token = localStorage.getItem('accessToken');
+            console.log('🔑 Token pentru download:', token ? 'Există' : 'Lipsește');
+            
+            if (!token) { 
+                window.location.href = '/'; 
+                return; 
+            }
+            
+            const downloadUrl = `/download-resource-token/${downloadId}?token=${encodeURIComponent(token)}`;
+            console.log('📥 Download URL:', downloadUrl);
+            
+            try {
+                const response = await fetch(downloadUrl);
+                
+                if (response.status === 401) {
+                    console.log('🔒 Token invalid la download');
+                    localStorage.clear();
+                    window.location.href = '/';
+                    return;
+                }
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Eroare:', errorText);
+                    throw new Error(`Status: ${response.status} - ${errorText}`);
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                let filename = 'download';
+                const contentDisposition = response.headers.get('content-disposition');
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="(.+)"/);
+                    if (match) filename = match[1];
+                } else {
+                    const r = resurse.find(item => item.id === downloadId);
+                    if (r && r.original_name) filename = r.original_name;
+                }
+                
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                showToast('✅ Fișierul s-a descărcat!');
+                
+            } catch (error) {
+                console.error('❌ Download error:', error);
+                showToast('⚠️ Eroare la descărcare: ' + error.message, 'error');
+            }
         }
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Eroare:', errorText);
-            throw new Error(`Status: ${response.status} - ${errorText}`);
-        }
-        
-        // Descarcă fișierul
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        
-        // Extrage numele fișierului din header sau folosește cel salvat
-        let filename = 'download';
-        const contentDisposition = response.headers.get('content-disposition');
-        if (contentDisposition) {
-            const match = contentDisposition.match(/filename="(.+)"/);
-            if (match) filename = match[1];
-        } else {
-            const r = resurse.find(item => item.id === downloadId);
-            if (r && r.original_name) filename = r.original_name;
-        }
-        
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        
-        showToast('✅ Fișierul s-a descărcat!');
-        
-    } catch (error) {
-        console.error('❌ Download error:', error);
-        showToast('⚠️ Eroare la descărcare: ' + error.message, 'error');
-    }
-}
+
         // ============================================================
         // DELETE
         // ============================================================
@@ -1403,12 +1436,10 @@ async function downloadResource(id) {
             document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
             document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
 
-            // ⚠️ PASUL 1: Verifică token-ul MAI ÎNTÂI
             console.log('🚀 Inițializare pagină resurse...');
             const tokenValid = await verificaToken();
-            if (!tokenValid) return;  // Dacă token invalid, redirecționează la login
+            if (!tokenValid) return;
             
-            // ⚠️ PASUL 2: Verifică autentificarea
             console.log('🔐 Verificare autentificare...');
             const autentificat = await verificaAutentificare();
             if (autentificat) {
@@ -1417,7 +1448,6 @@ async function downloadResource(id) {
                 await incarcaResurse();
             }
 
-            // Restul codului (drag and drop, etc.)
             const uploadZone = document.querySelector('.upload-zone');
             if (uploadZone) {
                 uploadZone.addEventListener('dragover', e => { 
