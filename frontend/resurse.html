@@ -1034,10 +1034,18 @@
                 return;
             }
 
+            // ============================================================
+// MAPA ICONIȚELOR PENTRU TIPURI DE FIȘIERE
+// ============================================================
             const tipIconMap = {
-                'pdf': 'fa-file-pdf', 'image': 'fa-file-image', 'code': 'fa-file-code',
-                'text': 'fa-file-alt', 'word': 'fa-file-word', 'ppt': 'fa-file-powerpoint',
-                'excel': 'fa-file-excel', 'zip': 'fa-file-archive'
+                'pdf': 'fa-file-pdf',
+                'image': 'fa-file-image',
+                'code': 'fa-file-code',
+                'text': 'fa-file-alt',
+                'word': 'fa-file-word',
+                'ppt': 'fa-file-powerpoint',
+                'excel': 'fa-file-excel',
+                'zip': 'fa-file-archive'
             };
 
             const tipClassMap = {
@@ -1075,52 +1083,117 @@
         // ============================================================
         // PREVIEW - TRIMITE TOKEN
         // ============================================================
-        async function previewResource(id) {
-            const r = resurse.find(item => item.id === id);
-            if (!r) { showToast('⚠️ Resursa nu a fost găsită!', 'error'); return; }
+        // ============================================================
+// PREVIEW - FOLOSEȘTE BLOB PENTRU PREVIZUALIZARE
+// ============================================================
+async function previewResource(id) {
+    console.log('🔍 Preview resource:', id);
+    
+    const r = resurse.find(item => item.id === id);
+    if (!r) { 
+        showToast('⚠️ Resursa nu a fost găsită!', 'error'); 
+        return; 
+    }
 
-            const token = localStorage.getItem('accessToken');
-            if (!token) { window.location.href = '/'; return; }
+    const token = localStorage.getItem('accessToken');
+    console.log('🔑 Token pentru preview:', token ? 'Există' : 'Lipsește');
+    
+    if (!token) { 
+        window.location.href = '/'; 
+        return; 
+    }
 
-            currentPreviewId = id;
-            document.getElementById('preview-title').textContent = r.titlu;
+    currentPreviewId = id;
+    document.getElementById('preview-title').textContent = r.titlu;
 
-            const body = document.getElementById('preview-body');
-            document.getElementById('preview-download-btn').onclick = () => downloadResource(id);
+    const body = document.getElementById('preview-body');
+    document.getElementById('preview-download-btn').onclick = () => downloadResource(id);
 
-            const ext = r.original_name ? r.original_name.split('.').pop().toLowerCase() : '';
-            const downloadUrl = `/download-resource/${r.id}`;
-            
-            try {
-                if (r.tip === 'pdf' || ext === 'pdf') {
-                    body.innerHTML = `<embed src="${downloadUrl}?token=${encodeURIComponent(token)}" type="application/pdf" class="preview-pdf" />`;
-                } else if (r.tip === 'image' || ['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
-                    body.innerHTML = `<img src="${downloadUrl}?token=${encodeURIComponent(token)}" alt="${r.titlu}" class="preview-image" />`;
-                } else if (r.tip === 'text' || ext === 'txt') {
-                    const textRes = await fetch(downloadUrl, { headers: getAuthHeaders() });
-                    const text = await textRes.text();
-                    body.innerHTML = `<div class="preview-text">${text}</div>`;
-                } else if (r.tip === 'code' || ['cpp', 'c', 'py', 'html'].includes(ext)) {
-                    const codeRes = await fetch(downloadUrl, { headers: getAuthHeaders() });
-                    const code = await codeRes.text();
-                    body.innerHTML = `<div class="preview-code">${code}</div>`;
-                } else {
-                    body.innerHTML = `<div style="text-align:center;padding:2rem;"><i class="fas ${tipIconMap[r.tip] || 'fa-file'}" style="font-size:4rem;color:var(--primary);"></i><h3 style="margin-top:1rem;">${r.titlu}</h3><p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p><p style="color:var(--text-secondary);font-size:0.85rem;">Folosește butonul "Descarcă" pentru a-l salva.</p></div>`;
-                }
-            } catch (error) {
-                console.error('Preview error:', error);
-                body.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--danger);"><i class="fas fa-exclamation-circle" style="font-size:4rem;"></i><p>Eroare la încărcarea fișierului. Încearcă din nou.</p></div>`;
+    const ext = r.original_name ? r.original_name.split('.').pop().toLowerCase() : '';
+    
+    try {
+        // Fetch fișierul cu token în header
+        const response = await fetch(`/download-resource/${r.id}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
-
-            document.getElementById('preview-modal').classList.add('active');
-            document.body.style.overflow = 'hidden';
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                localStorage.clear();
+                window.location.href = '/';
+                return;
+            }
+            throw new Error(`Status: ${response.status}`);
         }
-
-        function closePreview() {
-            document.getElementById('preview-modal').classList.remove('active');
-            document.body.style.overflow = '';
-            document.getElementById('preview-body').innerHTML = '';
+        
+        // Obține blob-ul
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        
+        // Determină tipul fișierului
+        const fileType = r.tip || ext;
+        
+        // Afișează în funcție de tip
+        if (fileType === 'pdf' || ext === 'pdf') {
+            body.innerHTML = `<embed src="${url}" type="application/pdf" class="preview-pdf" />`;
+        } else if (fileType === 'image' || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) {
+            body.innerHTML = `<img src="${url}" alt="${r.titlu}" class="preview-image" />`;
+        } else if (fileType === 'text' || ext === 'txt') {
+            const text = await blob.text();
+            body.innerHTML = `<div class="preview-text">${text}</div>`;
+        } else if (fileType === 'code' || ['cpp', 'c', 'py', 'html', 'css', 'js', 'java', 'go', 'rs'].includes(ext)) {
+            const code = await blob.text();
+            body.innerHTML = `<div class="preview-code">${code}</div>`;
+        } else {
+            body.innerHTML = `
+                <div style="text-align:center;padding:2rem;">
+                    <i class="fas ${tipIconMap[r.tip] || 'fa-file'}" style="font-size:4rem;color:var(--primary);"></i>
+                    <h3 style="margin-top:1rem;">${r.titlu}</h3>
+                    <p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p>
+                    <p style="color:var(--text-secondary);font-size:0.85rem;">Folosește butonul "Descarcă" pentru a-l salva.</p>
+                    <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:0.5rem;">📄 ${r.original_name || 'document'}</p>
+                </div>
+            `;
         }
+        
+        // Salvează URL-ul pentru a-l elibera mai târziu
+        body.dataset.blobUrl = url;
+        
+    } catch (error) {
+        console.error('❌ Preview error:', error);
+        body.innerHTML = `
+            <div style="text-align:center;padding:2rem;color:var(--danger);">
+                <i class="fas fa-exclamation-circle" style="font-size:4rem;"></i>
+                <p style="margin-top:1rem;">Eroare la încărcarea fișierului.</p>
+                <p style="font-size:0.85rem;color:var(--text-secondary);">${error.message}</p>
+                <button class="btn btn-primary" onclick="previewResource(${id})" style="margin-top:1rem;">
+                    <i class="fas fa-redo"></i> Încearcă din nou
+                </button>
+            </div>
+        `;
+    }
+
+    document.getElementById('preview-modal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+       function closePreview() {
+    const body = document.getElementById('preview-body');
+    
+    // Eliberează URL-ul obiect pentru a evita memory leaks
+    if (body.dataset.blobUrl) {
+        URL.revokeObjectURL(body.dataset.blobUrl);
+        body.dataset.blobUrl = '';
+    }
+    
+    document.getElementById('preview-modal').classList.remove('active');
+    document.body.style.overflow = '';
+    document.getElementById('preview-body').innerHTML = '';
+}
 
         // ============================================================
         // DOWNLOAD - TRIMITE TOKEN
