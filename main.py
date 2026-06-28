@@ -861,7 +861,69 @@ async def download_resource_with_token(
     except Exception as e:
         print(f"❌ Eroare download: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================
+# VIZUALIZARE PDF - INLINE
+# ============================================================
+@app.get("/view-pdf/{file_id}")
+async def view_pdf(
+    file_id: int,
+    token: str
+):
+    """Vizualizează PDF inline în browser"""
+    try:
+        # Verifică token-ul
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print(f"✅ Vizualizare PDF pentru: {payload.get('email')}")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirat")
+    except jwt.InvalidTokenError as e:
+        print(f"❌ Token invalid: {e}")
+        raise HTTPException(status_code=401, detail="Token invalid")
     
+    try:
+        metadata_file = UPLOAD_DIR / "metadata.json"
+        if not metadata_file.exists():
+            raise HTTPException(status_code=404, detail="Metadatele nu au fost găsite")
+        
+        with open(metadata_file, "r", encoding="utf-8") as f:
+            metadata = json.load(f)
+        
+        resource = None
+        for r in metadata:
+            if r["id"] == file_id:
+                resource = r
+                break
+        
+        if not resource:
+            raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
+        
+        file_path = UPLOAD_DIR / resource["filename"]
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit pe server")
+        
+        # Crește contorul de vizualizări
+        resource["vizualizari"] += 1
+        with open(metadata_file, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, ensure_ascii=False, indent=2)
+        
+        # Returnează PDF-ul pentru vizualizare inline
+        return FileResponse(
+            path=file_path,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": "inline; filename=\"" + resource["original_name"] + "\"",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Eroare vizualizare PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 # ============================================================
 # PORNIRE APLICAȚIE
 # ============================================================
