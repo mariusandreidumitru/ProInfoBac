@@ -1129,253 +1129,271 @@
         // PREVIEW
         // ============================================================
         async function previewResource(id) {
-            console.log('🔍 Preview resource apelat cu ID:', id);
-            
-            const r = resurse.find(item => item.id == id);
-            if (!r) { 
-                showToast('⚠️ Resursa nu a fost găsită!', 'error'); 
-                return; 
-            }
+    console.log('🔍 Preview resource apelat cu ID:', id);
+    
+    const r = resurse.find(item => item.id == id);
+    if (!r) { 
+        showToast('⚠️ Resursa nu a fost găsită!', 'error'); 
+        return; 
+    }
 
-            const token = localStorage.getItem('accessToken');
-            if (!token) { 
-                window.location.href = '/'; 
-                return; 
-            }
+    const token = localStorage.getItem('accessToken');
+    if (!token) { 
+        window.location.href = '/'; 
+        return; 
+    }
 
-            currentPreviewId = id;
-            document.getElementById('preview-title').textContent = r.titlu;
-            document.getElementById('preview-download-btn').onclick = () => downloadResource(id);
+    currentPreviewId = id;
+    document.getElementById('preview-title').textContent = r.titlu;
+    document.getElementById('preview-download-btn').onclick = () => downloadResource(id);
 
-            const body = document.getElementById('preview-body');
+    const body = document.getElementById('preview-body');
 
-            body.innerHTML = `
-                <div style="text-align:center;padding:2rem;">
-                    <i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--primary);"></i>
-                    <p style="margin-top:1rem;color:var(--text-secondary);">Se încarcă fișierul...</p>
-                </div>
-            `;
+    body.innerHTML = `
+        <div style="text-align:center;padding:2rem;">
+            <i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--primary);"></i>
+            <p style="margin-top:1rem;color:var(--text-secondary);">Se încarcă fișierul...</p>
+        </div>
+    `;
 
-            document.getElementById('preview-modal').classList.add('active');
-            document.body.style.overflow = 'hidden';
+    document.getElementById('preview-modal').classList.add('active');
+    document.body.style.overflow = 'hidden';
 
-            const ext = r.original_name ? r.original_name.split('.').pop().toLowerCase() : '';
-            const fileType = r.tip || ext;
-            
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000);
-                
-                const response = await fetch(`/download-resource/${r.id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-                
-                console.log('📥 Răspuns status:', response.status);
-                
-                if (response.status === 401) {
-                    localStorage.clear();
-                    window.location.href = '/';
-                    return;
-                }
-                
-                if (!response.ok) {
-                    throw new Error(`Status: ${response.status}`);
-                }
-                
-                const blob = await response.blob();
-
-                if (currentPreviewBlobUrl) {
-                    URL.revokeObjectURL(currentPreviewBlobUrl);
-                }
-                const url = URL.createObjectURL(blob);
-                currentPreviewBlobUrl = url;
-                
-                if (fileType === 'pdf' || ext === 'pdf') {
-                    body.innerHTML = `
-                        <div style="width:100%;height:70vh;border-radius:8px;overflow:hidden;border:1px solid var(--border-color);">
-                            <iframe src="${url}" style="width:100%;height:100%;border:none;"></iframe>
-                        </div>
-                        <div style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;align-items:center;">
-                            <span style="font-size:0.85rem;color:var(--text-secondary);">📄 ${r.original_name || 'document.pdf'}</span>
-                            <button onclick="window.open('${url}', '_blank')" class="btn btn-primary btn-sm">
-                                <i class="fas fa-external-link-alt"></i> Deschide
-                            </button>
-                            <button onclick="downloadResource(${r.id})" class="btn btn-success btn-sm">
-                                <i class="fas fa-download"></i> Descarcă
-                            </button>
-                        </div>
-                    `;
-                } else if (fileType === 'image' || ['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
-                    body.innerHTML = `
-                        <img src="${url}" alt="${r.titlu}" style="max-width:100%;max-height:70vh;border-radius:8px;display:block;margin:0 auto;" />
-                        <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary);text-align:center;">
-                            🖼️ ${r.original_name || 'image'}
-                        </div>
-                    `;
-                } else {
-                    body.innerHTML = `
-                        <div style="text-align:center;padding:2rem;">
-                            <i class="fas ${tipIconMap[r.tip] || 'fa-file'}" style="font-size:4rem;color:var(--primary);"></i>
-                            <h3 style="margin-top:1rem;">${r.titlu}</h3>
-                            <p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p>
-                            <button class="btn btn-success" onclick="downloadResource(${r.id})" style="margin-top:1rem;">
-                                <i class="fas fa-download"></i> Descarcă
-                            </button>
-                        </div>
-                    `;
-                }
-                
-            } catch (error) {
-                console.error('❌ Preview error:', error);
-                if (error.name === 'AbortError') {
-                    showToast('⏱️ Timeout la încărcare', 'warning');
-                }
+    try {
+        // 1. Obține URL-ul direct
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const urlResponse = await fetch(`/api/resurse/${id}/url`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!urlResponse.ok) {
+            throw new Error(`Status: ${urlResponse.status}`);
+        }
+        
+        const data = await urlResponse.json();
+        console.log('📥 URL response:', data);
+        
+        const ext = r.original_name ? r.original_name.split('.').pop().toLowerCase() : '';
+        const fileType = r.tip || ext;
+        
+        if (data.direct && data.url) {
+            // Folosește URL-ul direct din Storage
+            if (fileType === 'pdf' || ext === 'pdf') {
                 body.innerHTML = `
-                    <div style="text-align:center;padding:2rem;color:var(--danger);">
-                        <i class="fas fa-exclamation-circle" style="font-size:4rem;"></i>
-                        <p style="margin-top:1rem;font-weight:600;">Eroare la încărcare</p>
-                        <p style="font-size:0.85rem;color:var(--text-secondary);">${error.message}</p>
-                        <button class="btn btn-primary" onclick="previewResource(${id})" style="margin-top:1rem;">
-                            <i class="fas fa-redo"></i> Încearcă din nou
+                    <div style="width:100%;height:70vh;border-radius:8px;overflow:hidden;border:1px solid var(--border-color);">
+                        <iframe src="${data.url}" style="width:100%;height:100%;border:none;"></iframe>
+                    </div>
+                    <div style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;align-items:center;">
+                        <span style="font-size:0.85rem;color:var(--text-secondary);">📄 ${data.original_name || 'document.pdf'}</span>
+                        <button onclick="window.open('${data.url}', '_blank')" class="btn btn-primary btn-sm">
+                            <i class="fas fa-external-link-alt"></i> Deschide
+                        </button>
+                        <button onclick="window.open('${data.url}', '_blank')" class="btn btn-success btn-sm">
+                            <i class="fas fa-download"></i> Descarcă
+                        </button>
+                    </div>
+                `;
+            } else if (fileType === 'image' || ['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+                body.innerHTML = `
+                    <img src="${data.url}" alt="${r.titlu}" style="max-width:100%;max-height:70vh;border-radius:8px;display:block;margin:0 auto;" />
+                    <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary);text-align:center;">
+                        🖼️ ${data.original_name || 'image'}
+                        <br>
+                        <button onclick="window.open('${data.url}', '_blank')" class="btn btn-success btn-sm" style="margin-top:0.5rem;">
+                            <i class="fas fa-download"></i> Descarcă
+                        </button>
+                    </div>
+                `;
+            } else {
+                body.innerHTML = `
+                    <div style="text-align:center;padding:2rem;">
+                        <i class="fas ${tipIconMap[r.tip] || 'fa-file'}" style="font-size:4rem;color:var(--primary);"></i>
+                        <h3 style="margin-top:1rem;">${r.titlu}</h3>
+                        <p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p>
+                        <button class="btn btn-success" onclick="window.open('${data.url}', '_blank')" style="margin-top:1rem;">
+                            <i class="fas fa-download"></i> Descarcă
                         </button>
                     </div>
                 `;
             }
-        }
-
-        function closePreview() {
-            document.getElementById('preview-modal').classList.remove('active');
-            document.body.style.overflow = '';
-            document.getElementById('preview-body').innerHTML = '';
+        } else if (data.file_data) {
+            // Fallback pentru resurse vechi (base64)
+            const fileBytes = atob(data.file_data);
+            const byteArray = new Uint8Array(fileBytes.length);
+            for (let i = 0; i < fileBytes.length; i++) {
+                byteArray[i] = fileBytes.charCodeAt(i);
+            }
+            const blob = new Blob([byteArray], { type: getMimeType(data.original_name) });
+            const url = URL.createObjectURL(blob);
+            
             if (currentPreviewBlobUrl) {
                 URL.revokeObjectURL(currentPreviewBlobUrl);
-                currentPreviewBlobUrl = null;
             }
-        }
-
-        // ============================================================
-        // DOWNLOAD
-        // ============================================================
-        async function downloadResource(id) {
-            console.log("downloadResource chemat cu id:", id);
+            currentPreviewBlobUrl = url;
             
-            const downloadId = id || currentPreviewId;
-           
-            if (!downloadId) { 
-                showToast('⚠️ Nicio resursă selectată!', 'warning'); 
-                return; 
+            if (fileType === 'pdf' || ext === 'pdf') {
+                body.innerHTML = `
+                    <div style="width:100%;height:70vh;border-radius:8px;overflow:hidden;border:1px solid var(--border-color);">
+                        <iframe src="${url}" style="width:100%;height:100%;border:none;"></iframe>
+                    </div>
+                    <div style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;align-items:center;">
+                        <span style="font-size:0.85rem;color:var(--text-secondary);">📄 ${data.original_name || 'document.pdf'}</span>
+                        <button onclick="window.open('${url}', '_blank')" class="btn btn-primary btn-sm">
+                            <i class="fas fa-external-link-alt"></i> Deschide
+                        </button>
+                    </div>
+                `;
+            } else if (fileType === 'image' || ['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+                body.innerHTML = `
+                    <img src="${url}" alt="${r.titlu}" style="max-width:100%;max-height:70vh;border-radius:8px;display:block;margin:0 auto;" />
+                    <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary);text-align:center;">
+                        🖼️ ${data.original_name || 'image'}
+                    </div>
+                `;
+            } else {
+                body.innerHTML = `
+                    <div style="text-align:center;padding:2rem;">
+                        <i class="fas ${tipIconMap[r.tip] || 'fa-file'}" style="font-size:4rem;color:var(--primary);"></i>
+                        <h3 style="margin-top:1rem;">${r.titlu}</h3>
+                        <p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p>
+                        <button class="btn btn-success" onclick="downloadResource(${r.id})" style="margin-top:1rem;">
+                            <i class="fas fa-download"></i> Descarcă
+                        </button>
+                    </div>
+                `;
             }
-            
-            const token = localStorage.getItem('accessToken');
-            if (!token) { 
-                window.location.href = '/'; 
-                return; 
-            }
-            
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000);
-                
-                const response = await fetch(`/download-resource/${downloadId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-                
-                console.log('📥 Răspuns download status:', response.status);
-                
-                if (response.status === 401) {
-                    localStorage.clear();
-                    window.location.href = '/';
-                    return;
-                }
-                
-                if (!response.ok) {
-                    throw new Error(`Status: ${response.status}`);
-                }
-                
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                
-                let filename = 'download';
-                const r = resurse.find(item => item.id == downloadId);
-                if (r && r.original_name) filename = r.original_name;
-                
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-                
-                showToast('✅ Fișierul s-a descărcat!');
-                
-            } catch (error) {
-                console.error('❌ Download error:', error);
-                if (error.name === 'AbortError') {
-                    showToast('⏱️ Timeout la descărcare', 'warning');
-                } else {
-                    showToast('⚠️ Eroare la descărcare: ' + error.message, 'error');
-                }
-            }
+        } else {
+            throw new Error('Nu s-au găsit date pentru fișier');
         }
-
-        // ============================================================
-        // STERGE RESURSA
-        // ============================================================
-        async function stergeResursa(id) {
-            if (rolUtilizator !== 'teacher') { 
-                showToast('⚠️ Doar profesorii pot șterge!', 'error'); 
-                return; 
-            }
-            if (!confirm('Sigur dorești să ștergi această resursă?')) return;
-
-            const token = localStorage.getItem('accessToken');
-            if (!token) { window.location.href = '/'; return; }
-
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-                
-                const response = await fetch(`/api/resurse/${id}`, {
-                    method: 'DELETE',
-                    headers: { 
-                        'Authorization': `Bearer ${token}`, 
-                        'Content-Type': 'application/json' 
-                    },
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-
-                if (response.ok) {
-                    showToast('🗑️ Resursa a fost ștearsă!');
-                    // Forțează reîncărcarea
-                    await incarcaResurse(true);
-                } else {
-                    const data = await response.json();
-                    showToast('⚠️ ' + (data.detail || 'Eroare la ștergere'), 'error');
-                }
-            } catch (error) {
-                if (error.name === 'AbortError') {
-                    showToast('⏱️ Timeout la ștergere', 'warning');
-                } else {
-                    showToast('⚠️ Eroare: ' + error.message, 'error');
-                }
-            }
+        
+    } catch (error) {
+        console.error('❌ Preview error:', error);
+        if (error.name === 'AbortError') {
+            showToast('⏱️ Timeout la încărcare', 'warning');
         }
+        body.innerHTML = `
+            <div style="text-align:center;padding:2rem;color:var(--danger);">
+                <i class="fas fa-exclamation-circle" style="font-size:4rem;"></i>
+                <p style="margin-top:1rem;font-weight:600;">Eroare la încărcare</p>
+                <p style="font-size:0.85rem;color:var(--text-secondary);">${error.message}</p>
+                <button class="btn btn-primary" onclick="previewResource(${id})" style="margin-top:1rem;">
+                    <i class="fas fa-redo"></i> Încearcă din nou
+                </button>
+            </div>
+        `;
+    }
+}
+    async function downloadResource(id) {
+    console.log("downloadResource chemat cu id:", id);
+    
+    const downloadId = id || currentPreviewId;
+   
+    if (!downloadId) { 
+        showToast('⚠️ Nicio resursă selectată!', 'warning'); 
+        return; 
+    }
+    
+    const token = localStorage.getItem('accessToken');
+    if (!token) { 
+        window.location.href = '/'; 
+        return; 
+    }
+    
+    try {
+        // 1. Obține URL-ul direct
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const urlResponse = await fetch(`/api/resurse/${downloadId}/url`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!urlResponse.ok) {
+            throw new Error(`Status: ${urlResponse.status}`);
+        }
+        
+        const data = await urlResponse.json();
+        console.log('📥 Download URL:', data);
+        
+        if (data.direct && data.url) {
+            // Descarcă direct din Storage
+            const a = document.createElement('a');
+            a.href = data.url;
+            a.download = data.original_name || 'download';
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('✅ Descărcare inițiată!');
+        } else if (data.file_data) {
+            // Fallback pentru resurse vechi
+            const fileBytes = atob(data.file_data);
+            const byteArray = new Uint8Array(fileBytes.length);
+            for (let i = 0; i < fileBytes.length; i++) {
+                byteArray[i] = fileBytes.charCodeAt(i);
+            }
+            const blob = new Blob([byteArray], { type: getMimeType(data.original_name) });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = data.original_name || 'download';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('✅ Fișierul s-a descărcat!');
+        } else {
+            throw new Error('Nu s-au găsit date pentru fișier');
+        }
+        
+    } catch (error) {
+        console.error('❌ Download error:', error);
+        if (error.name === 'AbortError') {
+            showToast('⏱️ Timeout la descărcare', 'warning');
+        } else {
+            showToast('⚠️ Eroare la descărcare: ' + error.message, 'error');
+        }
+    }
+}
 
+function getMimeType(filename) {
+    const ext = filename ? filename.split('.').pop().toLowerCase() : '';
+    const mimeTypes = {
+        'pdf': 'application/pdf',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'txt': 'text/plain',
+        'cpp': 'text/plain',
+        'c': 'text/plain',
+        'py': 'text/plain',
+        'js': 'text/plain',
+        'html': 'text/html',
+        'doc': 'application/msword',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'ppt': 'application/vnd.ms-powerpoint',
+        'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'xls': 'application/vnd.ms-excel',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'zip': 'application/zip'
+    };
+    return mimeTypes[ext] || 'application/octet-stream';
+}
         // ============================================================
         // UPLOAD
         // ============================================================
