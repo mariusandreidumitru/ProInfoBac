@@ -1086,6 +1086,9 @@
         // ============================================================
 // PREVIEW - FOLOSEȘTE BLOB PENTRU PREVIZUALIZARE
 // ============================================================
+// ============================================================
+// PREVIEW - VERSIUNE CORECTATĂ
+// ============================================================
 async function previewResource(id) {
     console.log('🔍 Preview resource:', id);
     
@@ -1109,10 +1112,18 @@ async function previewResource(id) {
     const body = document.getElementById('preview-body');
     document.getElementById('preview-download-btn').onclick = () => downloadResource(id);
 
+    // Arată loading
+    body.innerHTML = `
+        <div style="text-align:center;padding:2rem;">
+            <i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--primary);"></i>
+            <p style="margin-top:1rem;color:var(--text-secondary);">Se încarcă fișierul...</p>
+        </div>
+    `;
+
     const ext = r.original_name ? r.original_name.split('.').pop().toLowerCase() : '';
     
     try {
-        // Fetch fișierul cu token în header
+        // ⚠️ IMPORTANT: Folosește fetch cu token în header
         const response = await fetch(`/download-resource/${r.id}`, {
             method: 'GET',
             headers: {
@@ -1121,33 +1132,54 @@ async function previewResource(id) {
             }
         });
         
+        console.log('📥 Răspuns status:', response.status);
+        
         if (!response.ok) {
             if (response.status === 401) {
+                console.log('🔒 Token invalid, redirecționez la login...');
                 localStorage.clear();
                 window.location.href = '/';
                 return;
             }
-            throw new Error(`Status: ${response.status}`);
+            throw new Error(`Status: ${response.status} - ${response.statusText}`);
         }
         
         // Obține blob-ul
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
-        
-        // Determină tipul fișierului
         const fileType = r.tip || ext;
         
         // Afișează în funcție de tip
         if (fileType === 'pdf' || ext === 'pdf') {
-            body.innerHTML = `<embed src="${url}" type="application/pdf" class="preview-pdf" />`;
-        } else if (fileType === 'image' || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) {
-            body.innerHTML = `<img src="${url}" alt="${r.titlu}" class="preview-image" />`;
+            body.innerHTML = `
+                <embed src="${url}" type="application/pdf" class="preview-pdf" />
+                <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-secondary);text-align:center;">
+                    📄 ${r.original_name || 'document.pdf'}
+                </div>
+            `;
+        } else if (fileType === 'image' || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
+            body.innerHTML = `
+                <img src="${url}" alt="${r.titlu}" class="preview-image" />
+                <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-secondary);text-align:center;">
+                    🖼️ ${r.original_name || 'image'}
+                </div>
+            `;
         } else if (fileType === 'text' || ext === 'txt') {
             const text = await blob.text();
-            body.innerHTML = `<div class="preview-text">${text}</div>`;
-        } else if (fileType === 'code' || ['cpp', 'c', 'py', 'html', 'css', 'js', 'java', 'go', 'rs'].includes(ext)) {
+            body.innerHTML = `
+                <div class="preview-text">${text}</div>
+                <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-secondary);text-align:center;">
+                    📝 ${r.original_name || 'text.txt'}
+                </div>
+            `;
+        } else if (fileType === 'code' || ['cpp', 'c', 'py', 'html', 'css', 'js', 'java', 'go', 'rs', 'php'].includes(ext)) {
             const code = await blob.text();
-            body.innerHTML = `<div class="preview-code">${code}</div>`;
+            body.innerHTML = `
+                <div class="preview-code">${code}</div>
+                <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-secondary);text-align:center;">
+                    💻 ${r.original_name || 'code'}
+                </div>
+            `;
         } else {
             body.innerHTML = `
                 <div style="text-align:center;padding:2rem;">
@@ -1155,7 +1187,9 @@ async function previewResource(id) {
                     <h3 style="margin-top:1rem;">${r.titlu}</h3>
                     <p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p>
                     <p style="color:var(--text-secondary);font-size:0.85rem;">Folosește butonul "Descarcă" pentru a-l salva.</p>
-                    <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:0.5rem;">📄 ${r.original_name || 'document'}</p>
+                    <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:0.5rem;">
+                        📄 ${r.original_name || 'document'} (${r.tip || ext || 'necunoscut'})
+                    </p>
                 </div>
             `;
         }
@@ -1168,8 +1202,11 @@ async function previewResource(id) {
         body.innerHTML = `
             <div style="text-align:center;padding:2rem;color:var(--danger);">
                 <i class="fas fa-exclamation-circle" style="font-size:4rem;"></i>
-                <p style="margin-top:1rem;">Eroare la încărcarea fișierului.</p>
+                <p style="margin-top:1rem;font-weight:600;">Eroare la încărcarea fișierului</p>
                 <p style="font-size:0.85rem;color:var(--text-secondary);">${error.message}</p>
+                <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.5rem;">
+                    📄 ${r.original_name || 'document'}
+                </p>
                 <button class="btn btn-primary" onclick="previewResource(${id})" style="margin-top:1rem;">
                     <i class="fas fa-redo"></i> Încearcă din nou
                 </button>
