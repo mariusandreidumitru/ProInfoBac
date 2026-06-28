@@ -714,7 +714,8 @@
                     <textarea class="form-control" id="resource-desc" rows="2" placeholder="Descrie pe scurt conținutul resursei..."></textarea>
                 </div>
 
-                <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+                <!-- FIX: Adăugat id="upload-zone" pentru a putea atașa event listeners corect -->
+                <div class="upload-zone" id="upload-zone">
                     <i class="fas fa-cloud-upload-alt"></i>
                     <p><strong>Click pentru a încărca un fișier</strong></p>
                     <p>sau trage și plasează aici</p>
@@ -821,7 +822,8 @@
                 <button class="btn btn-outline" onclick="closePreview()">
                     <i class="fas fa-times"></i> Închide
                 </button>
-                <button class="btn btn-primary" id="preview-download-btn" onclick="downloadResource()">
+                <!-- FIX: onclick setat dinamic în previewResource(), nu inline cu currentPreviewId -->
+                <button class="btn btn-primary" id="preview-download-btn">
                     <i class="fas fa-download"></i> Descarcă
                 </button>
             </div>
@@ -838,6 +840,8 @@
         let selectedFile = null;
         let selectedFileName = '';
         let selectedFileSize = '';
+        // FIX: Reține blob URL-ul din preview pentru a-l elibera corect la closePreview
+        let currentPreviewBlobUrl = null;
 
         // ============================================================
         // MAPA ICONIȚELOR
@@ -851,6 +855,28 @@
             'ppt': 'fa-file-powerpoint',
             'excel': 'fa-file-excel',
             'zip': 'fa-file-archive'
+        };
+
+        // FIX: Map static pentru etichetele capitolelor.
+        // Original: căuta în DOM-ul dropdownului de upload (care poate fi ascuns pentru elevi),
+        // returnând undefined. Acum se folosește un obiect simplu, întotdeauna disponibil.
+        const capitoleLabelMap = {
+            'tipuri-date': 'Tipuri de date',
+            'operatori': 'Operatori',
+            'structuri-alternative': 'Structuri alternative',
+            'structuri-repetitive': 'Structuri repetitive',
+            'algoritmi-elementari': 'Algoritmi elementari',
+            'numere-speciale': 'Numere speciale',
+            'cifre': 'Operații cu cifre',
+            'vectori': 'Vectori',
+            'matrici': 'Matrici',
+            'subprograme': 'Subprograme',
+            'siruri-caractere': 'Șiruri de caractere',
+            'structuri': 'Structuri de date',
+            'grafuri': 'Grafuri',
+            'arbori': 'Arbori',
+            'variante-bac': 'Variante Bac',
+            'altele': 'Altele'
         };
 
         // ============================================================
@@ -1031,9 +1057,10 @@
                 const icon = tipIconMap[r.tip] || 'fa-file';
                 const dataStr = new Date(r.data_incarcare || Date.now()).toLocaleDateString('ro-RO');
                 const sizeStr = r.dimensiune ? (r.dimensiune / 1024).toFixed(1) + ' KB' : 'N/A';
-                const numeCapitol = document.getElementById('resource-capitol').options[
-                    Array.from(document.getElementById('resource-capitol').options).findIndex(opt => opt.value === r.capitol)
-                ]?.text || r.capitol || 'Necategorisit';
+                // FIX: Folosește capitoleLabelMap în loc de căutare în DOM-ul dropdown-ului de upload.
+                // Originalul: Array.from(document.getElementById('resource-capitol').options).findIndex(...)
+                // — returna undefined pentru elevi deoarece secțiunea de upload era display:none.
+                const numeCapitol = capitoleLabelMap[r.capitol] || r.capitol || 'Necategorisit';
                 
                 return `
                     <div class="resource-card">
@@ -1056,181 +1083,193 @@
         // ============================================================
         // PREVIEW
         // ============================================================
-       // ============================================================
-// PREVIEW - VERSIUNE CORECTĂ
-// ============================================================
-async function previewResource(id) {
-    console.log('🔍 Preview resource apelat cu ID:', id);
-    
-    const r = resurse.find(item => item.id === id);
-    if (!r) { 
-        showToast('⚠️ Resursa nu a fost găsită!', 'error'); 
-        return; 
-    }
-
-    const token = localStorage.getItem('accessToken');
-    if (!token) { 
-        window.location.href = '/'; 
-        return; 
-    }
-
-    currentPreviewId = id;
-    document.getElementById('preview-title').textContent = r.titlu;
-
-    const body = document.getElementById('preview-body');
-    document.getElementById('preview-download-btn').onclick = () => downloadResource(id);
-
-    body.innerHTML = `
-        <div style="text-align:center;padding:2rem;">
-            <i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--primary);"></i>
-            <p style="margin-top:1rem;color:var(--text-secondary);">Se încarcă fișierul...</p>
-        </div>
-    `;
-
-    const ext = r.original_name ? r.original_name.split('.').pop().toLowerCase() : '';
-    const fileType = r.tip || ext;
-    
-    try {
-        // Folosește ruta cu header (Authorization: Bearer token)
-        const response = await fetch(`/download-resource/${r.id}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+        async function previewResource(id) {
+            console.log('🔍 Preview resource apelat cu ID:', id);
+            
+            const r = resurse.find(item => item.id === id);
+            if (!r) { 
+                showToast('⚠️ Resursa nu a fost găsită!', 'error'); 
+                return; 
             }
-        });
-        
-        console.log('📥 Răspuns status:', response.status);
-        
-        if (response.status === 401) {
-            localStorage.clear();
-            window.location.href = '/';
-            return;
-        }
-        
-        if (!response.ok) {
-            throw new Error(`Status: ${response.status}`);
-        }
-        
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        
-        if (fileType === 'pdf' || ext === 'pdf') {
-            body.innerHTML = `
-                <div style="width:100%;height:70vh;border-radius:8px;overflow:hidden;border:1px solid var(--border-color);">
-                    <iframe src="${url}" style="width:100%;height:100%;border:none;"></iframe>
-                </div>
-                <div style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;align-items:center;">
-                    <span style="font-size:0.85rem;color:var(--text-secondary);">📄 ${r.original_name || 'document.pdf'}</span>
-                    <button onclick="window.open('${url}', '_blank')" class="btn btn-primary btn-sm">
-                        <i class="fas fa-external-link-alt"></i> Deschide
-                    </button>
-                    <button onclick="downloadResource(${r.id})" class="btn btn-success btn-sm">
-                        <i class="fas fa-download"></i> Descarcă
-                    </button>
-                </div>
-            `;
-        } else if (fileType === 'image' || ['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
-            body.innerHTML = `
-                <img src="${url}" alt="${r.titlu}" style="max-width:100%;max-height:70vh;border-radius:8px;display:block;margin:0 auto;" />
-                <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary);text-align:center;">
-                    🖼️ ${r.original_name || 'image'}
-                </div>
-            `;
-        } else {
+
+            const token = localStorage.getItem('accessToken');
+            if (!token) { 
+                window.location.href = '/'; 
+                return; 
+            }
+
+            currentPreviewId = id;
+            document.getElementById('preview-title').textContent = r.titlu;
+            // FIX: Setează onclick pe butonul din footer cu ID-ul corect capturat în closure,
+            // în loc să depindă de currentPreviewId la momentul click-ului
+            document.getElementById('preview-download-btn').onclick = () => downloadResource(id);
+
+            const body = document.getElementById('preview-body');
+
             body.innerHTML = `
                 <div style="text-align:center;padding:2rem;">
-                    <i class="fas ${tipIconMap[r.tip] || 'fa-file'}" style="font-size:4rem;color:var(--primary);"></i>
-                    <h3 style="margin-top:1rem;">${r.titlu}</h3>
-                    <p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p>
-                    <button class="btn btn-success" onclick="downloadResource(${r.id})" style="margin-top:1rem;">
-                        <i class="fas fa-download"></i> Descarcă
-                    </button>
+                    <i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--primary);"></i>
+                    <p style="margin-top:1rem;color:var(--text-secondary);">Se încarcă fișierul...</p>
                 </div>
             `;
-        }
-        
-    } catch (error) {
-        console.error('❌ Preview error:', error);
-        body.innerHTML = `
-            <div style="text-align:center;padding:2rem;color:var(--danger);">
-                <i class="fas fa-exclamation-circle" style="font-size:4rem;"></i>
-                <p style="margin-top:1rem;font-weight:600;">Eroare la încărcare</p>
-                <p style="font-size:0.85rem;color:var(--text-secondary);">${error.message}</p>
-                <button class="btn btn-primary" onclick="previewResource(${id})" style="margin-top:1rem;">
-                    <i class="fas fa-redo"></i> Încearcă din nou
-                </button>
-            </div>
-        `;
-    }
 
-    document.getElementById('preview-modal').classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
+            // FIX: Deschide modalul imediat cu spinner, în loc să aștepte fetch-ul
+            document.getElementById('preview-modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            const ext = r.original_name ? r.original_name.split('.').pop().toLowerCase() : '';
+            const fileType = r.tip || ext;
+            
+            try {
+                const response = await fetch(`/download-resource/${r.id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📥 Răspuns status:', response.status);
+                
+                if (response.status === 401) {
+                    localStorage.clear();
+                    window.location.href = '/';
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`Status: ${response.status}`);
+                }
+                
+                const blob = await response.blob();
+
+                // FIX: Eliberează blob URL-ul anterior înainte de a crea unul nou,
+                // prevenind leak-uri de memorie la previzualizări succesive
+                if (currentPreviewBlobUrl) {
+                    URL.revokeObjectURL(currentPreviewBlobUrl);
+                }
+                const url = URL.createObjectURL(blob);
+                currentPreviewBlobUrl = url;
+                
+                if (fileType === 'pdf' || ext === 'pdf') {
+                    body.innerHTML = `
+                        <div style="width:100%;height:70vh;border-radius:8px;overflow:hidden;border:1px solid var(--border-color);">
+                            <iframe src="${url}" style="width:100%;height:100%;border:none;"></iframe>
+                        </div>
+                        <div style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;align-items:center;">
+                            <span style="font-size:0.85rem;color:var(--text-secondary);">📄 ${r.original_name || 'document.pdf'}</span>
+                            <button onclick="window.open('${url}', '_blank')" class="btn btn-primary btn-sm">
+                                <i class="fas fa-external-link-alt"></i> Deschide
+                            </button>
+                            <button onclick="downloadResource(${r.id})" class="btn btn-success btn-sm">
+                                <i class="fas fa-download"></i> Descarcă
+                            </button>
+                        </div>
+                    `;
+                } else if (fileType === 'image' || ['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+                    body.innerHTML = `
+                        <img src="${url}" alt="${r.titlu}" style="max-width:100%;max-height:70vh;border-radius:8px;display:block;margin:0 auto;" />
+                        <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary);text-align:center;">
+                            🖼️ ${r.original_name || 'image'}
+                        </div>
+                    `;
+                } else {
+                    body.innerHTML = `
+                        <div style="text-align:center;padding:2rem;">
+                            <i class="fas ${tipIconMap[r.tip] || 'fa-file'}" style="font-size:4rem;color:var(--primary);"></i>
+                            <h3 style="margin-top:1rem;">${r.titlu}</h3>
+                            <p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p>
+                            <button class="btn btn-success" onclick="downloadResource(${r.id})" style="margin-top:1rem;">
+                                <i class="fas fa-download"></i> Descarcă
+                            </button>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('❌ Preview error:', error);
+                body.innerHTML = `
+                    <div style="text-align:center;padding:2rem;color:var(--danger);">
+                        <i class="fas fa-exclamation-circle" style="font-size:4rem;"></i>
+                        <p style="margin-top:1rem;font-weight:600;">Eroare la încărcare</p>
+                        <p style="font-size:0.85rem;color:var(--text-secondary);">${error.message}</p>
+                        <button class="btn btn-primary" onclick="previewResource(${id})" style="margin-top:1rem;">
+                            <i class="fas fa-redo"></i> Încearcă din nou
+                        </button>
+                    </div>
+                `;
+            }
+        }
 
         function closePreview() {
             document.getElementById('preview-modal').classList.remove('active');
             document.body.style.overflow = '';
             document.getElementById('preview-body').innerHTML = '';
+            // FIX: Eliberează blob URL-ul la închiderea modalului pentru a evita leak-uri de memorie
+            if (currentPreviewBlobUrl) {
+                URL.revokeObjectURL(currentPreviewBlobUrl);
+                currentPreviewBlobUrl = null;
+            }
         }
 
         // ============================================================
         // DOWNLOAD
         // ============================================================
-     async function downloadResource(id) {
-    const downloadId = id || currentPreviewId;
-    if (!downloadId) { 
-        showToast('⚠️ Nicio resursă selectată!', 'warning'); 
-        return; 
-    }
-    
-    const token = localStorage.getItem('accessToken');
-    if (!token) { 
-        window.location.href = '/'; 
-        return; 
-    }
-    
-    try {
-        const response = await fetch(`/download-resource/${downloadId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+        async function downloadResource(id) {
+            const downloadId = id || currentPreviewId;
+            if (!downloadId) { 
+                showToast('⚠️ Nicio resursă selectată!', 'warning'); 
+                return; 
             }
-        });
-        
-        console.log('📥 Răspuns download status:', response.status);
-        
-        if (response.status === 401) {
-            localStorage.clear();
-            window.location.href = '/';
-            return;
+            
+            const token = localStorage.getItem('accessToken');
+            if (!token) { 
+                window.location.href = '/'; 
+                return; 
+            }
+            
+            try {
+                const response = await fetch(`/download-resource/${downloadId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📥 Răspuns download status:', response.status);
+                
+                if (response.status === 401) {
+                    localStorage.clear();
+                    window.location.href = '/';
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`Status: ${response.status}`);
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                let filename = 'download';
+                const r = resurse.find(item => item.id === downloadId);
+                if (r && r.original_name) filename = r.original_name;
+                
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                // FIX: revokeObjectURL era deja prezent în original — păstrat corect
+                window.URL.revokeObjectURL(url);
+                
+                showToast('✅ Fișierul s-a descărcat!');
+                
+            } catch (error) {
+                console.error('❌ Download error:', error);
+                showToast('⚠️ Eroare la descărcare: ' + error.message, 'error');
+            }
         }
-        
-        if (!response.ok) {
-            throw new Error(`Status: ${response.status}`);
-        }
-        
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        
-        let filename = 'download';
-        const r = resurse.find(item => item.id === downloadId);
-        if (r && r.original_name) filename = r.original_name;
-        
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        
-        showToast('✅ Fișierul s-a descărcat!');
-        
-    } catch (error) {
-        console.error('❌ Download error:', error);
-        showToast('⚠️ Eroare la descărcare: ' + error.message, 'error');
-    }
-}
 
         // ============================================================
         // STERGE RESURSA
@@ -1406,19 +1445,29 @@ async function previewResource(id) {
             actualizeazaUI();
             await incarcaResurse();
 
-            const uploadZone = document.querySelector('.upload-zone');
+            // FIX: Event listeners pe upload zone prin getElementById, nu querySelector,
+            // și click handler separat care evită declanșarea dublă dacă target-ul este input-ul
+            const uploadZone = document.getElementById('upload-zone');
             if (uploadZone) {
-                uploadZone.addEventListener('dragover', e => { 
-                    e.preventDefault(); 
-                    uploadZone.style.borderColor = 'var(--primary)'; 
+                uploadZone.addEventListener('click', (e) => {
+                    if (e.target !== document.getElementById('file-input')) {
+                        document.getElementById('file-input').click();
+                    }
                 });
-                uploadZone.addEventListener('dragleave', e => { 
-                    e.preventDefault(); 
-                    uploadZone.style.borderColor = ''; 
+                uploadZone.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    uploadZone.style.borderColor = 'var(--primary)';
+                    uploadZone.style.background = 'var(--primary-light)';
+                });
+                uploadZone.addEventListener('dragleave', e => {
+                    e.preventDefault();
+                    uploadZone.style.borderColor = '';
+                    uploadZone.style.background = '';
                 });
                 uploadZone.addEventListener('drop', e => {
                     e.preventDefault();
                     uploadZone.style.borderColor = '';
+                    uploadZone.style.background = '';
                     if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
                 });
             }
