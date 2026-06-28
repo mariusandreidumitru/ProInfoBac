@@ -865,6 +865,50 @@
         }
 
         // ============================================================
+// VERIFICĂ TOKEN-UL LA ÎNCĂRCARE
+// ============================================================
+async function verificaToken() {
+    const token = localStorage.getItem('accessToken');
+    console.log('🔍 Verific token:', token ? 'Există' : 'Lipsește');
+    
+    if (!token) {
+        console.log('🔒 Token lipsă, redirecționez la login...');
+        window.location.href = '/';
+        return false;
+    }
+    
+    try {
+        console.log('📡 Trimit request la /api/verify-token...');
+        const response = await fetch('/api/verify-token', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('📥 Răspuns status:', response.status);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Token valid:', data);
+            return true;
+        } else if (response.status === 401) {
+            console.log('❌ Token invalid sau expirat');
+            localStorage.clear();
+            window.location.href = '/';
+            return false;
+        } else {
+            console.log('⚠️ Eroare la verificare token:', response.status);
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Eroare la verificare token:', error);
+        return false;
+    }
+}
+
+        // ============================================================
         // AUTENTIFICARE
         // ============================================================
         async function verificaAutentificare() {
@@ -1266,17 +1310,28 @@
             document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
             document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
 
+            // ⚠️ IMPORTANT: Verifică token-ul MAI ÎNTÂI
+            const tokenValid = await verificaToken();
+            if (!tokenValid) return;  // Dacă token invalid, redirecționează la login
+            
+            // Abia apoi verifică autentificarea și încarcă resursele
             const autentificat = await verificaAutentificare();
             if (autentificat) {
                 actualizeazaUI();
                 await incarcaResurse();
             }
 
-            // Drag and drop
+            // Restul codului (drag and drop, etc.)
             const uploadZone = document.querySelector('.upload-zone');
             if (uploadZone) {
-                uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = 'var(--primary)'; });
-                uploadZone.addEventListener('dragleave', e => { e.preventDefault(); uploadZone.style.borderColor = ''; });
+                uploadZone.addEventListener('dragover', e => { 
+                    e.preventDefault(); 
+                    uploadZone.style.borderColor = 'var(--primary)'; 
+                });
+                uploadZone.addEventListener('dragleave', e => { 
+                    e.preventDefault(); 
+                    uploadZone.style.borderColor = ''; 
+                });
                 uploadZone.addEventListener('drop', e => {
                     e.preventDefault();
                     uploadZone.style.borderColor = '';
@@ -1287,7 +1342,7 @@
             document.getElementById('file-input').addEventListener('change', e => {
                 if (e.target.files.length > 0) handleFile(e.target.files[0]);
             });
-        });
+});
 
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closePreview(); });
         document.getElementById('preview-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closePreview(); });

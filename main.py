@@ -726,10 +726,20 @@ async def download_resource(
         print(f"❌ Eroare download: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
     
+# ============================================================
+# API - VERIFICĂ TOKEN
+# ============================================================
 @app.get("/api/verify-token")
 def verify_token_endpoint(payload: dict = Depends(verify_token)):
     """Verifică dacă token-ul este valid"""
-    return {"valid": True, "user": payload}
+    return {
+        "valid": True, 
+        "user": {
+            "id": payload.get("sub"),
+            "email": payload.get("email"),
+            "role": payload.get("role")
+        }
+    }
 
 # ============================================================
 # RUTE PENTRU PAGINI HTML (NEPROTEJATE)
