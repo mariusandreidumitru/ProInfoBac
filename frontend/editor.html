@@ -574,73 +574,74 @@ int main() {
         // RULEAZĂ COD - CU LOADING STATE
         // ============================================================
         async function ruleazaCod() {
-            const outputElement = document.getElementById('output');
-            const runBtn = document.getElementById('run-btn');
-            const runIcon = document.getElementById('run-icon');
-            const runText = document.getElementById('run-text');
+    const outputElement = document.getElementById('output');
+    const runBtn = document.getElementById('run-btn');
+    const runIcon = document.getElementById('run-icon');
+    const runText = document.getElementById('run-text');
 
-            // Verifică dacă codul este gol
-            const codElev = document.getElementById('code-editor').value;
-            if (!codElev.trim()) {
-                outputElement.textContent = "⚠️ Te rugăm să scrii cod înainte de a rula.";
-                outputElement.className = 'console-output error';
-                return;
+    const codElev = document.getElementById('code-editor').value;
+    if (!codElev.trim()) {
+        outputElement.textContent = "⚠️ Te rugăm să scrii cod înainte de a rula.";
+        outputElement.className = 'console-output error';
+        return;
+    }
+
+    runBtn.disabled = true;
+    runIcon.className = 'fas fa-spinner fa-spin';
+    runText.textContent = 'Compilează...';
+    outputElement.textContent = "⏳ Compilare în curs (poate dura până la 15 secunde)...\n";
+    outputElement.className = 'console-output info';
+
+    const stdinValue = document.getElementById('stdin-input').value;
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 secunde
+
+        const response = await fetch(`${window.location.origin}/compile`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
+            body: JSON.stringify({ 
+                code: codElev, 
+                language: "cpp",
+                stdin: stdinValue
+            })
+        });
+
+        clearTimeout(timeoutId);
+        const data = await response.json();
+
+        if (data.output) {
+            outputElement.textContent = data.output;
+            outputElement.className = 'console-output success';
+        } else if (data.error) {
+            // Mesaj mai prietenos pentru erori
+            let errorMsg = data.error;
+            if (data.fallback) {
+                errorMsg = "⚠️ " + errorMsg;
             }
-
-            // Dezactivează butonul și arată loading
-            runBtn.disabled = true;
-            runIcon.className = 'fas fa-spinner fa-spin';
-            runText.textContent = 'Compilează...';
-            outputElement.textContent = "⏳ Compilare în curs...\n";
-            outputElement.className = 'console-output info';
-
-            const stdinValue = document.getElementById('stdin-input').value;
-
-            try {
-                // Setează timeout mai mic pentru Piston API (8 secunde)
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-                const response = await fetch(`${window.location.origin}/compile`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    signal: controller.signal,
-                    body: JSON.stringify({ 
-                        code: codElev, 
-                        language: "cpp",
-                        stdin: stdinValue
-                    })
-                });
-
-                clearTimeout(timeoutId);
-                const data = await response.json();
-
-                if (data.output) {
-                    outputElement.textContent = data.output;
-                    outputElement.className = 'console-output success';
-                } else if (data.error) {
-                    outputElement.textContent = data.error;
-                    outputElement.className = 'console-output error';
-                } else {
-                    outputElement.textContent = JSON.stringify(data, null, 2);
-                    outputElement.className = 'console-output error';
-                }
-
-            } catch (error) {
-                if (error.name === 'AbortError') {
-                    outputElement.textContent = "⏰ Compilarea a durat prea mult (peste 8 secunde). Încearcă un cod mai simplu.";
-                    outputElement.className = 'console-output error';
-                } else {
-                    outputElement.textContent = "❌ Eroare de conexiune: " + error.message;
-                    outputElement.className = 'console-output error';
-                }
-            }
-
-            // Reactivează butonul
-            runBtn.disabled = false;
-            runIcon.className = 'fas fa-play';
-            runText.textContent = 'Rulează cod';
+            outputElement.textContent = errorMsg;
+            outputElement.className = 'console-output error';
+        } else {
+            outputElement.textContent = JSON.stringify(data, null, 2);
+            outputElement.className = 'console-output error';
         }
+
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            outputElement.textContent = "⏰ Compilarea a durat prea mult (peste 15 secunde).\n\n💡 Sfaturi:\n• Verifică dacă ai bucle infinite\n• Încearcă un cod mai simplu\n• Rulează local pentru testare";
+            outputElement.className = 'console-output error';
+        } else {
+            outputElement.textContent = "❌ Eroare de conexiune: " + error.message;
+            outputElement.className = 'console-output error';
+        }
+    }
+
+    runBtn.disabled = false;
+    runIcon.className = 'fas fa-play';
+    runText.textContent = 'Rulează cod';
+}
 
         // ============================================================
         // RESET COD
