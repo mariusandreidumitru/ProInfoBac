@@ -1215,7 +1215,11 @@
         // DOWNLOAD
         // ============================================================
         async function downloadResource(id) {
+            console.log("downloadResource chemat cu id:", id, typeof id);
+            console.log("resurse disponibile:", resurse.map(r => ({id: r.id, tip: typeof r.id})));
+            
             const downloadId = id || currentPreviewId;
+           
             if (!downloadId) { 
                 showToast('⚠️ Nicio resursă selectată!', 'warning'); 
                 return; 
