@@ -511,11 +511,11 @@ def serve_resurse():
     raise HTTPException(status_code=404, detail="Pagina resurse.html nu a fost găsită")
 
 # ============================================================
-# API - RESURSE (STORAGE ÎN SUPABASE)
+# API - RESURSE (STORAGE ÎN SUPABASE - VERSIUNE OPTIMIZATĂ)
 # ============================================================
 
 # ============================================================
-# UPLOAD RESURSĂ - ÎN SUPABASE
+# UPLOAD RESURSĂ - ÎN SUPABASE STORAGE
 # ============================================================
 @app.post("/upload-resource")
 async def upload_resource(
@@ -544,17 +544,25 @@ async def upload_resource(
         if len(content) > 10 * 1024 * 1024:
             raise HTTPException(status_code=400, detail="Fișierul este prea mare! Maxim 10 MB.")
         
-        # Codifică în base64
-        file_data = base64.b64encode(content).decode('utf-8')
+        # Generează un nume unic pentru fișier
+        file_id = str(uuid.uuid4())
+        file_path = f"resources/{file_id}/{file.filename}"
         
-        # Salvează în Supabase
+        # Încarcă în Supabase Storage
+        supabase.storage.from_("resources").upload(file_path, content)
+        
+        # Obține URL-ul public
+        public_url = supabase.storage.from_("resources").get_public_url(file_path)
+        
+        # Salvează doar URL-ul în tabelă
         resource_data = {
             "titlu": titlu,
             "descriere": descriere or "",
             "capitol": capitol,
             "tip": tip,
             "original_name": file.filename,
-            "file_data": file_data,
+            "file_url": public_url,  # URL-ul public în storage
+            "file_path": file_path,  # Calea în storage
             "dimensiune": len(content),
             "uploaded_by": payload.get("email", "unknown"),
             "vizualizari": 0,
@@ -594,7 +602,7 @@ async def get_resurse(payload: dict = Depends(verify_token)):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
-# ȘTERGE RESURSĂ - DIN SUPABASE
+# ȘTERGE RESURSĂ - DIN SUPABASE ȘI STORAGE
 # ============================================================
 @app.delete("/api/resurse/{file_id}")
 async def delete_resource(
@@ -607,11 +615,19 @@ async def delete_resource(
     
     try:
         # Verifică dacă resursa există
-        check = supabase.table("resources").select("id").eq("id", file_id).execute()
+        check = supabase.table("resources").select("*").eq("id", file_id).execute()
         if not check.data or len(check.data) == 0:
             raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
         
-        # Șterge resursa
+        resource = check.data[0]
+        
+        # Șterge fișierul din Storage
+        try:
+            supabase.storage.from_("resources").remove([resource.get("file_path")])
+        except Exception as e:
+            print(f"⚠️ Eroare la ștergerea fișierului din storage: {e}")
+        
+        # Șterge resursa din tabelă
         response = supabase.table("resources").delete().eq("id", file_id).execute()
         
         return {"status": "success", "message": "Resursa a fost ștearsă"}
@@ -623,14 +639,14 @@ async def delete_resource(
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
-# DOWNLOAD RESURSĂ - DIN SUPABASE (CU TOKEN ÎN URL)
+# DOWNLOAD RESURSĂ - REDIRECTARE LA URL-UL PUBLIC
 # ============================================================
 @app.get("/download-resource-token/{file_id}")
 async def download_resource_with_token(
     file_id: int,
     token: str
 ):
-    """Descarcă resursă folosind token din URL"""
+    """Descarcă resursă - redirecționează la URL-ul public din Supabase Storage"""
     try:
         # Verifică token-ul
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -652,27 +668,9 @@ async def download_resource_with_token(
             "vizualizari": resource.get("vizualizari", 0) + 1
         }).eq("id", file_id).execute()
         
-        # Decodifică din base64
-        file_data = base64.b64decode(resource.get("file_data", ""))
-        
-        # Determină tipul MIME
-        ext = os.path.splitext(resource["original_name"])[1].lower()
-        media_type = "application/octet-stream"
-        if ext == ".pdf": media_type = "application/pdf"
-        elif ext in [".jpg", ".jpeg"]: media_type = "image/jpeg"
-        elif ext == ".png": media_type = "image/png"
-        elif ext == ".gif": media_type = "image/gif"
-        elif ext == ".txt": media_type = "text/plain"
-        elif ext in [".cpp", ".c", ".py", ".js", ".html", ".css"]: media_type = "text/plain"
-        
-        return StreamingResponse(
-            BytesIO(file_data),
-            media_type=media_type,
-            headers={
-                "Content-Disposition": f"inline; filename=\"{resource['original_name']}\"",
-                "Content-Length": str(len(file_data))
-            }
-        )
+        # Redirecționează la URL-ul public
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=resource.get("file_url"))
         
     except HTTPException:
         raise
@@ -681,14 +679,14 @@ async def download_resource_with_token(
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
-# VIZUALIZARE PDF - DIN SUPABASE
+# VIZUALIZARE PDF - REDIRECTARE LA URL-UL PUBLIC
 # ============================================================
 @app.get("/view-pdf/{file_id}")
 async def view_pdf(
     file_id: int,
     token: str
 ):
-    """Vizualizează PDF inline în browser"""
+    """Vizualizează PDF - redirecționează la URL-ul public din Supabase Storage"""
     try:
         # Verifică token-ul
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -710,19 +708,9 @@ async def view_pdf(
             "vizualizari": resource.get("vizualizari", 0) + 1
         }).eq("id", file_id).execute()
         
-        # Decodifică din base64
-        file_data = base64.b64decode(resource.get("file_data", ""))
-        
-        return StreamingResponse(
-            BytesIO(file_data),
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": f"inline; filename=\"{resource['original_name']}\"",
-                "Cache-Control": "no-cache, no-store, must-revalidate",
-                "Pragma": "no-cache",
-                "Expires": "0"
-            }
-        )
+        # Redirecționează la URL-ul public
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=resource.get("file_url"))
         
     except HTTPException:
         raise

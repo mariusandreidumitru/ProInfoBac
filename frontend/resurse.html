@@ -1150,122 +1150,162 @@ async function stergeResursa(id) {
         // ============================================================
         // PREVIEW - VERSIUNE CORECTĂ
         // ============================================================
-        async function previewResource(id) {
-            console.log('🔍 Preview resource:', id);
-            
-            const r = resurse.find(item => item.id === id);
-            if (!r) { 
-                showToast('⚠️ Resursa nu a fost găsită!', 'error'); 
-                return; 
-            }
+       // ============================================================
+// PREVIEW - CU INDICATOR DE ÎNCĂRCARE
+// ============================================================
+async function previewResource(id) {
+    console.log('🔍 Preview resource:', id);
+    
+    const r = resurse.find(item => item.id === id);
+    if (!r) { 
+        showToast('⚠️ Resursa nu a fost găsită!', 'error'); 
+        return; 
+    }
 
-            const token = localStorage.getItem('accessToken');
-            console.log('🔑 Token pentru preview:', token ? 'Există' : 'Lipsește');
-            
-            if (!token) { 
-                window.location.href = '/'; 
-                return; 
-            }
+    const token = localStorage.getItem('accessToken');
+    console.log('🔑 Token pentru preview:', token ? 'Există' : 'Lipsește');
+    
+    if (!token) { 
+        window.location.href = '/'; 
+        return; 
+    }
 
-            currentPreviewId = id;
-            document.getElementById('preview-title').textContent = r.titlu;
+    currentPreviewId = id;
+    document.getElementById('preview-title').textContent = r.titlu;
 
-            const body = document.getElementById('preview-body');
-            document.getElementById('preview-download-btn').onclick = () => downloadResource(id);
+    const body = document.getElementById('preview-body');
+    document.getElementById('preview-download-btn').onclick = () => downloadResource(id);
 
-            // Arată loading
+    // Arată loading cu progres
+    body.innerHTML = `
+        <div style="text-align:center;padding:2rem;">
+            <i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--primary);"></i>
+            <p style="margin-top:1rem;color:var(--text-secondary);">Se încarcă fișierul...</p>
+            <p style="font-size:0.8rem;color:var(--text-secondary);" id="preview-progress">Pregătire...</p>
+            <div style="width:100%;max-width:300px;height:4px;background:var(--bg-input);border-radius:4px;margin:0.5rem auto;overflow:hidden;">
+                <div id="preview-progress-bar" style="width:0%;height:100%;background:var(--primary);border-radius:4px;transition:width 0.3s ease;"></div>
+            </div>
+        </div>
+    `;
+
+    const ext = r.original_name ? r.original_name.split('.').pop().toLowerCase() : '';
+    const fileType = r.tip || ext;
+    const fileSize = r.dimensiune || 0;
+    const fileSizeMB = (fileSize / 1024 / 1024).toFixed(2);
+    
+    try {
+        // Actualizează progresul
+        document.getElementById('preview-progress').textContent = `Descărcare fișier (${fileSizeMB} MB)...`;
+        document.getElementById('preview-progress-bar').style.width = '30%';
+        
+        const viewUrl = `/download-resource-token/${r.id}?token=${encodeURIComponent(token)}`;
+        
+        // Folosește fetch pentru a urmări progresul
+        const response = await fetch(viewUrl);
+        
+        document.getElementById('preview-progress').textContent = 'Procesare...';
+        document.getElementById('preview-progress-bar').style.width = '70%';
+        
+        if (response.status === 401) {
+            console.log('🔒 Token invalid la preview');
+            localStorage.clear();
+            window.location.href = '/';
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error(`Status: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        
+        document.getElementById('preview-progress').textContent = 'Afișare...';
+        document.getElementById('preview-progress-bar').style.width = '100%';
+        
+        // Afișează în funcție de tip
+        if (fileType === 'pdf' || ext === 'pdf') {
             body.innerHTML = `
-                <div style="text-align:center;padding:2rem;">
-                    <i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--primary);"></i>
-                    <p style="margin-top:1rem;color:var(--text-secondary);">Se încarcă fișierul...</p>
+                <div style="width:100%;height:70vh;border-radius:8px;overflow:hidden;border:1px solid var(--border-color);">
+                    <iframe src="${url}" style="width:100%;height:100%;border:none;"></iframe>
+                </div>
+                <div style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;align-items:center;">
+                    <span style="font-size:0.85rem;color:var(--text-secondary);">
+                        📄 ${r.original_name || 'document.pdf'} (${fileSizeMB} MB)
+                    </span>
+                    <button onclick="window.open('${url}', '_blank')" class="btn btn-primary btn-sm">
+                        <i class="fas fa-external-link-alt"></i> Deschide în fereastră nouă
+                    </button>
+                    <button onclick="downloadResource(${r.id})" class="btn btn-success btn-sm">
+                        <i class="fas fa-download"></i> Descarcă
+                    </button>
                 </div>
             `;
-
-            const ext = r.original_name ? r.original_name.split('.').pop().toLowerCase() : '';
-            const fileType = r.tip || ext;
-            
-            try {
-                if (fileType === 'pdf' || ext === 'pdf') {
-                    // Pentru PDF - folosește iframe cu view-pdf
-                    const viewUrl = `/view-pdf/${r.id}?token=${encodeURIComponent(token)}`;
-                    body.innerHTML = `
-                        <div style="width:100%;height:70vh;border-radius:8px;overflow:hidden;border:1px solid var(--border-color);">
-                            <iframe src="${viewUrl}" style="width:100%;height:100%;border:none;"></iframe>
-                        </div>
-                        <div style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;align-items:center;">
-                            <span style="font-size:0.85rem;color:var(--text-secondary);">
-                                📄 ${r.original_name || 'document.pdf'}
-                            </span>
-                            <button onclick="window.open('${viewUrl}', '_blank')" class="btn btn-primary btn-sm">
-                                <i class="fas fa-external-link-alt"></i> Deschide în fereastră nouă
-                            </button>
-                            <button onclick="downloadResource(${r.id})" class="btn btn-success btn-sm">
-                                <i class="fas fa-download"></i> Descarcă
-                            </button>
-                        </div>
-                    `;
-                } else if (fileType === 'image' || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
-                    const imageUrl = `/download-resource-token/${r.id}?token=${encodeURIComponent(token)}`;
-                    body.innerHTML = `
-                        <img src="${imageUrl}" alt="${r.titlu}" style="max-width:100%;max-height:70vh;border-radius:8px;display:block;margin:0 auto;" />
-                        <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary);text-align:center;">
-                            🖼️ ${r.original_name || 'image'}
-                        </div>
-                    `;
-                } else if (fileType === 'text' || ext === 'txt') {
-                    const downloadUrl = `/download-resource-token/${r.id}?token=${encodeURIComponent(token)}`;
-                    const response = await fetch(downloadUrl);
-                    const text = await response.text();
-                    body.innerHTML = `
-                        <div style="background:var(--bg-input);padding:1rem;border-radius:8px;white-space:pre-wrap;font-family:'JetBrains Mono',monospace;font-size:0.85rem;max-height:70vh;overflow-y:auto;border:1px solid var(--border-color);">${text}</div>
-                        <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary);text-align:center;">
-                            📝 ${r.original_name || 'text.txt'}
-                        </div>
-                    `;
-                } else if (fileType === 'code' || ['cpp', 'c', 'py', 'html', 'css', 'js', 'java', 'go', 'rs', 'php'].includes(ext)) {
-                    const downloadUrl = `/download-resource-token/${r.id}?token=${encodeURIComponent(token)}`;
-                    const response = await fetch(downloadUrl);
-                    const code = await response.text();
-                    body.innerHTML = `
-                        <div style="background:var(--bg-code);color:var(--text-code);padding:1rem;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:0.85rem;max-height:70vh;overflow-y:auto;white-space:pre-wrap;border:1px solid var(--border-color);">${code}</div>
-                        <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary);text-align:center;">
-                            💻 ${r.original_name || 'code'}
-                        </div>
-                    `;
-                } else {
-                    body.innerHTML = `
-                        <div style="text-align:center;padding:2rem;">
-                            <i class="fas ${tipIconMap[r.tip] || 'fa-file'}" style="font-size:4rem;color:var(--primary);"></i>
-                            <h3 style="margin-top:1rem;">${r.titlu}</h3>
-                            <p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p>
-                            <p style="color:var(--text-secondary);font-size:0.85rem;">Folosește butonul "Descarcă" pentru a-l salva.</p>
-                            <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:0.5rem;">
-                                📄 ${r.original_name || 'document'} (${r.tip || ext || 'necunoscut'})
-                            </p>
-                            <button class="btn btn-success" onclick="downloadResource(${r.id})" style="margin-top:1rem;">
-                                <i class="fas fa-download"></i> Descarcă
-                            </button>
-                        </div>
-                    `;
-                }
-                
-            } catch (error) {
-                console.error('❌ Preview error:', error);
-                body.innerHTML = `
-                    <div style="text-align:center;padding:2rem;color:var(--danger);">
-                        <i class="fas fa-exclamation-circle" style="font-size:4rem;"></i>
-                        <p style="margin-top:1rem;font-weight:600;">Eroare la încărcarea fișierului</p>
-                        <p style="font-size:0.85rem;color:var(--text-secondary);">${error.message}</p>
-                        <button class="btn btn-primary" onclick="previewResource(${id})" style="margin-top:1rem;">
-                            <i class="fas fa-redo"></i> Încearcă din nou
-                        </button>
-                    </div>
-                `;
-            }
-
-            document.getElementById('preview-modal').classList.add('active');
-            document.body.style.overflow = 'hidden';
+        } else if (fileType === 'image' || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
+            body.innerHTML = `
+                <img src="${url}" alt="${r.titlu}" style="max-width:100%;max-height:70vh;border-radius:8px;display:block;margin:0 auto;" />
+                <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary);text-align:center;">
+                    🖼️ ${r.original_name || 'image'} (${fileSizeMB} MB)
+                </div>
+            `;
+        } else if (fileType === 'text' || ext === 'txt') {
+            const text = await blob.text();
+            body.innerHTML = `
+                <div style="background:var(--bg-input);padding:1rem;border-radius:8px;white-space:pre-wrap;font-family:'JetBrains Mono',monospace;font-size:0.85rem;max-height:70vh;overflow-y:auto;border:1px solid var(--border-color);">${text}</div>
+                <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary);text-align:center;">
+                    📝 ${r.original_name || 'text.txt'} (${fileSizeMB} MB)
+                </div>
+            `;
+        } else if (fileType === 'code' || ['cpp', 'c', 'py', 'html', 'css', 'js', 'java', 'go', 'rs', 'php'].includes(ext)) {
+            const code = await blob.text();
+            body.innerHTML = `
+                <div style="background:var(--bg-code);color:var(--text-code);padding:1rem;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:0.85rem;max-height:70vh;overflow-y:auto;white-space:pre-wrap;border:1px solid var(--border-color);">${code}</div>
+                <div style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-secondary);text-align:center;">
+                    💻 ${r.original_name || 'code'} (${fileSizeMB} MB)
+                </div>
+            `;
+        } else {
+            body.innerHTML = `
+                <div style="text-align:center;padding:2rem;">
+                    <i class="fas ${tipIconMap[r.tip] || 'fa-file'}" style="font-size:4rem;color:var(--primary);"></i>
+                    <h3 style="margin-top:1rem;">${r.titlu}</h3>
+                    <p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p>
+                    <p style="color:var(--text-secondary);font-size:0.85rem;">Folosește butonul "Descarcă" pentru a-l salva.</p>
+                    <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:0.5rem;">
+                        📄 ${r.original_name || 'document'} (${fileSizeMB} MB)
+                    </p>
+                    <button class="btn btn-success" onclick="downloadResource(${r.id})" style="margin-top:1rem;">
+                        <i class="fas fa-download"></i> Descarcă
+                    </button>
+                </div>
+            `;
         }
+        
+        // Eliberează URL-ul după afișare (dar păstrează-l pentru iframe)
+        setTimeout(() => {
+            // Nu revoca URL-ul pentru că iframe-ul îl folosește
+        }, 1000);
+        
+    } catch (error) {
+        console.error('❌ Preview error:', error);
+        body.innerHTML = `
+            <div style="text-align:center;padding:2rem;color:var(--danger);">
+                <i class="fas fa-exclamation-circle" style="font-size:4rem;"></i>
+                <p style="margin-top:1rem;font-weight:600;">Eroare la încărcarea fișierului</p>
+                <p style="font-size:0.85rem;color:var(--text-secondary);">${error.message}</p>
+                <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.5rem;">
+                    📄 ${r.original_name || 'document'}
+                </p>
+                <button class="btn btn-primary" onclick="previewResource(${id})" style="margin-top:1rem;">
+                    <i class="fas fa-redo"></i> Încearcă din nou
+                </button>
+            </div>
+        `;
+    }
+
+    document.getElementById('preview-modal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
 
         function closePreview() {
             document.getElementById('preview-modal').classList.remove('active');
