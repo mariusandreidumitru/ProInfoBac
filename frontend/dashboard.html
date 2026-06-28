@@ -678,61 +678,93 @@
         // ============================================================
         // ÎNCARCĂ STATISTICI DIN localStorage
         // ============================================================
-        function incarcaStatistici() {
+       // ============================================================
+// ÎNCARCĂ STATISTICI DIN API ȘI localStorage
+// ============================================================
+async function incarcaStatistici() {
+    try {
+        // 🔥 EXERCIȚII - din localStorage
+        const exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
+        const varianteBac = JSON.parse(localStorage.getItem('varianteBac')) || [];
+        const rezultateElevi = JSON.parse(localStorage.getItem('rezultateElevi')) || {};
+        
+        // 🔥 RESURSE - din API (server)
+        let totalResurse = 0;
+        const token = localStorage.getItem('accessToken');
+        
+        if (token) {
             try {
-                // Exerciții disponibile din comunitate
-                const exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
-                const varianteBac = JSON.parse(localStorage.getItem('varianteBac')) || [];
-                const rezultateElevi = JSON.parse(localStorage.getItem('rezultateElevi')) || {};
-                const resurse = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
-                
-                // Număr real de exerciții
-                const totalExercitii = exercitiiComunitate.length;
-                document.getElementById('stat-exercitii').textContent = totalExercitii;
-                
-                // Actualizează badge-ul de pe cardul "Teste Bac Info"
-                const badgeExercitii = document.getElementById('badge-exercitii');
-                if (badgeExercitii) {
-                    badgeExercitii.textContent = totalExercitii + '+';
-                }
-                
-                // Actualizează badge-ul de pe cardul "Resurse"
-                const badgeResurse = document.getElementById('badge-resurse');
-                if (badgeResurse) {
-                    badgeResurse.textContent = resurse.length;
-                }
-                
-                // Variante create
-                const totalVariante = varianteBac.length;
-                document.getElementById('stat-variante').textContent = totalVariante;
-                
-                // Rezolvări trimise
-                let totalRezolvari = 0;
-                let totalNote = 0;
-                let noteCount = 0;
-                
-                for (const variantaId in rezultateElevi) {
-                    const rezultate = rezultateElevi[variantaId];
-                    if (Array.isArray(rezultate)) {
-                        totalRezolvari += rezultate.length;
-                        rezultate.forEach(r => {
-                            if (r.nota !== null && r.nota !== undefined) {
-                                totalNote += r.nota;
-                                noteCount++;
-                            }
-                        });
+                const response = await fetch('/api/resurse', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    totalResurse = data.resurse ? data.resurse.length : 0;
+                    console.log('✅ Resurse încărcate din API:', totalResurse);
                 }
-                
-                document.getElementById('stat-rezolvate').textContent = totalRezolvari;
-                
-                const medie = noteCount > 0 ? (totalNote / noteCount) : 0;
-                document.getElementById('stat-medie').textContent = medie.toFixed(2);
-                
-            } catch (e) {
-                console.warn('Nu s-au putut încărca statisticile:', e);
+            } catch (error) {
+                console.warn('⚠️ Nu s-au putut încărca resursele din API:', error);
+                // Fallback la localStorage
+                const resurse = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
+                totalResurse = resurse.length;
+            }
+        } else {
+            // Fallback la localStorage
+            const resurse = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
+            totalResurse = resurse.length;
+        }
+        
+        // Număr real de exerciții
+        const totalExercitii = exercitiiComunitate.length;
+        document.getElementById('stat-exercitii').textContent = totalExercitii;
+        
+        // Actualizează badge-ul de pe cardul "Teste Bac Info"
+        const badgeExercitii = document.getElementById('badge-exercitii');
+        if (badgeExercitii) {
+            badgeExercitii.textContent = totalExercitii + '+';
+        }
+        
+        // 🔥 Actualizează badge-ul de pe cardul "Resurse" cu numărul real
+        const badgeResurse = document.getElementById('badge-resurse');
+        if (badgeResurse) {
+            badgeResurse.textContent = totalResurse;
+        }
+        
+        // Variante create
+        const totalVariante = varianteBac.length;
+        document.getElementById('stat-variante').textContent = totalVariante;
+        
+        // Rezolvări trimise
+        let totalRezolvari = 0;
+        let totalNote = 0;
+        let noteCount = 0;
+        
+        for (const variantaId in rezultateElevi) {
+            const rezultate = rezultateElevi[variantaId];
+            if (Array.isArray(rezultate)) {
+                totalRezolvari += rezultate.length;
+                rezultate.forEach(r => {
+                    if (r.nota !== null && r.nota !== undefined) {
+                        totalNote += r.nota;
+                        noteCount++;
+                    }
+                });
             }
         }
+        
+        document.getElementById('stat-rezolvate').textContent = totalRezolvari;
+        
+        const medie = noteCount > 0 ? (totalNote / noteCount) : 0;
+        document.getElementById('stat-medie').textContent = medie.toFixed(2);
+        
+    } catch (e) {
+        console.warn('Nu s-au putut încărca statisticile:', e);
+    }
+}
 
         // ============================================================
         // ADĂUGARE EXERCIȚII DE TEST (dacă nu există)
@@ -951,28 +983,28 @@ async function verificaRol() {
         // ============================================================
         // INIȚIALIZARE
         // ============================================================
-       document.addEventListener('DOMContentLoaded', async () => {
+      document.addEventListener('DOMContentLoaded', async () => {
     // Theme
-        const saved = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', saved);
-        document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
-        
-        // ⚠️ IMPORTANT: Verifică token-ul MAI ÎNTÂI
-        const tokenValid = await verificaToken();
-        if (!tokenValid) return;  // Dacă token invalid, redirecționează la login
-        
-        // Abia apoi verifică rolul
-        await verificaRol();
-        
-        // Adaugă exerciții de test dacă nu există
-        adaugaExercitiiTest();
-        
-        // Încarcă statistici
-        incarcaStatistici();
-        
-        // Actualizează statisticile la fiecare 30 de secunde
-        setInterval(incarcaStatistici, 30000);
+    const saved = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
+    
+    // ⚠️ IMPORTANT: Verifică token-ul MAI ÎNTÂI
+    const tokenValid = await verificaToken();
+    if (!tokenValid) return;
+    
+    // Abia apoi verifică rolul
+    await verificaRol();
+    
+    // Adaugă exerciții de test dacă nu există
+    adaugaExercitiiTest();
+    
+    // 🔥 Încarcă statistici (acum async)
+    await incarcaStatistici();
+    
+    // Actualizează statisticile la fiecare 30 de secunde
+    setInterval(incarcaStatistici, 30000);
 });
     </script>
 
