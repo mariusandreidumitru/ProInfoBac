@@ -585,7 +585,9 @@ async def upload_resource(
 async def get_resurse(payload: dict = Depends(verify_token)):
     """Listează toate resursele - necesită autentificare"""
     try:
+        print("📡 Interogare Supabase pentru resurse...")
         response = supabase.table("resources").select("*").order("uploaded_at", desc=True).execute()
+        print(f"✅ Resurse găsite: {len(response.data) if response.data else 0}")
         return {"resurse": response.data if response.data else []}
     except Exception as e:
         print(f"❌ Eroare la citirea resurselor: {str(e)}")
