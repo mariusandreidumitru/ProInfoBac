@@ -17,6 +17,7 @@ import base64
 from datetime import datetime, timedelta
 import jwt
 from io import BytesIO
+from typing import Optional
 
 BASE_DIR = Path(__file__).resolve().parent
 app = FastAPI()
@@ -128,7 +129,7 @@ def get_mime_type(filename: str) -> str:
 @app.post("/upload-resource")
 async def upload_resource(
     titlu: str = Form(...),
-    descriere: str = Form(None),
+    descriere: Optional[str] = Form(default=""),   # FIX: nu mai e None
     capitol: str = Form(...),
     tip: str = Form(...),
     file: UploadFile = File(...),
@@ -146,7 +147,7 @@ async def upload_resource(
         raise HTTPException(status_code=400, detail=f"Extensia {ext} nu este acceptată!")
  
     content = await file.read()
-    print(f"📁 Fișier primit: {file.filename}, dimensiune: {len(content)} bytes")
+    print(f"📁 Fișier: {file.filename} ({len(content)} bytes)")
  
     if len(content) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="Fișierul este prea mare! Maxim 10 MB.")
@@ -154,33 +155,27 @@ async def upload_resource(
     file_url = None
     storage_path = None
  
-    # Încearcă upload în Supabase Storage
+    # --- Încearcă Supabase Storage ---
     try:
         unique_name = f"{uuid.uuid4()}{ext}"
-        print(f"📤 Încerc upload în Storage: {unique_name}")
- 
         mime = get_mime_type(file.filename)
+        print(f"📤 Upload Storage: {unique_name} ({mime})")
  
-        response = db.storage.from_(STORAGE_BUCKET).upload(
+        db.storage.from_(STORAGE_BUCKET).upload(
             path=unique_name,
             file=content,
-            file_options={"content-type": mime, "upsert": "false"}
+            file_options={"content-type": mime}   # FIX: fără "upsert"
         )
  
-        print(f"✅ Storage response: {response}")
- 
-        storage_path = unique_name
         file_url = db.storage.from_(STORAGE_BUCKET).get_public_url(unique_name)
-        print(f"🔗 URL public: {file_url}")
+        storage_path = unique_name
+        print(f"✅ Storage OK: {file_url}")
  
-    except Exception as storage_err:
-        print(f"⚠️ Storage upload eșuat: {storage_err}")
-        print(f"   Tip eroare: {type(storage_err).__name__}")
-        # Fallback: salvează ca base64 în DB (metoda veche)
-        file_url = None
-        storage_path = None
+    except Exception as e:
+        print(f"⚠️ Storage eșuat ({type(e).__name__}): {e}")
+        # Fallback la base64
  
-    # Construiește datele pentru tabel
+    # --- Construiește datele pentru tabel ---
     resource_data = {
         "titlu": titlu,
         "descriere": descriere or "",
@@ -194,36 +189,33 @@ async def upload_resource(
     }
  
     if storage_path and file_url:
-        # Calea fericită: fișierul e în Storage
         resource_data["storage_path"] = storage_path
         resource_data["file_url"] = file_url
-        print("✅ Salvez metadate cu file_url în DB")
+        print("💾 Salvez cu file_url în DB")
     else:
-        # Fallback: salvează base64 în DB
+        # Fallback: base64 în DB
         resource_data["file_data"] = base64.b64encode(content).decode('utf-8')
         print("⚠️ Salvez ca base64 în DB (fallback)")
  
     try:
-        print(f"💾 Insert în tabel resources...")
         insert_response = db.table("resources").insert(resource_data).execute()
-        print(f"✅ Insert OK: {insert_response.data}")
+        print(f"✅ DB insert OK")
  
         if insert_response.data:
             return {
                 "status": "success",
                 "message": "Fișierul a fost încărcat cu succes!",
                 "resource": insert_response.data[0],
-                "storage_used": storage_path is not None
+                "via_storage": storage_path is not None
             }
         else:
             raise HTTPException(status_code=500, detail="Eroare la salvarea în baza de date!")
  
     except HTTPException:
         raise
-    except Exception as db_err:
-        print(f"❌ Eroare DB insert: {db_err}")
-        print(f"   Tip eroare: {type(db_err).__name__}")
-        raise HTTPException(status_code=500, detail=f"Eroare DB: {str(db_err)}")
+    except Exception as e:
+        print(f"❌ DB error: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail=f"Eroare DB: {str(e)}")
 
 # ============================================================
 # LISTEAZĂ RESURSE
