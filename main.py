@@ -19,6 +19,7 @@ import base64
 from datetime import datetime, timedelta
 import jwt
 from io import BytesIO
+from fastapi import FastAPI, HTTPException, Query, Depends, File, UploadFile, Form
 
 BASE_DIR = Path(__file__).resolve().parent
 app = FastAPI()
@@ -641,17 +642,23 @@ async def delete_resource(
 # ============================================================
 # DOWNLOAD RESURSĂ - REDIRECTARE LA URL-UL PUBLIC
 # ============================================================
+# ============================================================
+# DOWNLOAD RESURSĂ - DIN SUPABASE (CU TOKEN ÎN URL)
+# ============================================================
 @app.get("/download-resource-token/{file_id}")
 async def download_resource_with_token(
     file_id: int,
-    token: str
+    token: str = Query(...)  # ← IMPORTANT: Specifică că token-ul vine din query
 ):
-    """Descarcă resursă - redirecționează la URL-ul public din Supabase Storage"""
+    """Descarcă resursă folosind token din URL"""
     try:
         # Verifică token-ul
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         print(f"✅ Download pentru: {payload.get('email')}")
-    except Exception as e:
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirat")
+    except jwt.InvalidTokenError as e:
+        print(f"❌ Token invalid: {e}")
         raise HTTPException(status_code=401, detail="Token invalid")
     
     try:
@@ -668,16 +675,33 @@ async def download_resource_with_token(
             "vizualizari": resource.get("vizualizari", 0) + 1
         }).eq("id", file_id).execute()
         
-        # Redirecționează la URL-ul public
-        from fastapi.responses import RedirectResponse
-        return RedirectResponse(url=resource.get("file_url"))
+        # Decodifică din base64
+        file_data = base64.b64decode(resource.get("file_data", ""))
+        
+        # Determină tipul MIME
+        ext = os.path.splitext(resource["original_name"])[1].lower()
+        media_type = "application/octet-stream"
+        if ext == ".pdf": media_type = "application/pdf"
+        elif ext in [".jpg", ".jpeg"]: media_type = "image/jpeg"
+        elif ext == ".png": media_type = "image/png"
+        elif ext == ".gif": media_type = "image/gif"
+        elif ext == ".txt": media_type = "text/plain"
+        elif ext in [".cpp", ".c", ".py", ".js", ".html", ".css"]: media_type = "text/plain"
+        
+        return StreamingResponse(
+            BytesIO(file_data),
+            media_type=media_type,
+            headers={
+                "Content-Disposition": f"inline; filename=\"{resource['original_name']}\"",
+                "Content-Length": str(len(file_data))
+            }
+        )
         
     except HTTPException:
         raise
     except Exception as e:
         print(f"❌ Eroare download: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 # ============================================================
 # VIZUALIZARE PDF - REDIRECTARE LA URL-UL PUBLIC
 # ============================================================
