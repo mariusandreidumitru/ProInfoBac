@@ -6,6 +6,7 @@
     <title>Bibliotecă Resurse - ProInfoBAC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* ===== TOATE STILURILE (păstrează-le pe cele existente) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
@@ -668,8 +669,8 @@
             </div>
         </div>
 
-        <!-- UPLOAD SECTION -->
-        <div id="upload-section" class="card">
+        <!-- UPLOAD SECTION - ASCUNS PENTRU ELEVI -->
+        <div id="upload-section" class="card" style="display:none;">
             <div class="card-title"><i class="fas fa-upload" style="color:var(--success);"></i> Încarcă resursă nouă</div>
             
             <div id="profesor-content">
@@ -749,20 +750,6 @@
                     <button class="btn btn-outline" onclick="reseteazaFormular()">
                         <i class="fas fa-undo"></i> Resetează
                     </button>
-                </div>
-            </div>
-
-            <div id="elev-content" style="display:none;">
-                <div class="restrictie-profesor">
-                    <i class="fas fa-lock"></i>
-                    <h3>Acces restricționat</h3>
-                    <p>Doar profesorii pot încărca resurse în această bibliotecă.</p>
-                    <p style="font-size:0.9rem; margin-top:0.5rem;">
-                        <i class="fas fa-info-circle"></i> Rolul tău actual: <strong>Elev</strong>
-                    </p>
-                    <p style="font-size:0.85rem; margin-top:0.5rem; color:var(--text-secondary);">
-                        Poți vizualiza toate resursele încărcate de profesori mai jos.
-                    </p>
                 </div>
             </div>
         </div>
@@ -919,42 +906,32 @@
         }
 
         // ============================================================
-        // UI
+        // UI - ASCUNDE UPLOAD PENTRU ELEVI
         // ============================================================
         function actualizeazaUI() {
             const badge = document.getElementById('role-badge');
             const text = document.getElementById('role-text');
-            const profesorContent = document.getElementById('profesor-content');
-            const elevContent = document.getElementById('elev-content');
+            const uploadSection = document.getElementById('upload-section');
             
             if (rolUtilizator === 'teacher') {
                 badge.className = 'role-badge teacher';
                 badge.querySelector('i').className = 'fas fa-chalkboard-teacher';
                 text.textContent = 'Profesor';
-                profesorContent.style.display = 'block';
-                elevContent.style.display = 'none';
-                document.querySelector('.upload-zone').style.display = 'block';
-                document.querySelector('#profesor-content .filter-bar').style.display = 'flex';
-                document.getElementById('resource-titlu').style.display = 'block';
-                document.getElementById('resource-desc').style.display = 'block';
-                document.getElementById('upload-btn').style.display = 'inline-flex';
+                uploadSection.style.display = 'block';
             } else {
                 badge.className = 'role-badge student';
                 badge.querySelector('i').className = 'fas fa-user-graduate';
                 text.textContent = 'Elev';
-                profesorContent.style.display = 'none';
-                elevContent.style.display = 'block';
-                document.querySelector('.upload-zone').style.display = 'none';
-                document.querySelector('#profesor-content .filter-bar').style.display = 'none';
-                document.getElementById('resource-titlu').style.display = 'none';
-                document.getElementById('resource-desc').style.display = 'none';
-                document.getElementById('upload-btn').style.display = 'none';
+                uploadSection.style.display = 'none';
             }
         }
 
         function getAuthHeaders() {
             const token = localStorage.getItem('accessToken');
-            return { 'Authorization': `Bearer ${token}` };
+            return { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
         }
 
         // ============================================================
@@ -1055,11 +1032,14 @@
         }
 
         // ============================================================
-        // PREVIEW
+        // PREVIEW - TRIMITE TOKEN
         // ============================================================
         async function previewResource(id) {
             const r = resurse.find(item => item.id === id);
             if (!r) { showToast('⚠️ Resursa nu a fost găsită!', 'error'); return; }
+
+            const token = localStorage.getItem('accessToken');
+            if (!token) { window.location.href = '/'; return; }
 
             currentPreviewId = id;
             document.getElementById('preview-title').textContent = r.titlu;
@@ -1070,28 +1050,26 @@
             const ext = r.original_name ? r.original_name.split('.').pop().toLowerCase() : '';
             const downloadUrl = `/download-resource/${r.id}`;
             
-            if (r.tip === 'pdf' || ext === 'pdf') {
-                body.innerHTML = `<embed src="${downloadUrl}" type="application/pdf" class="preview-pdf" />`;
-            } else if (r.tip === 'image' || ['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
-                body.innerHTML = `<img src="${downloadUrl}" alt="${r.titlu}" class="preview-image" />`;
-            } else if (r.tip === 'text' || ext === 'txt') {
-                try {
+            // Pentru toate tipurile de fișiere, trimite token-ul
+            try {
+                if (r.tip === 'pdf' || ext === 'pdf') {
+                    body.innerHTML = `<embed src="${downloadUrl}?token=${token}" type="application/pdf" class="preview-pdf" />`;
+                } else if (r.tip === 'image' || ['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+                    body.innerHTML = `<img src="${downloadUrl}?token=${token}" alt="${r.titlu}" class="preview-image" />`;
+                } else if (r.tip === 'text' || ext === 'txt') {
                     const textRes = await fetch(downloadUrl, { headers: getAuthHeaders() });
                     const text = await textRes.text();
                     body.innerHTML = `<div class="preview-text">${text}</div>`;
-                } catch {
-                    body.innerHTML = `<div style="text-align:center;padding:2rem;"><i class="fas fa-file-alt" style="font-size:4rem;color:var(--primary);"></i><p>Nu s-a putut încărca conținutul text.</p></div>`;
-                }
-            } else if (r.tip === 'code' || ['cpp', 'c', 'py', 'html'].includes(ext)) {
-                try {
+                } else if (r.tip === 'code' || ['cpp', 'c', 'py', 'html'].includes(ext)) {
                     const codeRes = await fetch(downloadUrl, { headers: getAuthHeaders() });
                     const code = await codeRes.text();
                     body.innerHTML = `<div class="preview-code">${code}</div>`;
-                } catch {
-                    body.innerHTML = `<div style="text-align:center;padding:2rem;"><i class="fas fa-file-code" style="font-size:4rem;color:var(--primary);"></i><p>Nu s-a putut încărca codul.</p></div>`;
+                } else {
+                    body.innerHTML = `<div style="text-align:center;padding:2rem;"><i class="fas ${tipIconMap[r.tip] || 'fa-file'}" style="font-size:4rem;color:var(--primary);"></i><h3 style="margin-top:1rem;">${r.titlu}</h3><p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p><p style="color:var(--text-secondary);font-size:0.85rem;">Folosește butonul "Descarcă" pentru a-l salva.</p></div>`;
                 }
-            } else {
-                body.innerHTML = `<div style="text-align:center;padding:2rem;"><i class="fas ${tipIconMap[r.tip] || 'fa-file'}" style="font-size:4rem;color:var(--primary);"></i><h3 style="margin-top:1rem;">${r.titlu}</h3><p style="color:var(--text-secondary);">Acest tip de fișier nu poate fi previzualizat direct.</p><p style="color:var(--text-secondary);font-size:0.85rem;">Folosește butonul "Descarcă" pentru a-l salva.</p></div>`;
+            } catch (error) {
+                body.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--danger);"><i class="fas fa-exclamation-circle" style="font-size:4rem;"></i><p>Eroare la încărcarea fișierului. Încearcă din nou.</p></div>`;
+                console.error('Preview error:', error);
             }
 
             document.getElementById('preview-modal').classList.add('active');
@@ -1105,12 +1083,16 @@
         }
 
         // ============================================================
-        // DOWNLOAD
+        // DOWNLOAD - TRIMITE TOKEN
         // ============================================================
         function downloadResource(id) {
             const downloadId = id || currentPreviewId;
             if (!downloadId) { showToast('⚠️ Nicio resursă selectată!', 'warning'); return; }
-            window.open(`/download-resource/${downloadId}`, '_blank');
+            
+            const token = localStorage.getItem('accessToken');
+            if (!token) { window.location.href = '/'; return; }
+            
+            window.open(`/download-resource/${downloadId}?token=${token}`, '_blank');
             showToast('✅ Fișierul se descarcă...');
         }
 
