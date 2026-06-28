@@ -714,7 +714,6 @@
                     <textarea class="form-control" id="resource-desc" rows="2" placeholder="Descrie pe scurt conținutul resursei..."></textarea>
                 </div>
 
-                <!-- FIX: Adăugat id="upload-zone" pentru a putea atașa event listeners corect -->
                 <div class="upload-zone" id="upload-zone">
                     <i class="fas fa-cloud-upload-alt"></i>
                     <p><strong>Click pentru a încărca un fișier</strong></p>
@@ -822,7 +821,6 @@
                 <button class="btn btn-outline" onclick="closePreview()">
                     <i class="fas fa-times"></i> Închide
                 </button>
-                <!-- FIX: onclick setat dinamic în previewResource(), nu inline cu currentPreviewId -->
                 <button class="btn btn-primary" id="preview-download-btn">
                     <i class="fas fa-download"></i> Descarcă
                 </button>
@@ -840,8 +838,8 @@
         let selectedFile = null;
         let selectedFileName = '';
         let selectedFileSize = '';
-        // FIX: Reține blob URL-ul din preview pentru a-l elibera corect la closePreview
         let currentPreviewBlobUrl = null;
+        let isLoading = false;
 
         // ============================================================
         // MAPA ICONIȚELOR
@@ -857,9 +855,6 @@
             'zip': 'fa-file-archive'
         };
 
-        // FIX: Map static pentru etichetele capitolelor.
-        // Original: căuta în DOM-ul dropdownului de upload (care poate fi ascuns pentru elevi),
-        // returnând undefined. Acum se folosește un obiect simplu, întotdeauna disponibil.
         const capitoleLabelMap = {
             'tipuri-date': 'Tipuri de date',
             'operatori': 'Operatori',
@@ -905,12 +900,18 @@
             }
             
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
                 const response = await fetch('/api/verify-token', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -938,12 +939,18 @@
             }
             
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
                 const response = await fetch('/api/user', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -983,9 +990,35 @@
         }
 
         // ============================================================
-        // ÎNCARCĂ RESURSELE
+        // ÎNCARCĂ RESURSELE CU CACHE
         // ============================================================
-        async function incarcaResurse() {
+        async function incarcaResurse(forceRefresh = false) {
+            if (isLoading) return;
+            isLoading = true;
+            
+            // Verifică cache-ul
+            if (!forceRefresh) {
+                const cached = localStorage.getItem('bibliotecaResurseCache');
+                const cachedTime = localStorage.getItem('bibliotecaResurseCacheTime');
+                
+                if (cached && cachedTime) {
+                    const age = Date.now() - parseInt(cachedTime);
+                    if (age < 5 * 60 * 1000) { // 5 minute cache
+                        try {
+                            resurse = JSON.parse(cached);
+                            document.getElementById('loading-resurse').style.display = 'none';
+                            afiseazaResurse();
+                            actualizeazaStatistici();
+                            console.log('📦 Folosesc cache:', resurse.length, 'resurse');
+                            isLoading = false;
+                            return;
+                        } catch (e) {
+                            console.warn('Cache corupt, reîncarc...');
+                        }
+                    }
+                }
+            }
+            
             const token = localStorage.getItem('accessToken');
             document.getElementById('loading-resurse').style.display = 'block';
             
@@ -995,22 +1028,36 @@
                     headers['Authorization'] = `Bearer ${token}`;
                 }
                 
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
                 const response = await fetch('/api/resurse', {
-                    headers: headers
+                    headers: headers,
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
                 
                 if (response.ok) {
                     const data = await response.json();
                     resurse = data.resurse || [];
-                    localStorage.setItem('bibliotecaResurse', JSON.stringify(resurse));
-                    console.log('✅ Resurse încărcate:', resurse.length);
+                    
+                    // Salvează în cache
+                    localStorage.setItem('bibliotecaResurseCache', JSON.stringify(resurse));
+                    localStorage.setItem('bibliotecaResurseCacheTime', Date.now().toString());
+                    
+                    console.log('✅ Resurse încărcate din server:', resurse.length);
                 } else {
+                    // Fallback la localStorage
                     const saved = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
                     resurse = saved;
-                    console.log('📦 Folosesc localStorage:', resurse.length);
+                    console.log('📦 Folosesc localStorage (fallback):', resurse.length);
                 }
             } catch (error) {
                 console.error('❌ Eroare:', error);
+                if (error.name === 'AbortError') {
+                    showToast('⏱️ Timeout - folosesc datele din cache', 'warning');
+                }
                 const saved = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
                 resurse = saved;
             }
@@ -1018,6 +1065,7 @@
             document.getElementById('loading-resurse').style.display = 'none';
             afiseazaResurse();
             actualizeazaStatistici();
+            isLoading = false;
         }
 
         function afiseazaResurse() {
@@ -1055,11 +1103,8 @@
             grid.innerHTML = filtered.map(r => {
                 const iconClass = tipClassMap[r.tip] || '';
                 const icon = tipIconMap[r.tip] || 'fa-file';
-                const dataStr = new Date(r.data_incarcare || Date.now()).toLocaleDateString('ro-RO');
+                const dataStr = new Date(r.uploaded_at || Date.now()).toLocaleDateString('ro-RO');
                 const sizeStr = r.dimensiune ? (r.dimensiune / 1024).toFixed(1) + ' KB' : 'N/A';
-                // FIX: Folosește capitoleLabelMap în loc de căutare în DOM-ul dropdown-ului de upload.
-                // Originalul: Array.from(document.getElementById('resource-capitol').options).findIndex(...)
-                // — returna undefined pentru elevi deoarece secțiunea de upload era display:none.
                 const numeCapitol = capitoleLabelMap[r.capitol] || r.capitol || 'Necategorisit';
                 
                 return `
@@ -1086,7 +1131,7 @@
         async function previewResource(id) {
             console.log('🔍 Preview resource apelat cu ID:', id);
             
-            const r = resurse.find(item => item.id == id); // == în loc de ===
+            const r = resurse.find(item => item.id == id);
             if (!r) { 
                 showToast('⚠️ Resursa nu a fost găsită!', 'error'); 
                 return; 
@@ -1100,8 +1145,6 @@
 
             currentPreviewId = id;
             document.getElementById('preview-title').textContent = r.titlu;
-            // FIX: Setează onclick pe butonul din footer cu ID-ul corect capturat în closure,
-            // în loc să depindă de currentPreviewId la momentul click-ului
             document.getElementById('preview-download-btn').onclick = () => downloadResource(id);
 
             const body = document.getElementById('preview-body');
@@ -1113,7 +1156,6 @@
                 </div>
             `;
 
-            // FIX: Deschide modalul imediat cu spinner, în loc să aștepte fetch-ul
             document.getElementById('preview-modal').classList.add('active');
             document.body.style.overflow = 'hidden';
 
@@ -1121,12 +1163,18 @@
             const fileType = r.tip || ext;
             
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
+                
                 const response = await fetch(`/download-resource/${r.id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
                 
                 console.log('📥 Răspuns status:', response.status);
                 
@@ -1142,8 +1190,6 @@
                 
                 const blob = await response.blob();
 
-                // FIX: Eliberează blob URL-ul anterior înainte de a crea unul nou,
-                // prevenind leak-uri de memorie la previzualizări succesive
                 if (currentPreviewBlobUrl) {
                     URL.revokeObjectURL(currentPreviewBlobUrl);
                 }
@@ -1187,6 +1233,9 @@
                 
             } catch (error) {
                 console.error('❌ Preview error:', error);
+                if (error.name === 'AbortError') {
+                    showToast('⏱️ Timeout la încărcare', 'warning');
+                }
                 body.innerHTML = `
                     <div style="text-align:center;padding:2rem;color:var(--danger);">
                         <i class="fas fa-exclamation-circle" style="font-size:4rem;"></i>
@@ -1204,7 +1253,6 @@
             document.getElementById('preview-modal').classList.remove('active');
             document.body.style.overflow = '';
             document.getElementById('preview-body').innerHTML = '';
-            // FIX: Eliberează blob URL-ul la închiderea modalului pentru a evita leak-uri de memorie
             if (currentPreviewBlobUrl) {
                 URL.revokeObjectURL(currentPreviewBlobUrl);
                 currentPreviewBlobUrl = null;
@@ -1215,8 +1263,7 @@
         // DOWNLOAD
         // ============================================================
         async function downloadResource(id) {
-            console.log("downloadResource chemat cu id:", id, typeof id);
-            console.log("resurse disponibile:", resurse.map(r => ({id: r.id, tip: typeof r.id})));
+            console.log("downloadResource chemat cu id:", id);
             
             const downloadId = id || currentPreviewId;
            
@@ -1232,12 +1279,18 @@
             }
             
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                
                 const response = await fetch(`/download-resource/${downloadId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
                 
                 console.log('📥 Răspuns download status:', response.status);
                 
@@ -1257,21 +1310,24 @@
                 a.href = url;
                 
                 let filename = 'download';
-            const r = resurse.find(item => item.id == downloadId); // == în loc de === (int vs string)
+                const r = resurse.find(item => item.id == downloadId);
                 if (r && r.original_name) filename = r.original_name;
                 
                 a.download = filename;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                // FIX: revokeObjectURL era deja prezent în original — păstrat corect
                 window.URL.revokeObjectURL(url);
                 
                 showToast('✅ Fișierul s-a descărcat!');
                 
             } catch (error) {
                 console.error('❌ Download error:', error);
-                showToast('⚠️ Eroare la descărcare: ' + error.message, 'error');
+                if (error.name === 'AbortError') {
+                    showToast('⏱️ Timeout la descărcare', 'warning');
+                } else {
+                    showToast('⚠️ Eroare la descărcare: ' + error.message, 'error');
+                }
             }
         }
 
@@ -1289,20 +1345,34 @@
             if (!token) { window.location.href = '/'; return; }
 
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
                 const response = await fetch(`/api/resurse/${id}`, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+                    headers: { 
+                        'Authorization': `Bearer ${token}`, 
+                        'Content-Type': 'application/json' 
+                    },
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
 
                 if (response.ok) {
                     showToast('🗑️ Resursa a fost ștearsă!');
-                    await incarcaResurse();
+                    // Forțează reîncărcarea
+                    await incarcaResurse(true);
                 } else {
                     const data = await response.json();
                     showToast('⚠️ ' + (data.detail || 'Eroare la ștergere'), 'error');
                 }
             } catch (error) {
-                showToast('⚠️ Eroare: ' + error.message, 'error');
+                if (error.name === 'AbortError') {
+                    showToast('⏱️ Timeout la ștergere', 'warning');
+                } else {
+                    showToast('⚠️ Eroare: ' + error.message, 'error');
+                }
             }
         }
 
@@ -1313,8 +1383,14 @@
             const validExts = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'txt', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'zip', 'cpp', 'c', 'html'];
             const ext = file.name.split('.').pop().toLowerCase();
             
-            if (!validExts.includes(ext)) { showToast('⚠️ Format neacceptat!', 'warning'); return; }
-            if (file.size > 10 * 1024 * 1024) { showToast('⚠️ Fișier prea mare! Maxim 10 MB.', 'error'); return; }
+            if (!validExts.includes(ext)) { 
+                showToast('⚠️ Format neacceptat!', 'warning'); 
+                return; 
+            }
+            if (file.size > 10 * 1024 * 1024) { 
+                showToast('⚠️ Fișier prea mare! Maxim 10 MB.', 'error'); 
+                return; 
+            }
 
             selectedFile = file;
             selectedFileName = file.name;
@@ -1362,11 +1438,17 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se încarcă...';
 
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000);
+                
                 const response = await fetch('/upload-resource', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
+                    body: formData,
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
 
                 const data = await response.json();
 
@@ -1375,12 +1457,17 @@
                     stergeFisierSelectat();
                     document.getElementById('resource-titlu').value = '';
                     document.getElementById('resource-desc').value = '';
-                    await incarcaResurse();
+                    // Forțează reîncărcarea
+                    await incarcaResurse(true);
                 } else {
                     showToast('⚠️ ' + (data.detail || 'Eroare la încărcare'), 'error');
                 }
             } catch (error) {
-                showToast('⚠️ Eroare de conexiune: ' + error.message, 'error');
+                if (error.name === 'AbortError') {
+                    showToast('⏱️ Timeout la încărcare - încearcă din nou', 'warning');
+                } else {
+                    showToast('⚠️ Eroare de conexiune: ' + error.message, 'error');
+                }
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Încarcă resursa';
@@ -1390,13 +1477,17 @@
         // ============================================================
         // FILTERE
         // ============================================================
-        function filtreazaResurse() { afiseazaResurse(); }
+        function filtreazaResurse() { 
+            afiseazaResurse(); 
+        }
+        
         function reseteazaFiltre() {
             document.getElementById('search-resource').value = '';
             document.getElementById('filter-capitol').value = 'toate';
             document.getElementById('filter-tip').value = 'toate';
             afiseazaResurse();
         }
+        
         function reseteazaFormular() {
             document.getElementById('resource-titlu').value = '';
             document.getElementById('resource-desc').value = '';
@@ -1449,8 +1540,6 @@
             actualizeazaUI();
             await incarcaResurse();
 
-            // FIX: Event listeners pe upload zone prin getElementById, nu querySelector,
-            // și click handler separat care evită declanșarea dublă dacă target-ul este input-ul
             const uploadZone = document.getElementById('upload-zone');
             if (uploadZone) {
                 uploadZone.addEventListener('click', (e) => {

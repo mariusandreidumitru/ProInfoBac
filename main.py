@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import List
 from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse, RedirectResponse
+from fastapi.responses import FileResponse, StreamingResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
@@ -32,6 +32,7 @@ app.add_middleware(
         "http://localhost:8000",
         "https://proinfobac.vercel.app",
         "https://proinfobac.onrender.com",
+        "*"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -46,7 +47,7 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "frontend"), name="static"
 # ============================================================
 SUPABASE_URL = "https://qjtxgtjyxosjkktamctm.supabase.co"
 SUPABASE_KEY = "sb_publishable_Fx5UnIbVOm3Xr7pVAQkDjg_ox8zw7hV"
-STORAGE_BUCKET = "resources"  # numele bucket-ului creat în Supabase Storage
+STORAGE_BUCKET = "resources"
 
 try:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -124,12 +125,12 @@ def get_mime_type(filename: str) -> str:
     }.get(ext, "application/octet-stream")
 
 # ============================================================
-# UPLOAD RESURSĂ — folosește Supabase Storage
+# UPLOAD RESURSĂ
 # ============================================================
 @app.post("/upload-resource")
 async def upload_resource(
     titlu: str = Form(...),
-    descriere: Optional[str] = Form(default=""),   # FIX: nu mai e None
+    descriere: Optional[str] = Form(default=""),
     capitol: str = Form(...),
     tip: str = Form(...),
     file: UploadFile = File(...),
@@ -155,7 +156,6 @@ async def upload_resource(
     file_url = None
     storage_path = None
  
-    # --- Încearcă Supabase Storage ---
     try:
         unique_name = f"{uuid.uuid4()}{ext}"
         mime = get_mime_type(file.filename)
@@ -164,7 +164,7 @@ async def upload_resource(
         db.storage.from_(STORAGE_BUCKET).upload(
             path=unique_name,
             file=content,
-            file_options={"content-type": mime}   # FIX: fără "upsert"
+            file_options={"content-type": mime}
         )
  
         file_url = db.storage.from_(STORAGE_BUCKET).get_public_url(unique_name)
@@ -173,9 +173,7 @@ async def upload_resource(
  
     except Exception as e:
         print(f"⚠️ Storage eșuat ({type(e).__name__}): {e}")
-        # Fallback la base64
- 
-    # --- Construiește datele pentru tabel ---
+
     resource_data = {
         "titlu": titlu,
         "descriere": descriere or "",
@@ -193,7 +191,6 @@ async def upload_resource(
         resource_data["file_url"] = file_url
         print("💾 Salvez cu file_url în DB")
     else:
-        # Fallback: base64 în DB
         resource_data["file_data"] = base64.b64encode(content).decode('utf-8')
         print("⚠️ Salvez ca base64 în DB (fallback)")
  
@@ -202,6 +199,7 @@ async def upload_resource(
         print(f"✅ DB insert OK")
  
         if insert_response.data:
+            # Invalidează cache-ul după upload
             return {
                 "status": "success",
                 "message": "Fișierul a fost încărcat cu succes!",
@@ -218,17 +216,25 @@ async def upload_resource(
         raise HTTPException(status_code=500, detail=f"Eroare DB: {str(e)}")
 
 # ============================================================
-# LISTEAZĂ RESURSE
+# LISTEAZĂ RESURSE - OPTIMIZAT
 # ============================================================
 @app.get("/api/resurse")
 async def get_resurse(payload: dict = Depends(verify_token)):
     db = get_supabase()
     try:
-        # Selectăm tot FĂRĂ file_data (care nu mai există) — răspuns instant
+        # Selectează DOAR coloanele necesare, exclude file_data
         response = db.table("resources").select(
             "id, titlu, descriere, capitol, tip, original_name, file_url, storage_path, dimensiune, uploaded_by, vizualizari, uploaded_at"
         ).order("uploaded_at", desc=True).execute()
-        return {"resurse": response.data or []}
+        
+        # Adaugă header de cache pentru 5 minute
+        return JSONResponse(
+            content={"resurse": response.data or []},
+            headers={
+                "Cache-Control": "private, max-age=300",
+                "CDN-Cache-Control": "public, max-age=300"
+            }
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -248,11 +254,9 @@ async def delete_resource(file_id: int, payload: dict = Depends(verify_token)):
 
         storage_path = check.data[0].get("storage_path")
 
-        # Șterge din Storage
         if storage_path:
             db.storage.from_(STORAGE_BUCKET).remove([storage_path])
 
-        # Șterge din tabel
         db.table("resources").delete().eq("id", file_id).execute()
         return {"status": "success", "message": "Resursa a fost ștearsă"}
 
@@ -262,35 +266,52 @@ async def delete_resource(file_id: int, payload: dict = Depends(verify_token)):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
-# DOWNLOAD / PREVIEW — redirect direct la URL din Storage
-# Browserul descarcă direct din Supabase Storage, nu prin serverul tău!
+# DOWNLOAD / PREVIEW - OPTIMIZAT
 # ============================================================
 @app.get("/download-resource/{file_id}")
 async def download_resource(file_id: int, payload: dict = Depends(verify_token)):
     db = get_supabase()
-    # Selectăm și file_data pentru resurse vechi (base64)
-    resource = db.table("resources").select("file_url, file_data, original_name, vizualizari").eq("id", file_id).execute()
+    resource = db.table("resources").select(
+        "file_url, file_data, original_name, vizualizari, storage_path"
+    ).eq("id", file_id).execute()
+    
     if not resource.data:
         raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
 
     r = resource.data[0]
-    db.table("resources").update({"vizualizari": r.get("vizualizari", 0) + 1}).eq("id", file_id).execute()
+    
+    # Incrementează vizualizările async (nu aștepta)
+    try:
+        db.table("resources").update({"vizualizari": r.get("vizualizari", 0) + 1}).eq("id", file_id).execute()
+    except:
+        pass
 
     if r.get("file_url"):
-        # Resursă nouă — redirect direct la Storage (instant)
-        return RedirectResponse(url=r["file_url"])
+        # Redirect cu cache control pentru resurse static
+        return RedirectResponse(
+            url=r["file_url"],
+            headers={
+                "Cache-Control": "public, max-age=86400",
+                "CDN-Cache-Control": "public, max-age=86400"
+            }
+        )
     elif r.get("file_data"):
-        # Resursă veche — decodifică base64 și trimite
         file_bytes = base64.b64decode(r["file_data"])
         media_type = get_mime_type(r.get("original_name", "file.bin"))
         return StreamingResponse(
             BytesIO(file_bytes),
             media_type=media_type,
-            headers={"Content-Disposition": f"attachment; filename=\"{r.get('original_name', 'download')}\""}
+            headers={
+                "Content-Disposition": f"attachment; filename=\"{r.get('original_name', 'download')}\"",
+                "Cache-Control": "public, max-age=3600"
+            }
         )
     else:
-        raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit (nici URL, nici date)")
+        raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit")
 
+# ============================================================
+# TOKEN DOWNLOAD
+# ============================================================
 @app.get("/download-resource-token/{file_id}")
 async def download_resource_token(file_id: int, token: str):
     try:
@@ -306,17 +327,30 @@ async def download_resource_token(file_id: int, token: str):
         raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
 
     r = resource.data[0]
-    db.table("resources").update({"vizualizari": r.get("vizualizari", 0) + 1}).eq("id", file_id).execute()
+    
+    try:
+        db.table("resources").update({"vizualizari": r.get("vizualizari", 0) + 1}).eq("id", file_id).execute()
+    except:
+        pass
 
     if r.get("file_url"):
-        return RedirectResponse(url=r["file_url"])
+        return RedirectResponse(
+            url=r["file_url"],
+            headers={"Cache-Control": "public, max-age=86400"}
+        )
     elif r.get("file_data"):
         file_bytes = base64.b64decode(r["file_data"])
-        return StreamingResponse(BytesIO(file_bytes), media_type=get_mime_type(r.get("original_name", "file.bin")),
-            headers={"Content-Disposition": f"attachment; filename=\"{r.get('original_name', 'download')}\""})
+        return StreamingResponse(
+            BytesIO(file_bytes), 
+            media_type=get_mime_type(r.get("original_name", "file.bin")),
+            headers={"Content-Disposition": f"attachment; filename=\"{r.get('original_name', 'download')}\""}
+        )
     else:
         raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit")
 
+# ============================================================
+# VIEW PDF
+# ============================================================
 @app.get("/view-pdf/{file_id}")
 async def view_pdf(file_id: int, token: str):
     try:
@@ -330,14 +364,27 @@ async def view_pdf(file_id: int, token: str):
         raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
 
     r = resource.data[0]
-    db.table("resources").update({"vizualizari": r.get("vizualizari", 0) + 1}).eq("id", file_id).execute()
+    
+    try:
+        db.table("resources").update({"vizualizari": r.get("vizualizari", 0) + 1}).eq("id", file_id).execute()
+    except:
+        pass
 
     if r.get("file_url"):
-        return RedirectResponse(url=r["file_url"])
+        return RedirectResponse(
+            url=r["file_url"],
+            headers={"Cache-Control": "public, max-age=86400"}
+        )
     elif r.get("file_data"):
         file_bytes = base64.b64decode(r["file_data"])
-        return StreamingResponse(BytesIO(file_bytes), media_type="application/pdf",
-            headers={"Content-Disposition": f"inline; filename=\"{r.get('original_name', 'document.pdf')}\""})
+        return StreamingResponse(
+            BytesIO(file_bytes), 
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"inline; filename=\"{r.get('original_name', 'document.pdf')}\"",
+                "Cache-Control": "public, max-age=3600"
+            }
+        )
     else:
         raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit")
 
@@ -389,10 +436,18 @@ def get_user(payload: dict = Depends(verify_token)):
         response = db.table("users").select("*").eq("id", user_id).execute()
         if response.data:
             user = response.data[0]
-            return {"id": user.get("id"), "email": user.get("email"), "role": user.get("role"),
-                    "name": user.get("name") or user.get("email").split('@')[0]}
-        return {"id": user_id, "email": payload.get("email"), "role": payload.get("role"),
-                "name": payload.get("email", "").split('@')[0]}
+            return {
+                "id": user.get("id"), 
+                "email": user.get("email"), 
+                "role": user.get("role"),
+                "name": user.get("name") or user.get("email").split('@')[0]
+            }
+        return {
+            "id": user_id, 
+            "email": payload.get("email"), 
+            "role": payload.get("role"),
+            "name": payload.get("email", "").split('@')[0]
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -404,9 +459,22 @@ def login_user(login: UserLogin):
         if not response.data:
             raise HTTPException(status_code=401, detail="Email sau parola incorecte!")
         user = response.data[0]
-        token = create_access_token({"sub": str(user["id"]), "email": user["email"], "role": user.get("role", "student")})
-        return {"status": "success", "message": "Autentificare reușită!", "access_token": token,
-                "token_type": "bearer", "user": {"id": user["id"], "email": user["email"], "role": user.get("role")}}
+        token = create_access_token({
+            "sub": str(user["id"]), 
+            "email": user["email"], 
+            "role": user.get("role", "student")
+        })
+        return {
+            "status": "success", 
+            "message": "Autentificare reușită!", 
+            "access_token": token,
+            "token_type": "bearer", 
+            "user": {
+                "id": user["id"], 
+                "email": user["email"], 
+                "role": user.get("role")
+            }
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -421,13 +489,22 @@ def register_user(user: UserRegister):
         if db.table("users").select("id").eq("email", user.email).execute().data:
             raise HTTPException(status_code=400, detail="Acest email este deja înregistrat!")
         response = db.table("users").insert({
-            "email": user.email, "password_hash": user.password,
-            "role": user.role, "created_at": datetime.now().isoformat()
+            "email": user.email, 
+            "password_hash": user.password,
+            "role": user.role, 
+            "created_at": datetime.now().isoformat()
         }).execute()
         if response.data:
             u = response.data[0]
-            return {"status": "success", "message": "Cont creat cu succes!",
-                    "user": {"email": u.get("email"), "role": u.get("role"), "id": u.get("id")}}
+            return {
+                "status": "success", 
+                "message": "Cont creat cu succes!",
+                "user": {
+                    "email": u.get("email"), 
+                    "role": u.get("role"), 
+                    "id": u.get("id")
+                }
+            }
         raise HTTPException(status_code=500, detail="Eroare la salvarea utilizatorului!")
     except HTTPException:
         raise
@@ -495,7 +572,11 @@ def generate_test(request: TestRequest):
 @app.post("/generate-meeting")
 def generate_meeting_link(request: MeetingRequest):
     room_name = f"BacInfo_{request.nume_materie.replace(' ', '')}_{str(uuid.uuid4())[:8]}"
-    return {"status": "Sala a fost creata!", "link_intalnire": f"https://meet.jit.si/{room_name}", "nume_camera": room_name}
+    return {
+        "status": "Sala a fost creata!", 
+        "link_intalnire": f"https://meet.jit.si/{room_name}", 
+        "nume_camera": room_name
+    }
 
 # ============================================================
 # PAGINI HTML
@@ -519,10 +600,23 @@ def serve_creator(): return FileResponse(BASE_DIR / "frontend" / "creator.html")
 @app.get("/resurse")
 def serve_resurse(): return FileResponse(BASE_DIR / "frontend" / "resurse.html")
 
+# ============================================================
+# VERIFY TOKEN
+# ============================================================
 @app.get("/api/verify-token")
 def verify_token_endpoint(payload: dict = Depends(verify_token)):
-    return {"valid": True, "user": {"id": payload.get("sub"), "email": payload.get("email"), "role": payload.get("role")}}
+    return {
+        "valid": True, 
+        "user": {
+            "id": payload.get("sub"), 
+            "email": payload.get("email"), 
+            "role": payload.get("role")
+        }
+    }
 
+# ============================================================
+# TEST SUPABASE
+# ============================================================
 @app.get("/test-supabase")
 def test_supabase_endpoint():
     try:
@@ -533,6 +627,9 @@ def test_supabase_endpoint():
     except Exception as e:
         return {"status": "❌ Eroare", "error": str(e)}
 
+# ============================================================
+# DEBUG TOKEN
+# ============================================================
 @app.get("/debug-token")
 async def debug_token(token: str = None):
     if not token:
@@ -542,6 +639,9 @@ async def debug_token(token: str = None):
     except Exception as e:
         return {"valid": False, "error": str(e)}
 
+# ============================================================
+# RUN
+# ============================================================
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
