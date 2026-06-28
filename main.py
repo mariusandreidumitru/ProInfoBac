@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Query, Depends, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
@@ -15,8 +15,10 @@ import json
 import subprocess
 import tempfile
 import shutil
+import base64
 from datetime import datetime, timedelta
 import jwt
+from io import BytesIO
 
 BASE_DIR = Path(__file__).resolve().parent
 app = FastAPI()
@@ -29,9 +31,9 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:8000",
-        "https://proinfobac.vercel.app",  # URL-ul tău Vercel
-        "https://proinfobac.onrender.com",  # URL-ul tău Render
-        "*"  # Pentru testare, dar în producție pune URL-urile exacte
+        "https://proinfobac.vercel.app",
+        "https://proinfobac.onrender.com",
+        "*"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -499,13 +501,7 @@ def generate_meeting_link(request: MeetingRequest):
     }
 
 # ============================================================
-# API - RESURSE (UPLOAD FIȘIERE) - CU AUTENTIFICARE
-# ============================================================
-UPLOAD_DIR = BASE_DIR / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)
-
-# ============================================================
-# RUTA PENTRU PAGINA DE RESURSE - CU AUTENTIFICARE
+# RUTA PENTRU PAGINA DE RESURSE
 # ============================================================
 @app.get("/resurse")
 def serve_resurse():
@@ -514,15 +510,12 @@ def serve_resurse():
         return FileResponse(resurse_path, media_type="text/html")
     raise HTTPException(status_code=404, detail="Pagina resurse.html nu a fost găsită")
 
-@app.get("/resurse.html")
-def serve_resurse_html():
-    resurse_path = BASE_DIR / "frontend" / "resurse.html"
-    if resurse_path.exists():
-        return FileResponse(resurse_path, media_type="text/html")
-    raise HTTPException(status_code=404, detail="Pagina resurse.html nu a fost găsită")
+# ============================================================
+# API - RESURSE (STORAGE ÎN SUPABASE)
+# ============================================================
 
 # ============================================================
-# UPLOAD RESURSĂ - CU AUTENTIFICARE ȘI VERIFICARE ROL
+# UPLOAD RESURSĂ - ÎN SUPABASE
 # ============================================================
 @app.post("/upload-resource")
 async def upload_resource(
@@ -533,10 +526,12 @@ async def upload_resource(
     file: UploadFile = File(...),
     payload: dict = Depends(verify_token)
 ):
+    """Upload resursă - necesită autentificare și rol de profesor"""
     if payload.get("role") != "teacher":
         raise HTTPException(status_code=403, detail="Doar profesorii pot încărca resurse!")
     
     try:
+        # Verifică extensia
         valid_extensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.txt', '.doc', '.docx', 
                            '.ppt', '.pptx', '.xls', '.xlsx', '.zip', '.cpp', '.c', '.html']
         ext = os.path.splitext(file.filename)[1].lower()
@@ -544,11 +539,12 @@ async def upload_resource(
         if ext not in valid_extensions:
             raise HTTPException(status_code=400, detail=f"Extensia {ext} nu este acceptată!")
         
-        # Citește conținutul fișierului
+        # Verifică dimensiunea (max 10 MB)
         content = await file.read()
+        if len(content) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Fișierul este prea mare! Maxim 10 MB.")
         
         # Codifică în base64
-        import base64
         file_data = base64.b64encode(content).decode('utf-8')
         
         # Salvează în Supabase
@@ -576,15 +572,18 @@ async def upload_resource(
         else:
             raise HTTPException(status_code=500, detail="Eroare la salvarea resursei!")
         
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"❌ Eroare upload: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
-# LISTEAZĂ RESURSE - CU AUTENTIFICARE
+# LISTEAZĂ RESURSE - DIN SUPABASE
 # ============================================================
 @app.get("/api/resurse")
 async def get_resurse(payload: dict = Depends(verify_token)):
+    """Listează toate resursele - necesită autentificare"""
     try:
         response = supabase.table("resources").select("*").order("uploaded_at", desc=True).execute()
         return {"resurse": response.data if response.data else []}
@@ -593,76 +592,84 @@ async def get_resurse(payload: dict = Depends(verify_token)):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================
-# ȘTERGE RESURSĂ - CU AUTENTIFICARE ȘI VERIFICARE ROL
+# ȘTERGE RESURSĂ - DIN SUPABASE
 # ============================================================
 @app.delete("/api/resurse/{file_id}")
 async def delete_resource(
     file_id: int,
     payload: dict = Depends(verify_token)
 ):
+    """Șterge resursă - necesită autentificare și rol de profesor"""
     if payload.get("role") != "teacher":
         raise HTTPException(status_code=403, detail="Doar profesorii pot șterge resurse!")
     
     try:
-        response = supabase.table("resources").delete().eq("id", file_id).execute()
-        
-        if response.data and len(response.data) > 0:
-            return {"status": "success", "message": "Resursa a fost ștearsă"}
-        else:
+        # Verifică dacă resursa există
+        check = supabase.table("resources").select("id").eq("id", file_id).execute()
+        if not check.data or len(check.data) == 0:
             raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
         
+        # Șterge resursa
+        response = supabase.table("resources").delete().eq("id", file_id).execute()
+        
+        return {"status": "success", "message": "Resursa a fost ștearsă"}
+        
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"❌ Eroare ștergere: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # ============================================================
-# DOWNLOAD RESURSĂ - CU AUTENTIFICARE
+# DOWNLOAD RESURSĂ - DIN SUPABASE (CU TOKEN ÎN URL)
 # ============================================================
-# ============================================================
-# DOWNLOAD RESURSĂ - CU AUTENTIFICARE (acceptă token și din query)
-# ============================================================
-# ============================================================
-# DOWNLOAD RESURSĂ - CU AUTENTIFICARE
-# ============================================================
-# ============================================================
-# DOWNLOAD RESURSĂ - CU HEADER (pentru compatibilitate)
-# ============================================================
-@app.get("/download-resource/{file_id}")
-async def download_resource(
+@app.get("/download-resource-token/{file_id}")
+async def download_resource_with_token(
     file_id: int,
-    payload: dict = Depends(verify_token)
+    token: str
 ):
-    """Descarcă resursă - necesită autentificare prin header"""
+    """Descarcă resursă folosind token din URL"""
     try:
-        metadata_file = UPLOAD_DIR / "metadata.json"
-        if not metadata_file.exists():
-            raise HTTPException(status_code=404, detail="Metadatele nu au fost găsite")
+        # Verifică token-ul
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print(f"✅ Download pentru: {payload.get('email')}")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Token invalid")
+    
+    try:
+        # Caută resursa în Supabase
+        response = supabase.table("resources").select("*").eq("id", file_id).execute()
         
-        with open(metadata_file, "r", encoding="utf-8") as f:
-            metadata = json.load(f)
-        
-        resource = None
-        for r in metadata:
-            if r["id"] == file_id:
-                resource = r
-                break
-        
-        if not resource:
+        if not response.data or len(response.data) == 0:
             raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
         
-        file_path = UPLOAD_DIR / resource["filename"]
-        if not file_path.exists():
-            raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit pe server")
+        resource = response.data[0]
         
-        resource["vizualizari"] += 1
-        with open(metadata_file, "w", encoding="utf-8") as f:
-            json.dump(metadata, f, ensure_ascii=False, indent=2)
+        # Incrementează vizualizările
+        supabase.table("resources").update({
+            "vizualizari": resource.get("vizualizari", 0) + 1
+        }).eq("id", file_id).execute()
         
-        return FileResponse(
-            path=file_path,
-            filename=resource["original_name"],
-            media_type="application/octet-stream"
+        # Decodifică din base64
+        file_data = base64.b64decode(resource.get("file_data", ""))
+        
+        # Determină tipul MIME
+        ext = os.path.splitext(resource["original_name"])[1].lower()
+        media_type = "application/octet-stream"
+        if ext == ".pdf": media_type = "application/pdf"
+        elif ext in [".jpg", ".jpeg"]: media_type = "image/jpeg"
+        elif ext == ".png": media_type = "image/png"
+        elif ext == ".gif": media_type = "image/gif"
+        elif ext == ".txt": media_type = "text/plain"
+        elif ext in [".cpp", ".c", ".py", ".js", ".html", ".css"]: media_type = "text/plain"
+        
+        return StreamingResponse(
+            BytesIO(file_data),
+            media_type=media_type,
+            headers={
+                "Content-Disposition": f"inline; filename=\"{resource['original_name']}\"",
+                "Content-Length": str(len(file_data))
+            }
         )
         
     except HTTPException:
@@ -670,7 +677,57 @@ async def download_resource(
     except Exception as e:
         print(f"❌ Eroare download: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================
+# VIZUALIZARE PDF - DIN SUPABASE
+# ============================================================
+@app.get("/view-pdf/{file_id}")
+async def view_pdf(
+    file_id: int,
+    token: str
+):
+    """Vizualizează PDF inline în browser"""
+    try:
+        # Verifică token-ul
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print(f"✅ Vizualizare PDF pentru: {payload.get('email')}")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Token invalid")
     
+    try:
+        # Caută resursa în Supabase
+        response = supabase.table("resources").select("*").eq("id", file_id).execute()
+        
+        if not response.data or len(response.data) == 0:
+            raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
+        
+        resource = response.data[0]
+        
+        # Incrementează vizualizările
+        supabase.table("resources").update({
+            "vizualizari": resource.get("vizualizari", 0) + 1
+        }).eq("id", file_id).execute()
+        
+        # Decodifică din base64
+        file_data = base64.b64decode(resource.get("file_data", ""))
+        
+        return StreamingResponse(
+            BytesIO(file_data),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"inline; filename=\"{resource['original_name']}\"",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Eroare vizualizare PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ============================================================
 # API - VERIFICĂ TOKEN
 # ============================================================
@@ -706,7 +763,6 @@ def serve_signup():
 # ============================================================
 @app.get("/dashboard")
 def serve_dashboard():
-    """Dashboard - pagina HTML este accesibilă, dar conținutul se încarcă prin API"""
     return FileResponse(BASE_DIR / "frontend" / "dashboard.html", media_type="text/html")
 
 @app.get("/editor")
@@ -739,108 +795,6 @@ def test_supabase():
     except Exception as e:
         return {"status": "❌ Eroare Supabase:", "error": str(e)}
 
-# ============================================================
-# DOWNLOAD RESURSĂ - CU TOKEN ÎN URL (SIMPLU)
-# ============================================================
-@app.get("/download-resource-token/{file_id}")
-async def download_resource_with_token(
-    file_id: int,
-    token: str
-):
-    try:
-        import base64
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="Token invalid")
-    
-    try:
-        response = supabase.table("resources").select("*").eq("id", file_id).execute()
-        
-        if not response.data or len(response.data) == 0:
-            raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
-        
-        resource = response.data[0]
-        
-        # Increment vizualizări
-        supabase.table("resources").update({
-            "vizualizari": resource.get("vizualizari", 0) + 1
-        }).eq("id", file_id).execute()
-        
-        # Decodifică din base64
-        file_data = base64.b64decode(resource.get("file_data", ""))
-        
-        # Returnează fișierul
-        from fastapi.responses import StreamingResponse
-        from io import BytesIO
-        
-        ext = os.path.splitext(resource["original_name"])[1].lower()
-        media_type = "application/octet-stream"
-        if ext == ".pdf": media_type = "application/pdf"
-        elif ext in [".jpg", ".jpeg"]: media_type = "image/jpeg"
-        elif ext == ".png": media_type = "image/png"
-        elif ext == ".gif": media_type = "image/gif"
-        elif ext == ".txt": media_type = "text/plain"
-        
-        return StreamingResponse(
-            BytesIO(file_data),
-            media_type=media_type,
-            headers={
-                "Content-Disposition": f"inline; filename=\"{resource['original_name']}\""
-            }
-        )
-        
-    except Exception as e:
-        print(f"❌ Eroare download: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# ============================================================
-# VIZUALIZARE PDF - INLINE
-# ============================================================
-# ============================================================
-# VIZUALIZARE PDF - INLINE
-# ============================================================
-@app.get("/view-pdf/{file_id}")
-async def view_pdf(
-    file_id: int,
-    token: str
-):
-    try:
-        import base64
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="Token invalid")
-    
-    try:
-        response = supabase.table("resources").select("*").eq("id", file_id).execute()
-        
-        if not response.data or len(response.data) == 0:
-            raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
-        
-        resource = response.data[0]
-        
-        # Increment vizualizări
-        supabase.table("resources").update({
-            "vizualizari": resource.get("vizualizari", 0) + 1
-        }).eq("id", file_id).execute()
-        
-        # Decodifică din base64
-        file_data = base64.b64decode(resource.get("file_data", ""))
-        
-        from fastapi.responses import StreamingResponse
-        from io import BytesIO
-        
-        return StreamingResponse(
-            BytesIO(file_data),
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": "inline; filename=\"" + resource["original_name"] + "\"",
-                "Cache-Control": "no-cache, no-store, must-revalidate"
-            }
-        )
-        
-    except Exception as e:
-        print(f"❌ Eroare vizualizare PDF: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
 # ============================================================
 # PORNIRE APLICAȚIE
 # ============================================================
