@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+python-multipart
+supabase
+requests
+python-dotenv
+pydantic
+httpx
+python-jose
+passlib
+bcrypt
+PyJWT
