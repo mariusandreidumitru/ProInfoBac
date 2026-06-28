@@ -199,7 +199,6 @@ async def upload_resource(
         print(f"✅ DB insert OK")
  
         if insert_response.data:
-            # Invalidează cache-ul după upload
             return {
                 "status": "success",
                 "message": "Fișierul a fost încărcat cu succes!",
@@ -216,18 +215,16 @@ async def upload_resource(
         raise HTTPException(status_code=500, detail=f"Eroare DB: {str(e)}")
 
 # ============================================================
-# LISTEAZĂ RESURSE - OPTIMIZAT
+# LISTEAZĂ RESURSE
 # ============================================================
 @app.get("/api/resurse")
 async def get_resurse(payload: dict = Depends(verify_token)):
     db = get_supabase()
     try:
-        # Selectează DOAR coloanele necesare, exclude file_data
         response = db.table("resources").select(
             "id, titlu, descriere, capitol, tip, original_name, file_url, storage_path, dimensiune, uploaded_by, vizualizari, uploaded_at"
         ).order("uploaded_at", desc=True).execute()
         
-        # Adaugă header de cache pentru 5 minute
         return JSONResponse(
             content={"resurse": response.data or []},
             headers={
@@ -238,27 +235,28 @@ async def get_resurse(payload: dict = Depends(verify_token)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# Adaugă acest endpoint nou în main.py
+# ============================================================
+# GET RESOURCE URL - NOU ENDPOINT
+# ============================================================
 @app.get("/api/resurse/{file_id}/url")
 async def get_resource_url(file_id: int, payload: dict = Depends(verify_token)):
     """Returnează URL-ul direct către fișierul din Storage"""
     db = get_supabase()
     try:
-        response = db.table("resources").select("file_url, file_data, original_name, tip").eq("id", file_id).execute()
+        response = db.table("resources").select("file_url, file_data, original_name, tip, vizualizari").eq("id", file_id).execute()
         if not response.data:
             raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
         
         r = response.data[0]
         
-        # Dacă avem file_url, returnăm URL-ul direct
+        # Incrementează vizualizările
+        try:
+            current_views = r.get("vizualizari", 0)
+            db.table("resources").update({"vizualizari": current_views + 1}).eq("id", file_id).execute()
+        except Exception as e:
+            print(f"⚠️ Eroare la incrementarea vizualizărilor: {e}")
+        
         if r.get("file_url"):
-            # Incrementează vizualizările
-            try:
-                db.table("resources").update({"vizualizari": db.table("resources").select("vizualizari").eq("id", file_id).execute().data[0].get("vizualizari", 0) + 1}).eq("id", file_id).execute()
-            except:
-                pass
-            
             return {
                 "url": r["file_url"],
                 "original_name": r.get("original_name", "download"),
@@ -266,7 +264,6 @@ async def get_resource_url(file_id: int, payload: dict = Depends(verify_token)):
                 "direct": True
             }
         elif r.get("file_data"):
-            # Fallback pentru resurse vechi
             return {
                 "url": None,
                 "file_data": r["file_data"],
@@ -281,7 +278,7 @@ async def get_resource_url(file_id: int, payload: dict = Depends(verify_token)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 # ============================================================
 # ȘTERGE RESURSĂ
 # ============================================================
@@ -299,7 +296,10 @@ async def delete_resource(file_id: int, payload: dict = Depends(verify_token)):
         storage_path = check.data[0].get("storage_path")
 
         if storage_path:
-            db.storage.from_(STORAGE_BUCKET).remove([storage_path])
+            try:
+                db.storage.from_(STORAGE_BUCKET).remove([storage_path])
+            except Exception as e:
+                print(f"⚠️ Eroare la ștergerea din Storage: {e}")
 
         db.table("resources").delete().eq("id", file_id).execute()
         return {"status": "success", "message": "Resursa a fost ștearsă"}
@@ -324,15 +324,14 @@ async def download_resource(file_id: int, payload: dict = Depends(verify_token))
 
     r = resource.data[0]
     
-    # Incrementează vizualizările async
+    # Incrementează vizualizările
     try:
         current_views = r.get("vizualizari", 0)
         db.table("resources").update({"vizualizari": current_views + 1}).eq("id", file_id).execute()
-    except:
-        pass
+    except Exception as e:
+        print(f"⚠️ Eroare la incrementarea vizualizărilor: {e}")
 
     if r.get("file_url"):
-        # Redirect direct la Storage cu cache
         return RedirectResponse(
             url=r["file_url"],
             headers={
@@ -353,8 +352,11 @@ async def download_resource(file_id: int, payload: dict = Depends(verify_token))
         )
     else:
         raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit")
-    
-    @app.get("/download-resource-direct/{file_id}")
+
+# ============================================================
+# DOWNLOAD DIRECT - FĂRĂ AUTENTIFICARE (CU TOKEN)
+# ============================================================
+@app.get("/download-resource-direct/{file_id}")
 async def download_resource_direct(file_id: int, token: str = None):
     """Descarcă resursa direct - poate fi folosit fără autentificare cu token"""
     if token:
@@ -394,85 +396,6 @@ async def download_resource_direct(file_id: int, token: str = None):
             media_type=get_mime_type(r.get("original_name", "file.bin")),
             headers={
                 "Content-Disposition": f"attachment; filename=\"{r.get('original_name', 'download')}\""
-            }
-        )
-    else:
-        raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit")
-
-# ============================================================
-# TOKEN DOWNLOAD
-# ============================================================
-@app.get("/download-resource-token/{file_id}")
-async def download_resource_token(file_id: int, token: str):
-    try:
-        jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expirat")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Token invalid")
-
-    db = get_supabase()
-    resource = db.table("resources").select("file_url, file_data, original_name, vizualizari").eq("id", file_id).execute()
-    if not resource.data:
-        raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
-
-    r = resource.data[0]
-    
-    try:
-        db.table("resources").update({"vizualizari": r.get("vizualizari", 0) + 1}).eq("id", file_id).execute()
-    except:
-        pass
-
-    if r.get("file_url"):
-        return RedirectResponse(
-            url=r["file_url"],
-            headers={"Cache-Control": "public, max-age=86400"}
-        )
-    elif r.get("file_data"):
-        file_bytes = base64.b64decode(r["file_data"])
-        return StreamingResponse(
-            BytesIO(file_bytes), 
-            media_type=get_mime_type(r.get("original_name", "file.bin")),
-            headers={"Content-Disposition": f"attachment; filename=\"{r.get('original_name', 'download')}\""}
-        )
-    else:
-        raise HTTPException(status_code=404, detail="Fișierul nu a fost găsit")
-
-# ============================================================
-# VIEW PDF
-# ============================================================
-@app.get("/view-pdf/{file_id}")
-async def view_pdf(file_id: int, token: str):
-    try:
-        jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except Exception:
-        raise HTTPException(status_code=401, detail="Token invalid")
-
-    db = get_supabase()
-    resource = db.table("resources").select("file_url, file_data, original_name, vizualizari").eq("id", file_id).execute()
-    if not resource.data:
-        raise HTTPException(status_code=404, detail="Resursa nu a fost găsită")
-
-    r = resource.data[0]
-    
-    try:
-        db.table("resources").update({"vizualizari": r.get("vizualizari", 0) + 1}).eq("id", file_id).execute()
-    except:
-        pass
-
-    if r.get("file_url"):
-        return RedirectResponse(
-            url=r["file_url"],
-            headers={"Cache-Control": "public, max-age=86400"}
-        )
-    elif r.get("file_data"):
-        file_bytes = base64.b64decode(r["file_data"])
-        return StreamingResponse(
-            BytesIO(file_bytes), 
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": f"inline; filename=\"{r.get('original_name', 'document.pdf')}\"",
-                "Cache-Control": "public, max-age=3600"
             }
         )
     else:
