@@ -435,6 +435,9 @@
             color: var(--primary);
             border-color: var(--primary);
         }
+        .tab.hidden-tab {
+            display: none !important;
+        }
         
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -719,22 +722,28 @@
         <div class="card">
             <div class="breadcrumb">Dashboard / Creator</div>
             <h1 class="page-title"><i class="fas fa-pen-fancy" style="color:var(--primary);"></i> Creează Variantă Bac</h1>
-            <p class="page-description">Profesorii pot crea variante complete de Bacalaureat cu exerciții personalizate și barem.</p>
+            <p class="page-description" id="page-description">Profesorii pot crea variante complete de Bacalaureat cu exerciții personalizate și barem.</p>
         </div>
 
         <!-- ===== TAB-URI ===== -->
-        <div class="taburi">
+        <div class="taburi" id="taburi-container">
+            <!-- Tab-urile pentru PROFESOR -->
             <button class="tab active" onclick="switchTab('profesor')" id="tab-profesor">
                 <i class="fas fa-pen"></i> Profesor - Creează
-            </button>
-            <button class="tab" onclick="switchTab('elev')" id="tab-elev">
-                <i class="fas fa-user-graduate"></i> Elev - Rezolvă
             </button>
             <button class="tab" onclick="switchTab('variante')" id="tab-variante">
                 <i class="fas fa-folder-open"></i> Variantele mele
             </button>
             <button class="tab" onclick="switchTab('rezultate')" id="tab-rezultate">
                 <i class="fas fa-chart-bar"></i> Rezultate
+            </button>
+            
+            <!-- Tab-urile pentru ELEV -->
+            <button class="tab hidden-tab" onclick="switchTab('elev')" id="tab-elev">
+                <i class="fas fa-user-graduate"></i> Elev - Rezolvă
+            </button>
+            <button class="tab hidden-tab" onclick="switchTab('rezultate-elev')" id="tab-rezultate-elev">
+                <i class="fas fa-user-check"></i> Rezultatele mele
             </button>
         </div>
 
@@ -868,7 +877,7 @@
         </div>
 
         <!-- ============================================================ -->
-        <!-- TAB 3: VARIANTELE MELE -->
+        <!-- TAB 3: VARIANTELE MELE (PROFESOR) -->
         <!-- ============================================================ -->
         <div id="tab-variante-content" class="tab-content fade-in">
             <div class="card">
@@ -878,7 +887,7 @@
         </div>
 
         <!-- ============================================================ -->
-        <!-- TAB 4: REZULTATE -->
+        <!-- TAB 4: REZULTATE (PROFESOR - vede toate rezultatele) -->
         <!-- ============================================================ -->
         <div id="tab-rezultate-content" class="tab-content fade-in">
             <div class="card">
@@ -895,6 +904,22 @@
                     <div class="empty-state">
                         <i class="fas fa-inbox"></i>
                         <p>Nu există rezultate pentru varianta selectată.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TAB 5: REZULTATELE MELE (ELEV - vede doar propriile rezultate) -->
+        <!-- ============================================================ -->
+        <div id="tab-rezultate-elev-content" class="tab-content fade-in">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-user-check"></i> Rezultatele mele</div>
+                <p class="text-muted">Aici îți poți vedea rezultatele obținute la variantele pe care le-ai rezolvat.</p>
+                <div id="rezultate-elev-container">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>Nu ai rezolvat încă nicio variantă.</p>
                     </div>
                 </div>
             </div>
@@ -924,13 +949,17 @@
             
             await verificaRol();
             
-            for (let i = 0; i < 5; i++) adaugaExercitiuS1();
-            for (let i = 0; i < 3; i++) adaugaExercitiuS2();
-            for (let i = 0; i < 2; i++) adaugaExercitiuS3();
+            // Inițializare exerciții doar pentru profesor
+            if (rolUtilizator === 'teacher') {
+                for (let i = 0; i < 5; i++) adaugaExercitiuS1();
+                for (let i = 0; i < 3; i++) adaugaExercitiuS2();
+                for (let i = 0; i < 2; i++) adaugaExercitiuS3();
+                incarcaVarianteSelectRezultate();
+                incarcaVarianteLista();
+            }
             
-            incarcaVarianteSelectRezultate();
-            incarcaVarianteLista();
             incarcaVariantePublice();
+            incarcaRezultateElev();
             
             updateToggleStatus();
         });
@@ -942,6 +971,8 @@
             const checkbox = document.getElementById('varianta-publica');
             const statusLabel = document.getElementById('toggle-status-label');
             const vizibilitateText = document.getElementById('vizibilitate-text');
+            
+            if (!checkbox) return;
             
             if (checkbox.checked) {
                 statusLabel.textContent = '🌍 Publică';
@@ -974,53 +1005,65 @@
                 if (response.ok) {
                     const data = await response.json();
                     rolUtilizator = data.role || 'student';
+                    numeUtilizator = data.name || data.email || 'Elev';
                 } else {
                     const savedRole = localStorage.getItem('rolUtilizator');
                     rolUtilizator = savedRole || 'student';
+                    numeUtilizator = localStorage.getItem('numeUtilizator') || 'Elev';
                 }
             } catch (error) {
                 const savedRole = localStorage.getItem('rolUtilizator');
                 rolUtilizator = savedRole || 'student';
+                numeUtilizator = localStorage.getItem('numeUtilizator') || 'Elev';
             }
             
             // Actualizăm indicatorul de rol
             const roleBadge = document.getElementById('role-badge');
             const roleText = document.getElementById('role-text');
+            const pageDescription = document.getElementById('page-description');
             
             if (rolUtilizator === 'teacher') {
                 roleBadge.className = 'role-badge teacher';
                 roleBadge.querySelector('i').className = 'fas fa-chalkboard-teacher';
                 roleText.textContent = 'Profesor';
+                pageDescription.textContent = 'Profesorii pot crea variante complete de Bacalaureat cu exerciții personalizate și barem.';
                 
-                // Profesorul vede toate tab-urile
-                document.getElementById('tab-profesor').style.display = 'inline-flex';
-                if (document.getElementById('tab-profesor-content').innerHTML.includes('restrictie-profesor')) {
-                    location.reload();
+                // Ascundem tab-urile de elev
+                document.getElementById('tab-elev').classList.add('hidden-tab');
+                document.getElementById('tab-rezultate-elev').classList.add('hidden-tab');
+                
+                // Arătăm tab-urile de profesor
+                document.getElementById('tab-profesor').classList.remove('hidden-tab');
+                document.getElementById('tab-variante').classList.remove('hidden-tab');
+                document.getElementById('tab-rezultate').classList.remove('hidden-tab');
+                
+                // Dacă suntem pe un tab de elev, trecem la profesor
+                if (document.getElementById('tab-elev-content').classList.contains('active') ||
+                    document.getElementById('tab-rezultate-elev-content').classList.contains('active')) {
+                    switchTab('profesor');
                 }
+                
             } else {
                 roleBadge.className = 'role-badge student';
                 roleBadge.querySelector('i').className = 'fas fa-user-graduate';
                 roleText.textContent = 'Elev';
+                pageDescription.textContent = 'Elevii pot rezolva variantele create de profesori și își pot vedea rezultatele.';
                 
-                // Elevul vede doar tab-urile de rezolvare
-                document.getElementById('tab-profesor').style.display = 'none';
-                document.getElementById('tab-profesor-content').innerHTML = `
-                    <div class="restrictie-profesor" style="margin:1rem;">
-                        <i class="fas fa-lock"></i>
-                        <h3>Acces restricționat</h3>
-                        <p>Doar profesorii pot crea variante de Bacalaureat.</p>
-                        <p style="font-size:0.9rem; margin-top:0.5rem;">
-                            <i class="fas fa-info-circle"></i> Rolul tău actual: <strong>Elev</strong>
-                        </p>
-                        <p style="font-size:0.85rem; margin-top:0.5rem; color:var(--text-secondary);">
-                            Poți rezolva variantele create de profesori în tab-ul "Elev - Rezolvă".
-                        </p>
-                        <button class="btn btn-primary" onclick="window.location.href='/login'" style="margin-top:0.8rem;">
-                            <i class="fas fa-sign-in-alt"></i> Autentifică-te ca profesor
-                        </button>
-                    </div>
-                `;
-                switchTab('elev');
+                // Ascundem tab-urile de profesor
+                document.getElementById('tab-profesor').classList.add('hidden-tab');
+                document.getElementById('tab-variante').classList.add('hidden-tab');
+                document.getElementById('tab-rezultate').classList.add('hidden-tab');
+                
+                // Arătăm tab-urile de elev
+                document.getElementById('tab-elev').classList.remove('hidden-tab');
+                document.getElementById('tab-rezultate-elev').classList.remove('hidden-tab');
+                
+                // Dacă suntem pe un tab de profesor, trecem la elev
+                if (document.getElementById('tab-profesor-content').classList.contains('active') ||
+                    document.getElementById('tab-variante-content').classList.contains('active') ||
+                    document.getElementById('tab-rezultate-content').classList.contains('active')) {
+                    switchTab('elev');
+                }
             }
         }
 
@@ -1032,6 +1075,7 @@
         let rezultateElevi = JSON.parse(localStorage.getItem('rezultateElevi')) || {};
         let variantaCurentaElev = null;
         let rolUtilizator = 'student';
+        let numeUtilizator = 'Elev';
         let idCounterS1 = 0;
         let idCounterS2 = 0;
         let idCounterS3 = 0;
@@ -1278,13 +1322,17 @@ int main() {
         // ============================================================
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('tab-' + tab).classList.add('active');
+            const tabBtn = document.getElementById('tab-' + tab);
+            if (tabBtn) tabBtn.classList.add('active');
+            
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + tab + '-content').classList.add('active');
+            const content = document.getElementById('tab-' + tab + '-content');
+            if (content) content.classList.add('active');
             
             if (tab === 'rezultate') incarcaVarianteSelectRezultate();
             if (tab === 'variante') incarcaVarianteLista();
             if (tab === 'elev') incarcaVariantePublice();
+            if (tab === 'rezultate-elev') incarcaRezultateElev();
         }
 
         // ============================================================
@@ -1292,6 +1340,8 @@ int main() {
         // ============================================================
         function incarcaVariantePublice() {
             const select = document.getElementById('varianta-select-publica');
+            if (!select) return;
+            
             select.innerHTML = '<option value="">-- Selectează o variantă publică --</option>';
             
             const variantePublice = variantePublicate.filter(v => v.publica === true);
@@ -1458,6 +1508,9 @@ int main() {
             
             const numeElev = prompt('Introdu numele tău:');
             if (!numeElev) return;
+            
+            // Salvează numele în localStorage pentru a fi folosit la rezultate
+            localStorage.setItem('numeElevCurent', numeElev);
             
             const s1Raspunsuri = variantaCurentaElev.s1.map((q, idx) => {
                 const selected = document.querySelector(`input[name="s1_elev_${idx}"]:checked`);
@@ -1680,10 +1733,12 @@ int main() {
         }
 
         // ============================================================
-        // VARIANTE LISTA
+        // VARIANTE LISTA (PROFESOR)
         // ============================================================
         function incarcaVarianteLista() {
             const container = document.getElementById('variante-lista-container');
+            if (!container) return;
+            
             if (variantePublicate.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -1743,10 +1798,12 @@ int main() {
         }
 
         // ============================================================
-        // REZULTATE
+        // REZULTATE (PROFESOR - vede toate rezultatele)
         // ============================================================
         function incarcaVarianteSelectRezultate() {
             const select = document.getElementById('varianta-select-rezultate');
+            if (!select) return;
+            
             select.innerHTML = '<option value="">-- Selectează o variantă --</option>';
             variantePublicate.forEach(v => {
                 const opt = document.createElement('option');
@@ -1760,6 +1817,8 @@ int main() {
             const select = document.getElementById('varianta-select-rezultate');
             const id = parseInt(select.value);
             const container = document.getElementById('rezultate-container');
+            
+            if (!container) return;
             
             if (!id || !rezultateElevi[id] || rezultateElevi[id].length === 0) {
                 container.innerHTML = `
@@ -1929,6 +1988,148 @@ int main() {
             localStorage.setItem('rezultateElevi', JSON.stringify(rezultateElevi));
             showToast('✅ Evaluarea a fost finalizată!');
             incarcaRezultate();
+        }
+
+        // ============================================================
+        // REZULTATELE ELEVULUI (doar propriile rezultate)
+        // ============================================================
+        function incarcaRezultateElev() {
+            const container = document.getElementById('rezultate-elev-container');
+            if (!container) return;
+            
+            // Obținem numele elevului din localStorage
+            const numeElev = localStorage.getItem('numeElevCurent') || 'Elev';
+            
+            // Colectăm toate rezultatele care aparțin acestui elev
+            const rezultateElev = [];
+            for (const variantaId in rezultateElevi) {
+                const rezultate = rezultateElevi[variantaId];
+                rezultate.forEach(r => {
+                    if (r.numeElev === numeElev) {
+                        // Găsim varianta pentru a afișa titlul
+                        const varianta = variantePublicate.find(v => v.id === r.variantaId);
+                        rezultateElev.push({
+                            ...r,
+                            variantaTitlu: varianta ? varianta.titlu : 'Varianta necunoscută',
+                            variantaAn: varianta ? varianta.an : ''
+                        });
+                    }
+                });
+            }
+            
+            // Sortăm descrescător după dată
+            rezultateElev.sort((a, b) => new Date(b.data) - new Date(a.data));
+            
+            if (rezultateElev.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>Nu ai rezolvat încă nicio variantă.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div style="background:var(--primary-light); padding:0.8rem 1.2rem; border-radius:12px; margin-bottom:1rem;">
+                    <strong><i class="fas fa-user"></i> Rezultatele pentru: ${numeElev}</strong>
+                    <span style="font-size:0.85rem; color:var(--text-secondary); margin-left:0.5rem;">(${rezultateElev.length} rezolvări)</span>
+                </div>
+            `;
+            
+            rezultateElev.forEach((r) => {
+                const statusClass = r.status === 'graded' ? 'graded' : 'pending';
+                const statusText = r.status === 'graded' ? '✅ Notat' : '⏳ În așteptare';
+                
+                // Calculează câte răspunsuri corecte la grilă
+                const varianta = variantePublicate.find(v => v.id === r.variantaId);
+                let corecteS1 = 0;
+                if (varianta && varianta.s1) {
+                    r.s1.forEach((rasp, idx) => {
+                        if (rasp === varianta.s1[idx]?.corect) corecteS1++;
+                    });
+                }
+                
+                html += `
+                    <div class="rezultat-elev" style="border-left-color: ${r.status === 'graded' ? 'var(--success)' : 'var(--warning)'};">
+                        <div class="elev-info">
+                            <strong><i class="fas fa-file-alt"></i> ${r.variantaTitlu} ${r.variantaAn ? '(' + r.variantaAn + ')' : ''}</strong>
+                            <span style="font-size:0.8rem; color:var(--text-secondary);">${new Date(r.data).toLocaleString()}</span>
+                            <span class="badge-status ${statusClass}">${statusText}</span>
+                        </div>
+                        
+                        ${r.nota !== null ? `
+                            <div style="margin:0.5rem 0; padding:0.5rem 1rem; background:var(--bg-card); border-radius:8px; border-left:4px solid var(--primary);">
+                                <strong style="font-size:1.2rem; color:var(--primary);">Nota: ${r.nota}/10</strong>
+                            </div>
+                        ` : `
+                            <div style="margin:0.5rem 0; padding:0.5rem 1rem; background:var(--bg-card); border-radius:8px; border-left:4px solid var(--warning);">
+                                <span style="color:var(--warning);">⏳ În așteptarea evaluării de către profesor...</span>
+                            </div>
+                        `}
+                        
+                        <div style="font-size:0.85rem; color:var(--text-secondary);">
+                            <span>📝 Grilă: ${corecteS1}/${r.s1.length} corecte</span>
+                            <span style="margin-left:0.5rem;">•</span>
+                            <span>📝 Pseudocod: ${r.s2.filter(s => s && s.trim().length > 0).length} răspunsuri</span>
+                            <span style="margin-left:0.5rem;">•</span>
+                            <span>📝 Programare: ${r.s3.filter(s => s && s.trim().length > 0).length} răspunsuri</span>
+                        </div>
+                        
+                        <button class="btn btn-outline btn-sm" onclick="toggleDetaliiRezultat(${r.id})" style="margin-top:0.5rem;">
+                            <i class="fas fa-chevron-down"></i> Vezi detalii
+                        </button>
+                        <div id="detalii-rezultat-${r.id}" style="display:none; margin-top:0.5rem;">
+                            <div style="background:var(--bg-card); padding:0.8rem; border-radius:8px;">
+                                <h5 style="color:var(--primary);">Subiectul I - Grilă</h5>
+                                ${r.s1.map((rasp, idx) => {
+                                    const corect = varianta?.s1[idx]?.corect;
+                                    const isCorect = rasp === corect;
+                                    return `
+                                        <div style="font-size:0.85rem; padding:0.2rem 0;">
+                                            Q${idx+1}: Răspuns: ${rasp !== -1 ? String.fromCharCode(65 + rasp) : 'N/A'}
+                                            ${corect !== undefined ? `
+                                                <span style="color:${isCorect ? 'var(--success)' : 'var(--danger)'}; margin-left:0.5rem;">
+                                                    ${isCorect ? '✅' : '❌'} (corect: ${String.fromCharCode(65 + corect)})
+                                                </span>
+                                            ` : ''}
+                                        </div>
+                                    `;
+                                }).join('')}
+                                
+                                <h5 style="color:var(--warning); margin-top:0.5rem;">Subiectul II - Pseudocod</h5>
+                                ${r.s2.map((rasp, idx) => `
+                                    <div style="font-size:0.85rem; padding:0.2rem 0;">
+                                        Q${idx+1}: ${rasp || '(lipsă răspuns)'}
+                                    </div>
+                                `).join('')}
+                                
+                                <h5 style="color:var(--danger); margin-top:0.5rem;">Subiectul III - Programare C++</h5>
+                                ${r.s3.map((rasp, idx) => `
+                                    <div style="font-size:0.85rem; padding:0.2rem 0;">
+                                        Q${idx+1}: ${rasp || '(lipsă răspuns)'}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function toggleDetaliiRezultat(rezultatId) {
+            const el = document.getElementById(`detalii-rezultat-${rezultatId}`);
+            if (el) {
+                el.style.display = el.style.display === 'none' ? 'block' : 'none';
+                const btn = el.parentElement.querySelector('.btn');
+                if (btn) {
+                    btn.innerHTML = el.style.display === 'none' ? 
+                        '<i class="fas fa-chevron-down"></i> Vezi detalii' : 
+                        '<i class="fas fa-chevron-up"></i> Ascunde detalii';
+                }
+            }
         }
 
         // ============================================================
