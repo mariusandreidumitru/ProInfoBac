@@ -977,7 +977,7 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- SCRIPT -->
+<!-- SCRIPT - COD CORECTAT -->
 <!-- ============================================================ -->
 <script>
 // ============================================================
@@ -1096,19 +1096,8 @@ function switchTab(tab) {
 // ÎNCARCĂ EXERCIȚII COMUNITATE
 // ============================================================
 function incarcaExercitiiComunitate() {
-    // Încearcă să încarce din localStorage
+    // Încarcă doar din localStorage - fără exerciții implicite
     let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
-    
-    // Verifică dacă există un flag care spune că utilizatorul a șters exerciții
-    const userCleared = localStorage.getItem('exercitiiClearat') === 'true';
-    
-    // Dacă nu există exerciții și utilizatorul nu a șters nimic, adaugă cele implicite
-    if (exercitiiComunitate.length === 0 && !userCleared) {
-        exercitiiComunitate = getDefaultQuestions();
-        localStorage.setItem('exercitiiComunitate', JSON.stringify(exercitiiComunitate));
-        console.log('✅ Adăugate exerciții implicite:', exercitiiComunitate.length);
-    }
-    
     allExercitii = [...exercitiiComunitate];
     document.getElementById('ex-count').textContent = allExercitii.length;
     return allExercitii;
@@ -1738,14 +1727,12 @@ function stergeExercitiuComunitate(index) {
     exercitiiComunitate.splice(index, 1);
     localStorage.setItem('exercitiiComunitate', JSON.stringify(exercitiiComunitate));
     
-    // 🔥 SETEAZĂ FLAG-UL că utilizatorul a șters exerciții
-    localStorage.setItem('exercitiiClearat', 'true');
-    
     allExercitii = incarcaExercitiiComunitate();
     document.getElementById('ex-count').textContent = allExercitii.length;
     incarcaBiblioteca();
     showToast('🗑️ Exercițiul a fost șters!');
 }
+
 // ============================================================
 // TOAST
 // ============================================================
