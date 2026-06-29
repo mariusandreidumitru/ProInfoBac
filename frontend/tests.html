@@ -810,10 +810,7 @@
                 <h3 id="q-text">Întrebarea va apărea aici.</h3>
                 <div id="q-subtitle" class="subtitle"></div>
                 <div class="hint-box hidden" id="hint-box"><i class="fas fa-lightbulb" style="color:var(--warning);"></i> <span id="hint-text"></span></div>
-                <div id="barem-display" style="display:none; margin-top:0.5rem; background:var(--primary-light); padding:0.5rem 1rem; border-radius:8px; border-left:4px solid var(--primary);">
-                    <strong><i class="fas fa-check-double"></i> Barem:</strong>
-                    <span id="barem-text"></span>
-                </div>
+                <!-- BAREMUL A FOST ELIMINAT COMPLET DIN INTERFAȚA DE REZOLVARE -->
             </div>
 
             <!-- GRILĂ -->
@@ -825,7 +822,7 @@
             <div id="cod-section" class="hidden">
                 <div class="form-group">
                     <label><i class="fas fa-code"></i> Scrie codul soluției în C/C++:</label>
-                    <textarea class="form-control" id="cod-editor" rows="8" placeholder="#include <iostream>&#10;using namespace std;&#10;&#10;int main() {&#10;    // Scrie aici codul...&#10;    return 0;&#10;}"></textarea>
+                    <textarea class="form-control" id="cod-editor" rows="8" placeholder="#include &lt;iostream&gt;&#10;using namespace std;&#10;&#10;int main() {&#10;    // Scrie aici codul...&#10;    return 0;&#10;}"></textarea>
                     <div class="code-requirements">
                         <strong>📌 Cerințe pentru cod:</strong> 
                         <span id="code-requirements-text">Program C/C++ complet, cu citire, prelucrare și afișare</span>
@@ -1219,7 +1216,7 @@ function startSolving() {
 }
 
 // ============================================================
-// LOAD QUESTION
+// LOAD QUESTION - BAREMUL ESTE ASCUNS COMPLET
 // ============================================================
 function loadQuestion(index) {
     if (!currentTest || !currentTest.questions.length) return;
@@ -1266,14 +1263,7 @@ function loadQuestion(index) {
         hintBox.classList.add('hidden');
     }
     
-    const baremDisplay = document.getElementById('barem-display');
-    const baremText = document.getElementById('barem-text');
-    if (q.barem) {
-        baremDisplay.style.display = 'block';
-        baremText.textContent = q.barem;
-    } else {
-        baremDisplay.style.display = 'none';
-    }
+    // BAREMUL NU MAI ESTE AFIȘAT - codul eliminat complet
     
     const reqText = document.getElementById('code-requirements-text');
     if (q.cerinte) {
@@ -1445,7 +1435,7 @@ async function evaluateWithAI(answer, question) {
 }
 
 // ============================================================
-// SUBMIT ANSWER
+// SUBMIT ANSWER - BAREMUL NU MAI ESTE AFIȘAT
 // ============================================================
 async function submitAnswer() {
     if (isEvaluating) return;
@@ -1486,10 +1476,7 @@ async function submitAnswer() {
             }
         });
         
-        if (q.barem) {
-            document.getElementById('barem-display').style.display = 'block';
-            document.getElementById('barem-text').textContent = q.barem;
-        }
+        // BAREMUL NU MAI ESTE AFIȘAT - cod eliminat
         
     } else if (q.tip === 'cod' || q.tip === 'scris') {
         const result = await evaluateWithAI(answer, q);
@@ -1499,10 +1486,7 @@ async function submitAnswer() {
         if (!q.evaluation) q.evaluation = {};
         q.evaluation[currentQuestionIndex] = result;
         
-        if (q.barem) {
-            document.getElementById('barem-display').style.display = 'block';
-            document.getElementById('barem-text').textContent = q.barem;
-        }
+        // BAREMUL NU MAI ESTE AFIȘAT - cod eliminat
     }
     
     const feedbackBox = document.getElementById('feedback-box');
@@ -1772,7 +1756,6 @@ function resetAll() {
     document.getElementById('feedback-box').textContent = 'Așteaptă răspunsul tău...';
     document.getElementById('feedback-box').className = 'feedback-box';
     document.getElementById('cod-output').textContent = 'Output-ul va apărea aici.';
-    document.getElementById('barem-display').style.display = 'none';
     
     document.getElementById('submit-btn').disabled = false;
     document.getElementById('submit-text').textContent = 'Trimite';
