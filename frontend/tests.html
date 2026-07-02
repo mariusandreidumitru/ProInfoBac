@@ -542,17 +542,6 @@
             border: 1px solid var(--border-color);
         }
         
-        /* ===== HINT BOX ===== */
-        .hint-box {
-            background: rgba(243, 156, 18, 0.1);
-            border-radius: 8px;
-            padding: 0.6rem 1rem;
-            margin-top: 0.6rem;
-            border-left: 4px solid var(--warning);
-            font-size: 0.9rem;
-            color: var(--text-primary);
-        }
-        
         /* ===== OPTIONS LIST ===== */
         .options-list { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.4rem; }
         .option-item {
@@ -755,6 +744,20 @@
             padding: 0.3rem 0.7rem;
             font-size: 0.75rem;
         }
+        
+        /* ===== IMAGE CONTAINER ===== */
+        .image-container {
+            margin: 0.5rem 0;
+        }
+        .image-container img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .image-container.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -898,8 +901,7 @@
                 </div>
                 <h3 id="q-text">Întrebarea va apărea aici.</h3>
                 <div id="q-subtitle" class="subtitle"></div>
-                <div id="q-image-container"></div>
-                <div class="hint-box hidden" id="hint-box"><i class="fas fa-lightbulb" style="color:var(--warning);"></i> <span id="hint-text"></span></div>
+                <div id="q-image-container" class="image-container hidden"></div>
             </div>
 
             <!-- GRILĂ -->
@@ -953,7 +955,7 @@
         <div class="card">
             <div class="card-title"><i class="fas fa-plus-circle"></i> Creează un nou exercițiu</div>
             <p class="text-muted" style="margin-bottom:1rem;">
-                Completează toate câmpurile pentru a adăuga un exercițiu în biblioteca comunitară.
+                Completează câmpurile pentru a adăuga un exercițiu în biblioteca comunitară.
             </p>
 
             <div class="form-group">
@@ -1023,16 +1025,6 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label><i class="fas fa-lightbulb" style="color:var(--warning);"></i> Hint (opțional)</label>
-                <input class="form-control" id="nou-hint" placeholder="Scrie un hint pentru ajutor..." />
-            </div>
-
-            <div class="form-group">
-                <label><i class="fas fa-check-double" style="color:var(--success);"></i> Barem / Rezolvare corectă</label>
-                <textarea class="form-control" id="nou-barem" rows="4" placeholder="Scrie aici rezolvarea corectă sau baremul..."></textarea>
-            </div>
-
             <div style="display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:flex-end; margin-top:1rem;">
                 <button class="btn btn-warning" onclick="publicaExercitiu()">
                     <i class="fas fa-paper-plane"></i> Publică exercițiul
@@ -1063,7 +1055,7 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- SCRIPT - COD ACTUALIZAT CU MIGRARE EXERCIȚII VECHI -->
+<!-- SCRIPT - COD ACTUALIZAT -->
 <!-- ============================================================ -->
 <script>
 // ============================================================
@@ -1104,7 +1096,6 @@ function migreazaExercitiiVechi() {
     let modificat = false;
     
     exercitiiComunitate.forEach((ex, index) => {
-        // Dacă exercițiul nu are ID, îi atribuim unul
         if (!ex.id) {
             ex.id = 'ex_migrat_' + Date.now() + '_' + index + '_' + Math.random().toString(36).substr(2, 6);
             modificat = true;
@@ -1131,7 +1122,6 @@ function setupImageUpload() {
     fileInput.addEventListener('change', function(e) {
         const file = this.files[0];
         if (file) {
-            // Verifică dimensiunea (max 2MB)
             if (file.size > 2 * 1024 * 1024) {
                 showToast('⚠️ Imaginea este prea mare! Maxim 2MB.');
                 this.value = '';
@@ -1333,7 +1323,7 @@ function displayTestList() {
                 </div>
             </div>
             <p style="font-size:0.9rem;">${q.text.substring(0, 120)}${q.text.length > 120 ? '...' : ''}</p>
-            ${q.imageData ? `<div style="margin-top:0.3rem;"><img src="${q.imageData}" style="max-height:80px; border-radius:4px; border:1px solid var(--border-color);" /></div>` : ''}
+            ${q.imageData && q.imageData !== '' ? `<div style="margin-top:0.3rem;"><img src="${q.imageData}" style="max-height:80px; border-radius:4px; border:1px solid var(--border-color);" /></div>` : ''}
         </div>
     `).join('');
 }
@@ -1406,30 +1396,14 @@ function loadQuestion(index) {
     document.getElementById('q-text').textContent = q.text;
     document.getElementById('q-subtitle').textContent = q.subtitle || '';
     
-    // Afișează imaginea dacă există
+    // Afișează imaginea DOAR dacă există
     const imageContainer = document.getElementById('q-image-container');
-    if (q.imageData) {
+    if (q.imageData && q.imageData !== '') {
         imageContainer.innerHTML = `<img src="${q.imageData}" class="question-image" alt="Imagine exercițiu">`;
-        imageContainer.style.display = 'block';
+        imageContainer.classList.remove('hidden');
     } else {
         imageContainer.innerHTML = '';
-        imageContainer.style.display = 'none';
-    }
-    
-    const hintBox = document.getElementById('hint-box');
-    const hintText = document.getElementById('hint-text');
-    if (q.hint) {
-        hintBox.classList.remove('hidden');
-        hintText.textContent = q.hint;
-    } else {
-        hintBox.classList.add('hidden');
-    }
-    
-    const reqText = document.getElementById('code-requirements-text');
-    if (q.cerinte) {
-        reqText.textContent = q.cerinte;
-    } else {
-        reqText.textContent = 'Program C/C++ complet, cu citire, prelucrare și afișare.';
+        imageContainer.classList.add('hidden');
     }
     
     document.getElementById('grila-section').classList.add('hidden');
@@ -1729,31 +1703,25 @@ function runCode() {
 }
 
 // ============================================================
-// PUBLICĂ EXERCIȚIU - CU GENERARE ID UNIC
+// PUBLICĂ EXERCIȚIU
 // ============================================================
 function publicaExercitiu() {
     const capitol = document.getElementById('nou-capitol').value;
     const subiect = document.getElementById('nou-subiect').value;
     const text = document.getElementById('nou-text').value.trim();
-    const hint = document.getElementById('nou-hint').value.trim();
-    const barem = document.getElementById('nou-barem').value.trim();
     const autor = numeUtilizator || 'Utilizator';
     
-    // Preluăm imaginea
     const previewImg = document.getElementById('nou-image-preview-img');
-    const imageData = previewImg.src && previewImg.src !== '' ? previewImg.src : null;
+    let imageData = null;
+    if (previewImg.src && previewImg.src !== '' && previewImg.src !== 'http://localhost/') {
+        imageData = previewImg.src;
+    }
     
     if (!text) {
         showToast('⚠️ Te rugăm să scrii enunțul exercițiului!');
         return;
     }
     
-    if (subiect !== 's1' && !barem) {
-        showToast('⚠️ Te rugăm să adaugi un barem/rezolvare pentru Subiectul II sau III!');
-        return;
-    }
-    
-    // Generăm un ID unic
     const idUnic = 'ex_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     
     let exercitiuNou = {
@@ -1761,8 +1729,6 @@ function publicaExercitiu() {
         capitol: capitol,
         subiect: subiect,
         text: text,
-        hint: hint || '',
-        barem: barem || 'Răspuns corect: una dintre opțiunile de mai sus.',
         autor: autor,
         dificultate: 3,
         puncte: subiect === 's1' ? 4 : (subiect === 's2' ? 10 : 15),
@@ -1803,15 +1769,11 @@ function publicaExercitiu() {
     allExercitii = incarcaExercitiiComunitate();
     document.getElementById('ex-count').textContent = allExercitii.length;
     
-    // Resetare formular
     document.getElementById('nou-text').value = '';
-    document.getElementById('nou-hint').value = '';
-    document.getElementById('nou-barem').value = '';
     for (let i = 0; i < 4; i++) {
         document.getElementById(`nou-optiune-${i}`).value = '';
     }
     
-    // Resetare imagine
     const preview = document.getElementById('nou-image-preview');
     const previewImg2 = document.getElementById('nou-image-preview-img');
     const removeBtn = document.getElementById('nou-image-remove');
@@ -1826,10 +1788,9 @@ function publicaExercitiu() {
 }
 
 // ============================================================
-// EDITEAZĂ CAPITOLUL EXERCIȚIULUI - VERSIUNE REPARATĂ
+// EDITEAZĂ CAPITOLUL EXERCIȚIULUI
 // ============================================================
 function editeazaCapitol(exercitiuId) {
-    // Găsim exercițiul în baza de date
     let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
     const exercitiu = exercitiiComunitate.find(ex => ex.id === exercitiuId);
     
@@ -1839,11 +1800,8 @@ function editeazaCapitol(exercitiuId) {
     }
     
     const oldCapitol = exercitiu.capitol;
-    
-    // Căutăm elementul în pagină după ID
     let itemElement = document.querySelector(`[data-exercitiu-id="${exercitiuId}"]`);
     
-    // Dacă nu găsim elementul, reîncărcăm biblioteca
     if (!itemElement) {
         showToast('🔄 Reîncărcare bibliotecă...');
         incarcaBiblioteca();
@@ -1859,11 +1817,9 @@ function editeazaCapitol(exercitiuId) {
         return;
     }
     
-    // Eliminăm formularul existent dacă există
     const existingForm = itemElement.querySelector('.edit-capitol-form');
     if (existingForm) existingForm.remove();
     
-    // Creăm formularul de editare
     const editForm = document.createElement('div');
     editForm.className = 'edit-capitol-form';
     editForm.innerHTML = `
@@ -1885,7 +1841,6 @@ function editeazaCapitol(exercitiuId) {
         </button>
     `;
     
-    // Inserăm formularul după header
     const header = itemElement.querySelector('.exercitiu-header');
     if (header) {
         header.parentNode.insertBefore(editForm, header.nextSibling);
@@ -1917,7 +1872,6 @@ function salveazaCapitol(exercitiuId) {
     
     allExercitii = incarcaExercitiiComunitate();
     
-    // Eliminăm formularul de editare
     const itemElement = document.querySelector(`[data-exercitiu-id="${exercitiuId}"]`);
     if (itemElement) {
         const form = itemElement.querySelector('.edit-capitol-form');
@@ -1937,7 +1891,7 @@ function anuleazaEditareCapitol(exercitiuId) {
 }
 
 // ============================================================
-// BIBLIOTECA MEA - CU ATRIBUT DATA-EXERCITIU-ID
+// BIBLIOTECA MEA
 // ============================================================
 function incarcaBiblioteca() {
     const container = document.getElementById('biblioteca-container');
@@ -1989,13 +1943,8 @@ function incarcaBiblioteca() {
                         <i class="fas fa-trash"></i> Șterge
                     </button>
                 </div>
-                ${ex.imageData ? `<img src="${ex.imageData}" style="max-height:150px; border-radius:8px; margin-bottom:0.5rem; border:1px solid var(--border-color);" />` : ''}
-                <p style="font-weight:600;">${ex.text}</p>
-                ${ex.hint ? `<p style="font-size:0.85rem; color:var(--text-secondary);"><i class="fas fa-lightbulb" style="color:var(--warning);"></i> ${ex.hint}</p>` : ''}
-                <div style="margin-top:0.5rem; background:var(--bg-input); padding:0.5rem; border-radius:8px; border-left:3px solid var(--primary);">
-                    <strong><i class="fas fa-check-double" style="color:var(--success);"></i> Barem:</strong>
-                    <span style="font-size:0.9rem;">${ex.barem}</span>
-                </div>
+                ${ex.imageData && ex.imageData !== '' ? `<div style="margin-top:0.5rem;"><img src="${ex.imageData}" style="max-height:150px; border-radius:8px; border:1px solid var(--border-color);" /></div>` : ''}
+                <p style="font-weight:600; margin-top:0.5rem;">${ex.text}</p>
                 <div style="margin-top:0.3rem; font-size:0.8rem; color:var(--text-secondary);">
                     <i class="fas fa-user"></i> Publicat de: ${ex.autor || 'Utilizator'}
                 </div>
