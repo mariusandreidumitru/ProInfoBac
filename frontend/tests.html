@@ -534,12 +534,19 @@
             color: var(--text-secondary);
             margin-bottom: 0.5rem;
         }
-        .question-display .question-image {
+        
+        /* ===== IMAGE CONTAINER - ascuns complet dacă nu există imagine ===== */
+        .image-container {
+            margin: 0.5rem 0;
+        }
+        .image-container img {
             max-width: 100%;
             max-height: 300px;
             border-radius: 8px;
-            margin: 0.5rem 0;
             border: 1px solid var(--border-color);
+        }
+        .image-container.hidden {
+            display: none !important;
         }
         
         /* ===== OPTIONS LIST ===== */
@@ -598,7 +605,7 @@
         .feedback-box.wrong { border-color: var(--danger); background: rgba(231, 76, 60, 0.1); color: var(--danger); }
         .feedback-box.info { border-color: var(--primary); background: rgba(67, 97, 238, 0.1); color: var(--primary); }
         
-        /* ===== REZOLVARE CORECTĂ - STIL NOU ===== */
+        /* ===== REZOLVARE CORECTĂ ===== */
         .rezolvare-corecta-box {
             padding: 0.6rem 1rem;
             border-radius: 8px;
@@ -764,20 +771,6 @@
             font-size: 0.75rem;
         }
         
-        /* ===== IMAGE CONTAINER ===== */
-        .image-container {
-            margin: 0.5rem 0;
-        }
-        .image-container img {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-        .image-container.hidden {
-            display: none;
-        }
-        
         /* ===== BIBLIOTECA IMAGE ===== */
         .biblioteca-image {
             margin-top: 0.5rem;
@@ -789,6 +782,11 @@
         }
         .biblioteca-image.hidden {
             display: none;
+        }
+        
+        /* ===== AI BADGE - ascuns pentru S2 și S3 ===== */
+        .ai-eval-badge.hidden-ai {
+            display: none !important;
         }
     </style>
 </head>
@@ -927,7 +925,7 @@
                 <div class="flex" style="margin-bottom:0.3rem;">
                     <span class="badge" id="q-badge">S1</span>
                     <span id="q-subiect-label" style="font-size:0.8rem; color:var(--text-secondary);">Subiectul I</span>
-                    <span class="ai-eval-badge" id="ai-badge" style="display:none;">🤖 AI</span>
+                    <span class="ai-eval-badge hidden-ai" id="ai-badge">🤖 AI</span>
                     <span class="badge badge-profesor" id="q-creator-badge" style="display:none;">👨‍🏫 Profesor</span>
                     <div class="diff-dots" id="q-diff"></div>
                 </div>
@@ -1098,7 +1096,7 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- SCRIPT - COD ACTUALIZAT CU BAREM ȘI REZOLVARE CORECTĂ -->
+<!-- SCRIPT - COD ACTUALIZAT -->
 <!-- ============================================================ -->
 <script>
 // ============================================================
@@ -1398,7 +1396,7 @@ function startSolving() {
 }
 
 // ============================================================
-// LOAD QUESTION
+// LOAD QUESTION - AFIȘEAZĂ IMAGINEA DOAR DACĂ EXISTĂ
 // ============================================================
 function loadQuestion(index) {
     if (!currentTest || !currentTest.questions.length) return;
@@ -1422,10 +1420,13 @@ function loadQuestion(index) {
     creatorBadge.textContent = q.autor === numeUtilizator ? `✏️ ${q.autor}` : `👨‍🏫 ${q.autor || 'Profesor'}`;
     creatorBadge.className = `badge ${q.autor === numeUtilizator ? 'badge-owner' : 'badge-profesor'}`;
     
+    // AI BADGE - apare doar pentru Subiectul I (grilă)
     const aiBadge = document.getElementById('ai-badge');
-    if (q.useAI || q.subiect !== 's1') {
+    if (q.subiect === 's1') {
+        aiBadge.classList.remove('hidden-ai');
         aiBadge.style.display = 'inline-block';
     } else {
+        aiBadge.classList.add('hidden-ai');
         aiBadge.style.display = 'none';
     }
     
@@ -1437,9 +1438,11 @@ function loadQuestion(index) {
     document.getElementById('q-text').textContent = q.text;
     document.getElementById('q-subtitle').textContent = q.subtitle || '';
     
-    // Afișează imaginea DOAR dacă există
+    // Afișează imaginea DOAR dacă există și nu este goală
     const imageContainer = document.getElementById('q-image-container');
-    if (q.imageData && q.imageData !== '' && q.imageData !== 'null' && q.imageData !== 'undefined') {
+    const hasImage = q.imageData && q.imageData !== '' && q.imageData !== 'null' && q.imageData !== 'undefined';
+    
+    if (hasImage) {
         imageContainer.innerHTML = `<img src="${q.imageData}" class="question-image" alt="Imagine exercițiu">`;
         imageContainer.classList.remove('hidden');
     } else {
@@ -1675,7 +1678,6 @@ async function submitAnswer() {
         rezolvareText.textContent = q.barem;
         rezolvareBox.classList.add('visible');
     } else {
-        // Dacă nu există barem, afișăm un mesaj generic
         rezolvareText.textContent = 'Nu există o rezolvare standard pentru acest exercițiu. Verifică feedback-ul AI pentru îndrumări.';
         rezolvareBox.classList.add('visible');
     }
@@ -1759,7 +1761,7 @@ function runCode() {
 }
 
 // ============================================================
-// PUBLICĂ EXERCIȚIU - CU BAREM
+// PUBLICĂ EXERCIȚIU - CU BAREM ȘI VERIFICARE DUBLURI
 // ============================================================
 function publicaExercitiu() {
     const capitol = document.getElementById('nou-capitol').value;
@@ -1812,7 +1814,7 @@ function publicaExercitiu() {
         subiectLabel: subiect === 's1' ? 'Subiectul I (20p)' : (subiect === 's2' ? 'Subiectul II (40p)' : 'Subiectul III (30p)'),
         cerinte: subiect === 's1' ? 'Alege varianta corectă.' : (subiect === 's2' ? 'Scrie algoritmul în pseudocod sau explică execuția.' : 'Program C/C++: citire, prelucrare, afișare.'),
         sursa: 'comunitate',
-        useAI: subiect !== 's1',
+        useAI: subiect === 's1', // AI doar pentru grilă
         imageData: imageData
     };
     
