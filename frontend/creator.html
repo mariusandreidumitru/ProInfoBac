@@ -697,10 +697,10 @@
         <!-- ===== HEADER ===== -->
         <header class="app-header">
             <div class="logo-area" onclick="window.location.href='/dashboard'">
-                <i class="fas fa-chalkboard-teacher"></i>
+                <i class="fas fa-chalkboard-teacher" id="header-icon"></i>
                 <div>
                     <h1>Pro<span>InfoBAC</span></h1>
-                    <small>· Creator Variante</small>
+                    <small id="header-subtitle">· Creator Variante</small>
                 </div>
             </div>
             <div class="header-actions">
@@ -720,8 +720,8 @@
 
         <!-- ===== PAGE TITLE ===== -->
         <div class="card">
-            <div class="breadcrumb">Dashboard / Creator</div>
-            <h1 class="page-title"><i class="fas fa-pen-fancy" style="color:var(--primary);"></i> Creează Variantă Bac</h1>
+            <div class="breadcrumb" id="page-breadcrumb">Dashboard / Creator</div>
+            <h1 class="page-title" id="page-title"><i class="fas fa-pen-fancy" style="color:var(--primary);"></i> Creează Variantă Bac</h1>
             <p class="page-description" id="page-description">Profesorii pot crea variante complete de Bacalaureat cu exerciții personalizate și barem.</p>
         </div>
 
@@ -729,21 +729,21 @@
         <div class="taburi" id="taburi-container">
             <!-- Tab-urile pentru PROFESOR -->
             <button class="tab active" onclick="switchTab('profesor')" id="tab-profesor">
-                <i class="fas fa-pen"></i> Profesor - Creează
+                <i class="fas fa-pen"></i> <span id="tab-profesor-text">Profesor - Creează</span>
             </button>
             <button class="tab" onclick="switchTab('variante')" id="tab-variante">
-                <i class="fas fa-folder-open"></i> Variantele mele
+                <i class="fas fa-folder-open"></i> <span id="tab-variante-text">Variantele mele</span>
             </button>
             <button class="tab" onclick="switchTab('rezultate')" id="tab-rezultate">
-                <i class="fas fa-chart-bar"></i> Rezultate
+                <i class="fas fa-chart-bar"></i> <span id="tab-rezultate-text">Rezultate</span>
             </button>
             
             <!-- Tab-urile pentru ELEV -->
             <button class="tab hidden-tab" onclick="switchTab('elev')" id="tab-elev">
-                <i class="fas fa-user-graduate"></i> Elev - Rezolvă
+                <i class="fas fa-user-graduate"></i> <span id="tab-elev-text">Elev - Rezolvă</span>
             </button>
             <button class="tab hidden-tab" onclick="switchTab('rezultate-elev')" id="tab-rezultate-elev">
-                <i class="fas fa-user-check"></i> Rezultatele mele
+                <i class="fas fa-user-check"></i> <span id="tab-rezultate-elev-text">Rezultatele mele</span>
             </button>
         </div>
 
@@ -825,7 +825,7 @@
             <div class="card">
                 <div style="display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:center;">
                     <button class="btn btn-success" onclick="publicaVarianta()" style="padding:0.8rem 2rem; font-size:1.1rem;">
-                        <i class="fas fa-paper-plane"></i> Publică Varianta
+                        <i class="fas fa-paper-plane"></i> <span id="publica-btn-text">Publică Varianta</span>
                     </button>
                     <button class="btn btn-outline" onclick="resetVarianta()">
                         <i class="fas fa-undo"></i> Resetează
@@ -881,7 +881,7 @@
         <!-- ============================================================ -->
         <div id="tab-variante-content" class="tab-content fade-in">
             <div class="card">
-                <div class="card-title"><i class="fas fa-folder-open"></i> Variantele mele publicate</div>
+                <div class="card-title"><i class="fas fa-folder-open"></i> <span id="variante-lista-title">Variantele mele publicate</span></div>
                 <div id="variante-lista-container"></div>
             </div>
         </div>
@@ -891,7 +891,7 @@
         <!-- ============================================================ -->
         <div id="tab-rezultate-content" class="tab-content fade-in">
             <div class="card">
-                <div class="card-title"><i class="fas fa-chart-bar"></i> Rezultatele elevilor</div>
+                <div class="card-title"><i class="fas fa-chart-bar"></i> <span id="rezultate-title">Rezultatele elevilor</span></div>
 
                 <div class="form-group">
                     <label><i class="fas fa-list"></i> Alege varianta</label>
@@ -1017,16 +1017,35 @@
                 numeUtilizator = localStorage.getItem('numeUtilizator') || 'Elev';
             }
             
-            // Actualizăm indicatorul de rol
+            // Actualizăm UI-ul în funcție de rol
+            actualizeazaUIInFunctieDeRol();
+        }
+
+        // ============================================================
+        // ACTUALIZEAZĂ UI-UL ÎN FUNCȚIE DE ROL
+        // ============================================================
+        function actualizeazaUIInFunctieDeRol() {
             const roleBadge = document.getElementById('role-badge');
             const roleText = document.getElementById('role-text');
+            const pageTitle = document.getElementById('page-title');
             const pageDescription = document.getElementById('page-description');
+            const pageBreadcrumb = document.getElementById('page-breadcrumb');
+            const headerSubtitle = document.getElementById('header-subtitle');
+            const headerIcon = document.getElementById('header-icon');
+            const publicaBtnText = document.getElementById('publica-btn-text');
             
             if (rolUtilizator === 'teacher') {
+                // PROFESOR
                 roleBadge.className = 'role-badge teacher';
                 roleBadge.querySelector('i').className = 'fas fa-chalkboard-teacher';
                 roleText.textContent = 'Profesor';
+                
+                pageTitle.innerHTML = '<i class="fas fa-pen-fancy" style="color:var(--primary);"></i> Creează Variantă Bac';
                 pageDescription.textContent = 'Profesorii pot crea variante complete de Bacalaureat cu exerciții personalizate și barem.';
+                pageBreadcrumb.textContent = 'Dashboard / Creator';
+                headerSubtitle.textContent = '· Creator Variante';
+                headerIcon.className = 'fas fa-chalkboard-teacher';
+                publicaBtnText.textContent = 'Publică Varianta';
                 
                 // Ascundem tab-urile de elev
                 document.getElementById('tab-elev').classList.add('hidden-tab');
@@ -1037,6 +1056,13 @@
                 document.getElementById('tab-variante').classList.remove('hidden-tab');
                 document.getElementById('tab-rezultate').classList.remove('hidden-tab');
                 
+                // Actualizăm textele tab-urilor de profesor
+                document.getElementById('tab-profesor-text').textContent = 'Profesor - Creează';
+                document.getElementById('tab-variante-text').textContent = 'Variantele mele';
+                document.getElementById('tab-rezultate-text').textContent = 'Rezultate';
+                document.getElementById('variante-lista-title').textContent = 'Variantele mele publicate';
+                document.getElementById('rezultate-title').textContent = 'Rezultatele elevilor';
+                
                 // Dacă suntem pe un tab de elev, trecem la profesor
                 if (document.getElementById('tab-elev-content').classList.contains('active') ||
                     document.getElementById('tab-rezultate-elev-content').classList.contains('active')) {
@@ -1044,10 +1070,17 @@
                 }
                 
             } else {
+                // ELEV
                 roleBadge.className = 'role-badge student';
                 roleBadge.querySelector('i').className = 'fas fa-user-graduate';
                 roleText.textContent = 'Elev';
+                
+                pageTitle.innerHTML = '<i class="fas fa-pencil-alt" style="color:var(--warning);"></i> Rezolvă Variantă Bac';
                 pageDescription.textContent = 'Elevii pot rezolva variantele create de profesori și își pot vedea rezultatele.';
+                pageBreadcrumb.textContent = 'Dashboard / Rezolvă variante';
+                headerSubtitle.textContent = '· Rezolvă Variante';
+                headerIcon.className = 'fas fa-user-graduate';
+                publicaBtnText.textContent = 'Rezolvă Varianta';
                 
                 // Ascundem tab-urile de profesor
                 document.getElementById('tab-profesor').classList.add('hidden-tab');
@@ -1057,6 +1090,10 @@
                 // Arătăm tab-urile de elev
                 document.getElementById('tab-elev').classList.remove('hidden-tab');
                 document.getElementById('tab-rezultate-elev').classList.remove('hidden-tab');
+                
+                // Actualizăm textele tab-urilor de elev
+                document.getElementById('tab-elev-text').textContent = 'Elev - Rezolvă';
+                document.getElementById('tab-rezultate-elev-text').textContent = 'Rezultatele mele';
                 
                 // Dacă suntem pe un tab de profesor, trecem la elev
                 if (document.getElementById('tab-profesor-content').classList.contains('active') ||
