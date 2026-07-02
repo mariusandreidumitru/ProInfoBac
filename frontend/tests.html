@@ -449,12 +449,14 @@
         .badge-scris { background: #f3e5f5; color: #6a1b9a; }
         .badge-profesor { background: #e3f2fd; color: #1565c0; }
         .badge-public { background: #fff3e0; color: #e65100; }
+        .badge-owner { background: #e8f5e9; color: #2e7d32; }
         
         [data-theme="dark"] .badge-s1 { background: #1a2a4a; color: #6c8cff; }
         [data-theme="dark"] .badge-s2 { background: #3a1a2a; color: #ff6b8a; }
         [data-theme="dark"] .badge-s3 { background: #2a1a4a; color: #b87aff; }
         [data-theme="dark"] .badge-profesor { background: #1a2a4a; color: #6c8cff; }
         [data-theme="dark"] .badge-public { background: #3a2a1a; color: #ffa86b; }
+        [data-theme="dark"] .badge-owner { background: #1a3a2a; color: #6bffa8; }
         
         /* ===== DIFFICULTY DOTS ===== */
         .diff-dots { display: flex; gap: 2px; align-items: center; }
@@ -723,7 +725,7 @@
             </div>
             <div class="card-title"><i class="fas fa-sliders-h"></i> Configurare test</div>
             <p class="text-muted" style="margin-bottom:1rem; font-size:0.9rem;">
-                Alege capitolul și numărul de întrebări. Testele includ exercițiile create de profesori în comunitate.
+                Alege capitolul și numărul de întrebări. Testele includ exercițiile create de comunitate.
             </p>
 
             <div class="form-grid">
@@ -810,7 +812,6 @@
                 <h3 id="q-text">Întrebarea va apărea aici.</h3>
                 <div id="q-subtitle" class="subtitle"></div>
                 <div class="hint-box hidden" id="hint-box"><i class="fas fa-lightbulb" style="color:var(--warning);"></i> <span id="hint-text"></span></div>
-                <!-- BAREMUL A FOST ELIMINAT COMPLET DIN INTERFAȚA DE REZOLVARE -->
             </div>
 
             <!-- GRILĂ -->
@@ -858,96 +859,76 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- TAB 2: CREEAZĂ EXERCIȚIU (DOAR PROFESORI) -->
+    <!-- TAB 2: CREEAZĂ EXERCIȚIU -->
     <!-- ============================================================ -->
     <div id="tab-creeaza-content" class="tab-content fade-in">
         <div class="card">
             <div class="card-title"><i class="fas fa-plus-circle"></i> Creează un nou exercițiu</div>
-            
-            <!-- Conținut pentru profesor -->
-            <div id="profesor-content" style="display:none;">
-                <p class="text-muted" style="margin-bottom:1rem;">
-                    Completează toate câmpurile pentru a adăuga un exercițiu în biblioteca comunitară.
-                    <strong><i class="fas fa-check-circle" style="color:var(--success);"></i> Ai acces ca profesor!</strong>
-                </p>
+            <p class="text-muted" style="margin-bottom:1rem;">
+                Completează toate câmpurile pentru a adăuga un exercițiu în biblioteca comunitară.
+            </p>
 
+            <div class="form-group">
+                <label><i class="fas fa-tag"></i> Capitol</label>
+                <select class="form-control" id="nou-capitol">
+                    <option value="algoritmi">Algoritmi elementari</option>
+                    <option value="tablouri">Tablouri (vectori/matrice)</option>
+                    <option value="siruri">Șiruri de caractere</option>
+                    <option value="subprograme">Subprograme</option>
+                    <option value="recursivitate">Recursivitate</option>
+                    <option value="grafuri">Grafuri</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-layer-group"></i> Subiect</label>
+                <select class="form-control" id="nou-subiect" onchange="toggleOptiuni()">
+                    <option value="s1">Subiectul I - Grilă</option>
+                    <option value="s2">Subiectul II - Pseudocod</option>
+                    <option value="s3">Subiectul III - Programare C++</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-question-circle"></i> Enunțul exercițiului</label>
+                <textarea class="form-control" id="nou-text" rows="4" placeholder="Scrie aici enunțul exercițiului..."></textarea>
+            </div>
+
+            <div id="nou-optiuni-container">
                 <div class="form-group">
-                    <label><i class="fas fa-tag"></i> Capitol</label>
-                    <select class="form-control" id="nou-capitol">
-                        <option value="algoritmi">Algoritmi elementari</option>
-                        <option value="tablouri">Tablouri (vectori/matrice)</option>
-                        <option value="siruri">Șiruri de caractere</option>
-                        <option value="subprograme">Subprograme</option>
-                        <option value="recursivitate">Recursivitate</option>
-                        <option value="grafuri">Grafuri</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fas fa-layer-group"></i> Subiect</label>
-                    <select class="form-control" id="nou-subiect" onchange="toggleOptiuni()">
-                        <option value="s1">Subiectul I - Grilă</option>
-                        <option value="s2">Subiectul II - Pseudocod</option>
-                        <option value="s3">Subiectul III - Programare C++</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fas fa-question-circle"></i> Enunțul exercițiului</label>
-                    <textarea class="form-control" id="nou-text" rows="4" placeholder="Scrie aici enunțul exercițiului..."></textarea>
-                </div>
-
-                <div id="nou-optiuni-container">
-                    <div class="form-group">
-                        <label><i class="fas fa-list-ul"></i> Opțiuni (doar pentru Subiectul I - Grilă)</label>
-                        <div class="optiuni-grid">
-                            <div class="optiune-item"><span>A)</span> <input type="text" id="nou-optiune-0" placeholder="Opțiunea A" /></div>
-                            <div class="optiune-item"><span>B)</span> <input type="text" id="nou-optiune-1" placeholder="Opțiunea B" /></div>
-                            <div class="optiune-item"><span>C)</span> <input type="text" id="nou-optiune-2" placeholder="Opțiunea C" /></div>
-                            <div class="optiune-item"><span>D)</span> <input type="text" id="nou-optiune-3" placeholder="Opțiunea D" /></div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-check-circle" style="color:var(--success);"></i> Răspuns corect (pentru grilă)</label>
-                        <select class="form-control" id="nou-corect" style="width:150px;">
-                            <option value="0">A</option>
-                            <option value="1">B</option>
-                            <option value="2">C</option>
-                            <option value="3">D</option>
-                        </select>
+                    <label><i class="fas fa-list-ul"></i> Opțiuni (doar pentru Subiectul I - Grilă)</label>
+                    <div class="optiuni-grid">
+                        <div class="optiune-item"><span>A)</span> <input type="text" id="nou-optiune-0" placeholder="Opțiunea A" /></div>
+                        <div class="optiune-item"><span>B)</span> <input type="text" id="nou-optiune-1" placeholder="Opțiunea B" /></div>
+                        <div class="optiune-item"><span>C)</span> <input type="text" id="nou-optiune-2" placeholder="Opțiunea C" /></div>
+                        <div class="optiune-item"><span>D)</span> <input type="text" id="nou-optiune-3" placeholder="Opțiunea D" /></div>
                     </div>
                 </div>
-
                 <div class="form-group">
-                    <label><i class="fas fa-lightbulb" style="color:var(--warning);"></i> Hint (opțional)</label>
-                    <input class="form-control" id="nou-hint" placeholder="Scrie un hint pentru ajutor..." />
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fas fa-check-double" style="color:var(--success);"></i> Barem / Rezolvare corectă</label>
-                    <textarea class="form-control" id="nou-barem" rows="4" placeholder="Scrie aici rezolvarea corectă sau baremul..."></textarea>
-                </div>
-
-                <div style="display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:flex-end; margin-top:1rem;">
-                    <button class="btn btn-warning" onclick="publicaExercitiu()">
-                        <i class="fas fa-paper-plane"></i> Publică exercițiul
-                    </button>
+                    <label><i class="fas fa-check-circle" style="color:var(--success);"></i> Răspuns corect (pentru grilă)</label>
+                    <select class="form-control" id="nou-corect" style="width:150px;">
+                        <option value="0">A</option>
+                        <option value="1">B</option>
+                        <option value="2">C</option>
+                        <option value="3">D</option>
+                    </select>
                 </div>
             </div>
 
-            <!-- Conținut pentru elev -->
-            <div id="elev-content">
-                <div class="restrictie-profesor">
-                    <i class="fas fa-lock"></i>
-                    <h3>Acces restricționat</h3>
-                    <p>Doar profesorii pot publica exerciții în această platformă.</p>
-                    <p style="font-size:0.9rem; margin-top:0.5rem;">
-                        <i class="fas fa-info-circle"></i> Rolul tău actual: <strong>Elev</strong>
-                    </p>
-                    <p style="font-size:0.85rem; margin-top:0.5rem; color:var(--text-secondary);">
-                        Poți rezolva exercițiile create de profesori în tab-ul "Rezolvă teste".
-                    </p>
-                </div>
+            <div class="form-group">
+                <label><i class="fas fa-lightbulb" style="color:var(--warning);"></i> Hint (opțional)</label>
+                <input class="form-control" id="nou-hint" placeholder="Scrie un hint pentru ajutor..." />
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-check-double" style="color:var(--success);"></i> Barem / Rezolvare corectă</label>
+                <textarea class="form-control" id="nou-barem" rows="4" placeholder="Scrie aici rezolvarea corectă sau baremul..."></textarea>
+            </div>
+
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:flex-end; margin-top:1rem;">
+                <button class="btn btn-warning" onclick="publicaExercitiu()">
+                    <i class="fas fa-paper-plane"></i> Publică exercițiul
+                </button>
             </div>
         </div>
     </div>
@@ -965,7 +946,7 @@
                 <div class="empty-state">
                     <i class="fas fa-book"></i>
                     <p>Nu ai publicat încă niciun exercițiu.</p>
-                    <p style="font-size:0.85rem;">Dacă ești profesor, mergi la tab-ul "Creează exercițiu" pentru a adăuga primul tău exercițiu!</p>
+                    <p style="font-size:0.85rem;">Mergi la tab-ul "Creează exercițiu" pentru a adăuga primul tău exercițiu!</p>
                 </div>
             </div>
         </div>
@@ -1025,14 +1006,16 @@ async function incarcaRolUtilizator() {
         if (response.ok) {
             const data = await response.json();
             rolUtilizator = data.role || 'student';
-            numeUtilizator = data.name || '';
+            numeUtilizator = data.name || data.email || 'Utilizator';
         } else {
             const savedRole = localStorage.getItem('rolUtilizator');
             rolUtilizator = savedRole || 'student';
+            numeUtilizator = localStorage.getItem('numeUtilizator') || 'Utilizator';
         }
     } catch (error) {
         const savedRole = localStorage.getItem('rolUtilizator');
         rolUtilizator = savedRole || 'student';
+        numeUtilizator = localStorage.getItem('numeUtilizator') || 'Utilizator';
     }
     
     actualizeazaUI();
@@ -1044,21 +1027,15 @@ async function incarcaRolUtilizator() {
 function actualizeazaUI() {
     const roleBadge = document.getElementById('role-badge');
     const roleText = document.getElementById('role-text');
-    const profesorContent = document.getElementById('profesor-content');
-    const elevContent = document.getElementById('elev-content');
     
     if (rolUtilizator === 'teacher') {
         roleBadge.className = 'role-badge teacher';
         roleBadge.querySelector('i').className = 'fas fa-chalkboard-teacher';
         roleText.textContent = 'Profesor';
-        profesorContent.style.display = 'block';
-        elevContent.style.display = 'none';
     } else {
         roleBadge.className = 'role-badge student';
         roleBadge.querySelector('i').className = 'fas fa-user-graduate';
         roleText.textContent = 'Elev';
-        profesorContent.style.display = 'none';
-        elevContent.style.display = 'block';
     }
 }
 
@@ -1086,14 +1063,12 @@ function switchTab(tab) {
     document.getElementById('tab-' + tab + '-content').classList.add('active');
     
     if (tab === 'biblioteca') incarcaBiblioteca();
-    if (tab === 'creeaza') actualizeazaUI();
 }
 
 // ============================================================
 // ÎNCARCĂ EXERCIȚII COMUNITATE
 // ============================================================
 function incarcaExercitiiComunitate() {
-    // Încarcă doar din localStorage - fără exerciții implicite
     let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
     allExercitii = [...exercitiiComunitate];
     document.getElementById('ex-count').textContent = allExercitii.length;
@@ -1174,7 +1149,7 @@ function displayTestList() {
             <div class="q-meta">
                 <span class="badge badge-${q.subiect}">${q.subiect.toUpperCase()}</span>
                 <span class="badge badge-${q.tip}">${q.tip}</span>
-                <span class="badge badge-profesor">👨‍🏫 Profesor</span>
+                <span class="badge badge-${q.autor === numeUtilizator ? 'owner' : 'profesor'}">${q.autor === numeUtilizator ? '✏️ Creat de tine' : '👨‍🏫 Profesor'}</span>
                 <span>${q.puncte} puncte</span>
                 <div class="diff-dots">
                     ${Array(10).fill(0).map((_, i) => 
@@ -1216,7 +1191,7 @@ function startSolving() {
 }
 
 // ============================================================
-// LOAD QUESTION - BAREMUL ESTE ASCUNS COMPLET
+// LOAD QUESTION
 // ============================================================
 function loadQuestion(index) {
     if (!currentTest || !currentTest.questions.length) return;
@@ -1237,7 +1212,8 @@ function loadQuestion(index) {
     
     const creatorBadge = document.getElementById('q-creator-badge');
     creatorBadge.style.display = 'inline-block';
-    creatorBadge.textContent = q.autor ? `👨‍🏫 ${q.autor}` : '👨‍🏫 Profesor';
+    creatorBadge.textContent = q.autor === numeUtilizator ? `✏️ ${q.autor}` : `👨‍🏫 ${q.autor || 'Profesor'}`;
+    creatorBadge.className = `badge ${q.autor === numeUtilizator ? 'badge-owner' : 'badge-profesor'}`;
     
     const aiBadge = document.getElementById('ai-badge');
     if (q.useAI || q.subiect !== 's1') {
@@ -1262,8 +1238,6 @@ function loadQuestion(index) {
     } else {
         hintBox.classList.add('hidden');
     }
-    
-    // BAREMUL NU MAI ESTE AFIȘAT - codul eliminat complet
     
     const reqText = document.getElementById('code-requirements-text');
     if (q.cerinte) {
@@ -1435,7 +1409,7 @@ async function evaluateWithAI(answer, question) {
 }
 
 // ============================================================
-// SUBMIT ANSWER - BAREMUL NU MAI ESTE AFIȘAT
+// SUBMIT ANSWER
 // ============================================================
 async function submitAnswer() {
     if (isEvaluating) return;
@@ -1476,8 +1450,6 @@ async function submitAnswer() {
             }
         });
         
-        // BAREMUL NU MAI ESTE AFIȘAT - cod eliminat
-        
     } else if (q.tip === 'cod' || q.tip === 'scris') {
         const result = await evaluateWithAI(answer, q);
         isCorrect = result.isCorrect;
@@ -1485,8 +1457,6 @@ async function submitAnswer() {
         
         if (!q.evaluation) q.evaluation = {};
         q.evaluation[currentQuestionIndex] = result;
-        
-        // BAREMUL NU MAI ESTE AFIȘAT - cod eliminat
     }
     
     const feedbackBox = document.getElementById('feedback-box');
@@ -1572,20 +1542,15 @@ function runCode() {
 }
 
 // ============================================================
-// PUBLICĂ EXERCIȚIU
+// PUBLICĂ EXERCIȚIU - ACCESIBIL PENTRU TOȚI
 // ============================================================
 function publicaExercitiu() {
-    if (rolUtilizator !== 'teacher') {
-        showToast('⚠️ Doar profesorii pot publica exerciții!');
-        return;
-    }
-    
     const capitol = document.getElementById('nou-capitol').value;
     const subiect = document.getElementById('nou-subiect').value;
     const text = document.getElementById('nou-text').value.trim();
     const hint = document.getElementById('nou-hint').value.trim();
     const barem = document.getElementById('nou-barem').value.trim();
-    const autor = numeUtilizator || 'Profesor';
+    const autor = numeUtilizator || 'Utilizator';
     
     if (!text) {
         showToast('⚠️ Te rugăm să scrii enunțul exercițiului!');
@@ -1654,25 +1619,28 @@ function publicaExercitiu() {
 }
 
 // ============================================================
-// BIBLIOTECA MEA
+// BIBLIOTECA MEA - ARATĂ DOAR EXERCIȚIILE CREATE DE UTILIZATOR
 // ============================================================
 function incarcaBiblioteca() {
     const container = document.getElementById('biblioteca-container');
     const exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
     
-    if (exercitiiComunitate.length === 0) {
+    // Filtrăm doar exercițiile create de utilizatorul curent
+    const exercitiiMele = exercitiiComunitate.filter(ex => ex.autor === numeUtilizator);
+    
+    if (exercitiiMele.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-book"></i>
                 <p>Nu ai publicat încă niciun exercițiu.</p>
-                <p style="font-size:0.85rem;">Dacă ești profesor, mergi la tab-ul "Creează exercițiu" pentru a adăuga primul tău exercițiu!</p>
+                <p style="font-size:0.85rem;">Mergi la tab-ul "Creează exercițiu" pentru a adăuga primul tău exercițiu!</p>
             </div>
         `;
         return;
     }
     
     let html = '';
-    exercitiiComunitate.forEach((ex, idx) => {
+    exercitiiMele.forEach((ex, idx) => {
         const subiectNume = ex.subiect === 's1' ? 'Subiectul I - Grilă' : (ex.subiect === 's2' ? 'Subiectul II - Pseudocod' : 'Subiectul III - Programare');
         html += `
             <div class="exercitiu-item">
@@ -1680,9 +1648,9 @@ function incarcaBiblioteca() {
                     <span class="nr">#${idx + 1}</span>
                     <span class="badge badge-${ex.subiect}">${subiectNume}</span>
                     <span class="badge badge-public">Publicat</span>
-                    <span class="badge badge-profesor">👨‍🏫 Profesor</span>
-                    <button class="btn btn-danger btn-sm" onclick="stergeExercitiuComunitate(${idx})">
-                        <i class="fas fa-trash"></i>
+                    <span class="badge badge-owner">✏️ Creat de tine</span>
+                    <button class="btn btn-danger btn-sm" onclick="stergeExercitiuMeu(${idx})">
+                        <i class="fas fa-trash"></i> Șterge
                     </button>
                 </div>
                 <p style="font-weight:600;">${ex.text}</p>
@@ -1692,7 +1660,7 @@ function incarcaBiblioteca() {
                     <span style="font-size:0.9rem;">${ex.barem}</span>
                 </div>
                 <div style="margin-top:0.3rem; font-size:0.8rem; color:var(--text-secondary);">
-                    <i class="fas fa-user"></i> Publicat de: ${ex.autor || 'Profesor'}
+                    <i class="fas fa-user"></i> Publicat de: ${ex.autor || 'Utilizator'}
                 </div>
             </div>
         `;
@@ -1702,14 +1670,30 @@ function incarcaBiblioteca() {
 }
 
 // ============================================================
-// STERGE EXERCIȚIU COMUNITATE
+// STERGE EXERCIȚIU DIN BIBLIOTECA MEA
 // ============================================================
-function stergeExercitiuComunitate(index) {
+function stergeExercitiuMeu(index) {
     if (!confirm('Sigur dorești să ștergi acest exercițiu?')) return;
     
     let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
-    exercitiiComunitate.splice(index, 1);
-    localStorage.setItem('exercitiiComunitate', JSON.stringify(exercitiiComunitate));
+    
+    // Găsim exercițiile utilizatorului curent
+    const exercitiiMele = exercitiiComunitate.filter(ex => ex.autor === numeUtilizator);
+    
+    // Ștergem exercițiul din lista filtrată
+    if (index >= 0 && index < exercitiiMele.length) {
+        const exercitiuDeSters = exercitiiMele[index];
+        // Ștergem din lista principală
+        const idxInPrincipal = exercitiiComunitate.findIndex(ex => 
+            ex.text === exercitiuDeSters.text && 
+            ex.autor === exercitiuDeSters.autor &&
+            ex.tip === exercitiuDeSters.tip
+        );
+        if (idxInPrincipal !== -1) {
+            exercitiiComunitate.splice(idxInPrincipal, 1);
+            localStorage.setItem('exercitiiComunitate', JSON.stringify(exercitiiComunitate));
+        }
+    }
     
     allExercitii = incarcaExercitiiComunitate();
     document.getElementById('ex-count').textContent = allExercitii.length;
