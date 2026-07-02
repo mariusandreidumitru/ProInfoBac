@@ -734,6 +734,26 @@
             .q-card { padding: 0.8rem 1rem; }
             .optiuni-grid { grid-template-columns: 1fr; }
         }
+        
+        /* Stiluri pentru editare capitol */
+        .edit-capitol-form {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg-input);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .edit-capitol-form select {
+            flex: 1;
+            min-width: 150px;
+        }
+        .edit-capitol-form .btn {
+            padding: 0.3rem 0.7rem;
+            font-size: 0.75rem;
+        }
     </style>
 </head>
 <body>
@@ -802,6 +822,8 @@
                         <option value="subprograme">Subprograme</option>
                         <option value="recursivitate">Recursivitate</option>
                         <option value="grafuri">Grafuri</option>
+                        <option value="backtracking">Backtracking</option>
+                        <option value="arbori">Arbori</option>
                         <option value="mixed">Mixt (toate)</option>
                     </select>
                 </div>
@@ -942,6 +964,8 @@
                     <option value="subprograme">Subprograme</option>
                     <option value="recursivitate">Recursivitate</option>
                     <option value="grafuri">Grafuri</option>
+                    <option value="backtracking">Backtracking</option>
+                    <option value="arbori">Arbori</option>
                 </select>
             </div>
 
@@ -1038,7 +1062,7 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- SCRIPT - COD CORECTAT -->
+<!-- SCRIPT - COD ACTUALIZAT -->
 <!-- ============================================================ -->
 <script>
 // ============================================================
@@ -1477,7 +1501,8 @@ async function evaluateWithAI(answer, question) {
             
             const relevantWords = ['suma', 'produs', 'cmmdc', 'prim', 'par', 'impar', 'vector', 'șir', 'matrice', 
                                    'fibonacci', 'factorial', 'palindrom', 'invers', 'divizor', 'cifre', 'media',
-                                   'graf', 'nod', 'muchie', 'conex', 'ciclu', 'arbore', 'adiacenta'];
+                                   'graf', 'nod', 'muchie', 'conex', 'ciclu', 'arbore', 'adiacenta', 'backtracking',
+                                   'permutari', 'aranjamente', 'combinari', 'submultimi', 'regine', 'laborator'];
             
             const hasRelevant = relevantWords.some(word => cleanAnswer.includes(word));
             
@@ -1716,7 +1741,8 @@ function publicaExercitiu() {
         cerinte: subiect === 's1' ? 'Alege varianta corectă.' : (subiect === 's2' ? 'Scrie algoritmul în pseudocod sau explică execuția.' : 'Program C/C++: citire, prelucrare, afișare.'),
         sursa: 'comunitate',
         useAI: subiect !== 's1',
-        imageData: imageData // Adăugăm imaginea
+        imageData: imageData,
+        id: Date.now() + Math.random().toString(36).substr(2, 6) // ID unic pentru identificare
     };
     
     if (subiect === 's1') {
@@ -1772,7 +1798,99 @@ function publicaExercitiu() {
 }
 
 // ============================================================
-// BIBLIOTECA MEA
+// EDITEAZĂ CAPITOLUL EXERCIȚIULUI
+// ============================================================
+function editeazaCapitol(exercitiuId, oldCapitol) {
+    // Găsim exercițiul în baza de date
+    let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
+    const index = exercitiiComunitate.findIndex(ex => ex.id === exercitiuId);
+    
+    if (index === -1) {
+        showToast('⚠️ Exercițiul nu a fost găsit!');
+        return;
+    }
+    
+    // Afișăm un formular inline pentru editare
+    const itemElement = document.querySelector(`[data-exercitiu-id="${exercitiuId}"]`);
+    if (!itemElement) {
+        // Reîncărcăm biblioteca și încercăm din nou
+        incarcaBiblioteca();
+        setTimeout(() => {
+            const newItem = document.querySelector(`[data-exercitiu-id="${exercitiuId}"]`);
+            if (newItem) {
+                newItem.scrollIntoView({ behavior: 'smooth' });
+                editeazaCapitol(exercitiuId, oldCapitol);
+            }
+        }, 300);
+        return;
+    }
+    
+    // Creăm formularul de editare
+    const editForm = document.createElement('div');
+    editForm.className = 'edit-capitol-form';
+    editForm.innerHTML = `
+        <select class="form-control" id="edit-capitol-select-${exercitiuId}">
+            <option value="algoritmi" ${oldCapitol === 'algoritmi' ? 'selected' : ''}>Algoritmi elementari</option>
+            <option value="tablouri" ${oldCapitol === 'tablouri' ? 'selected' : ''}>Tablouri (vectori/matrice)</option>
+            <option value="siruri" ${oldCapitol === 'siruri' ? 'selected' : ''}>Șiruri de caractere</option>
+            <option value="subprograme" ${oldCapitol === 'subprograme' ? 'selected' : ''}>Subprograme</option>
+            <option value="recursivitate" ${oldCapitol === 'recursivitate' ? 'selected' : ''}>Recursivitate</option>
+            <option value="grafuri" ${oldCapitol === 'grafuri' ? 'selected' : ''}>Grafuri</option>
+            <option value="backtracking" ${oldCapitol === 'backtracking' ? 'selected' : ''}>Backtracking</option>
+            <option value="arbori" ${oldCapitol === 'arbori' ? 'selected' : ''}>Arbori</option>
+        </select>
+        <button class="btn btn-success btn-sm" onclick="salveazaCapitol(${exercitiuId})">
+            <i class="fas fa-save"></i> Salvează
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="anuleazaEditareCapitol(${exercitiuId})">
+            <i class="fas fa-times"></i> Anulează
+        </button>
+    `;
+    
+    // Găsim locul unde să inserăm formularul
+    const header = itemElement.querySelector('.exercitiu-header');
+    if (header) {
+        // Adăugăm formularul după header
+        const existingForm = itemElement.querySelector('.edit-capitol-form');
+        if (existingForm) existingForm.remove();
+        header.parentNode.insertBefore(editForm, header.nextSibling);
+    }
+}
+
+function salveazaCapitol(exercitiuId) {
+    const select = document.getElementById(`edit-capitol-select-${exercitiuId}`);
+    if (!select) {
+        showToast('⚠️ Eroare: select-ul nu a fost găsit!');
+        return;
+    }
+    
+    const newCapitol = select.value;
+    let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
+    const index = exercitiiComunitate.findIndex(ex => ex.id === exercitiuId);
+    
+    if (index === -1) {
+        showToast('⚠️ Exercițiul nu a fost găsit!');
+        return;
+    }
+    
+    exercitiiComunitate[index].capitol = newCapitol;
+    localStorage.setItem('exercitiiComunitate', JSON.stringify(exercitiiComunitate));
+    
+    allExercitii = incarcaExercitiiComunitate();
+    showToast(`✅ Capitolul a fost actualizat la "${newCapitol}"!`);
+    incarcaBiblioteca();
+}
+
+function anuleazaEditareCapitol(exercitiuId) {
+    const itemElement = document.querySelector(`[data-exercitiu-id="${exercitiuId}"]`);
+    if (itemElement) {
+        const form = itemElement.querySelector('.edit-capitol-form');
+        if (form) form.remove();
+    }
+}
+
+// ============================================================
+// BIBLIOTECA MEA - VERSIUNE ACTUALIZATĂ CU EDITARE CAPITOL
 // ============================================================
 function incarcaBiblioteca() {
     const container = document.getElementById('biblioteca-container');
@@ -1791,17 +1909,35 @@ function incarcaBiblioteca() {
         return;
     }
     
+    // Map pentru numele capitolelor
+    const capitolNume = {
+        'algoritmi': 'Algoritmi elementari',
+        'tablouri': 'Tablouri',
+        'siruri': 'Șiruri de caractere',
+        'subprograme': 'Subprograme',
+        'recursivitate': 'Recursivitate',
+        'grafuri': 'Grafuri',
+        'backtracking': 'Backtracking',
+        'arbori': 'Arbori'
+    };
+    
     let html = '';
     exercitiiMele.forEach((ex, idx) => {
         const subiectNume = ex.subiect === 's1' ? 'Subiectul I - Grilă' : (ex.subiect === 's2' ? 'Subiectul II - Pseudocod' : 'Subiectul III - Programare');
         html += `
-            <div class="exercitiu-item">
+            <div class="exercitiu-item" data-exercitiu-id="${ex.id}">
                 <div class="exercitiu-header">
                     <span class="nr">#${idx + 1}</span>
                     <span class="badge badge-${ex.subiect}">${subiectNume}</span>
                     <span class="badge badge-public">Publicat</span>
                     <span class="badge badge-owner">✏️ Creat de tine</span>
-                    <button class="btn btn-danger btn-sm" onclick="stergeExercitiuMeu(${idx})">
+                    <span class="badge" style="background:var(--primary-light);color:var(--primary);">
+                        📂 ${capitolNume[ex.capitol] || ex.capitol}
+                    </span>
+                    <button class="btn btn-warning btn-sm" onclick="editeazaCapitol(${ex.id}, '${ex.capitol}')">
+                        <i class="fas fa-edit"></i> Editează capitol
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="stergeExercitiuMeu('${ex.id}')">
                         <i class="fas fa-trash"></i> Șterge
                     </button>
                 </div>
@@ -1823,26 +1959,17 @@ function incarcaBiblioteca() {
 }
 
 // ============================================================
-// STERGE EXERCIȚIU DIN BIBLIOTECA MEA
+// STERGE EXERCIȚIU DIN BIBLIOTECA MEA - ACTUALIZAT CU ID
 // ============================================================
-function stergeExercitiuMeu(index) {
+function stergeExercitiuMeu(id) {
     if (!confirm('Sigur dorești să ștergi acest exercițiu?')) return;
     
     let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
     
-    const exercitiiMele = exercitiiComunitate.filter(ex => ex.autor === numeUtilizator);
-    
-    if (index >= 0 && index < exercitiiMele.length) {
-        const exercitiuDeSters = exercitiiMele[index];
-        const idxInPrincipal = exercitiiComunitate.findIndex(ex => 
-            ex.text === exercitiuDeSters.text && 
-            ex.autor === exercitiuDeSters.autor &&
-            ex.tip === exercitiuDeSters.tip
-        );
-        if (idxInPrincipal !== -1) {
-            exercitiiComunitate.splice(idxInPrincipal, 1);
-            localStorage.setItem('exercitiiComunitate', JSON.stringify(exercitiiComunitate));
-        }
+    const index = exercitiiComunitate.findIndex(ex => ex.id === id);
+    if (index !== -1) {
+        exercitiiComunitate.splice(index, 1);
+        localStorage.setItem('exercitiiComunitate', JSON.stringify(exercitiiComunitate));
     }
     
     allExercitii = incarcaExercitiiComunitate();
