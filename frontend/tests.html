@@ -735,7 +735,7 @@
             .optiuni-grid { grid-template-columns: 1fr; }
         }
         
-        /* Stiluri pentru editare capitol */
+        /* ===== EDIT CAPITOL FORM ===== */
         .edit-capitol-form {
             display: flex;
             align-items: center;
@@ -745,6 +745,7 @@
             background: var(--bg-input);
             border-radius: 8px;
             border: 1px solid var(--border-color);
+            flex-wrap: wrap;
         }
         .edit-capitol-form select {
             flex: 1;
@@ -1742,7 +1743,7 @@ function publicaExercitiu() {
         sursa: 'comunitate',
         useAI: subiect !== 's1',
         imageData: imageData,
-        id: Date.now() + Math.random().toString(36).substr(2, 6) // ID unic pentru identificare
+        id: Date.now() + '_' + Math.random().toString(36).substr(2, 8)
     };
     
     if (subiect === 's1') {
@@ -1800,30 +1801,35 @@ function publicaExercitiu() {
 // ============================================================
 // EDITEAZĂ CAPITOLUL EXERCIȚIULUI
 // ============================================================
-function editeazaCapitol(exercitiuId, oldCapitol) {
-    // Găsim exercițiul în baza de date
+function editeazaCapitol(exercitiuId) {
+    // Găsim exercițiul în baza de date pentru a afla capitolul curent
     let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
-    const index = exercitiiComunitate.findIndex(ex => ex.id === exercitiuId);
+    const exercitiu = exercitiiComunitate.find(ex => ex.id === exercitiuId);
     
-    if (index === -1) {
+    if (!exercitiu) {
         showToast('⚠️ Exercițiul nu a fost găsit!');
         return;
     }
     
-    // Afișăm un formular inline pentru editare
+    const oldCapitol = exercitiu.capitol;
     const itemElement = document.querySelector(`[data-exercitiu-id="${exercitiuId}"]`);
+    
     if (!itemElement) {
-        // Reîncărcăm biblioteca și încercăm din nou
+        showToast('⚠️ Elementul nu a fost găsit în pagină. Reîncărcare...');
         incarcaBiblioteca();
         setTimeout(() => {
             const newItem = document.querySelector(`[data-exercitiu-id="${exercitiuId}"]`);
             if (newItem) {
                 newItem.scrollIntoView({ behavior: 'smooth' });
-                editeazaCapitol(exercitiuId, oldCapitol);
+                editeazaCapitol(exercitiuId);
             }
-        }, 300);
+        }, 500);
         return;
     }
+    
+    // Eliminăm formularul existent dacă există
+    const existingForm = itemElement.querySelector('.edit-capitol-form');
+    if (existingForm) existingForm.remove();
     
     // Creăm formularul de editare
     const editForm = document.createElement('div');
@@ -1839,22 +1845,24 @@ function editeazaCapitol(exercitiuId, oldCapitol) {
             <option value="backtracking" ${oldCapitol === 'backtracking' ? 'selected' : ''}>Backtracking</option>
             <option value="arbori" ${oldCapitol === 'arbori' ? 'selected' : ''}>Arbori</option>
         </select>
-        <button class="btn btn-success btn-sm" onclick="salveazaCapitol(${exercitiuId})">
+        <button class="btn btn-success btn-sm" onclick="salveazaCapitol('${exercitiuId}')">
             <i class="fas fa-save"></i> Salvează
         </button>
-        <button class="btn btn-outline btn-sm" onclick="anuleazaEditareCapitol(${exercitiuId})">
+        <button class="btn btn-outline btn-sm" onclick="anuleazaEditareCapitol('${exercitiuId}')">
             <i class="fas fa-times"></i> Anulează
         </button>
     `;
     
-    // Găsim locul unde să inserăm formularul
+    // Inserăm formularul după header
     const header = itemElement.querySelector('.exercitiu-header');
     if (header) {
-        // Adăugăm formularul după header
-        const existingForm = itemElement.querySelector('.edit-capitol-form');
-        if (existingForm) existingForm.remove();
         header.parentNode.insertBefore(editForm, header.nextSibling);
+    } else {
+        // Dacă nu găsim header, adăugăm la începutul elementului
+        itemElement.prepend(editForm);
     }
+    
+    editForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function salveazaCapitol(exercitiuId) {
@@ -1873,12 +1881,22 @@ function salveazaCapitol(exercitiuId) {
         return;
     }
     
+    // Actualizăm capitolul
     exercitiiComunitate[index].capitol = newCapitol;
     localStorage.setItem('exercitiiComunitate', JSON.stringify(exercitiiComunitate));
     
     allExercitii = incarcaExercitiiComunitate();
-    showToast(`✅ Capitolul a fost actualizat la "${newCapitol}"!`);
+    
+    // Eliminăm formularul de editare
+    const itemElement = document.querySelector(`[data-exercitiu-id="${exercitiuId}"]`);
+    if (itemElement) {
+        const form = itemElement.querySelector('.edit-capitol-form');
+        if (form) form.remove();
+    }
+    
+    // Reîncărcăm biblioteca pentru a afișa noul capitol
     incarcaBiblioteca();
+    showToast(`✅ Capitolul a fost actualizat!`);
 }
 
 function anuleazaEditareCapitol(exercitiuId) {
@@ -1890,7 +1908,7 @@ function anuleazaEditareCapitol(exercitiuId) {
 }
 
 // ============================================================
-// BIBLIOTECA MEA - VERSIUNE ACTUALIZATĂ CU EDITARE CAPITOL
+// BIBLIOTECA MEA - CU DATA-EXERCITIU-ID
 // ============================================================
 function incarcaBiblioteca() {
     const container = document.getElementById('biblioteca-container');
@@ -1924,6 +1942,7 @@ function incarcaBiblioteca() {
     let html = '';
     exercitiiMele.forEach((ex, idx) => {
         const subiectNume = ex.subiect === 's1' ? 'Subiectul I - Grilă' : (ex.subiect === 's2' ? 'Subiectul II - Pseudocod' : 'Subiectul III - Programare');
+        // Folosim ID-ul ca atribut data-exercitiu-id
         html += `
             <div class="exercitiu-item" data-exercitiu-id="${ex.id}">
                 <div class="exercitiu-header">
@@ -1934,7 +1953,7 @@ function incarcaBiblioteca() {
                     <span class="badge" style="background:var(--primary-light);color:var(--primary);">
                         📂 ${capitolNume[ex.capitol] || ex.capitol}
                     </span>
-                    <button class="btn btn-warning btn-sm" onclick="editeazaCapitol(${ex.id}, '${ex.capitol}')">
+                    <button class="btn btn-warning btn-sm" onclick="editeazaCapitol('${ex.id}')">
                         <i class="fas fa-edit"></i> Editează capitol
                     </button>
                     <button class="btn btn-danger btn-sm" onclick="stergeExercitiuMeu('${ex.id}')">
@@ -1959,7 +1978,7 @@ function incarcaBiblioteca() {
 }
 
 // ============================================================
-// STERGE EXERCIȚIU DIN BIBLIOTECA MEA - ACTUALIZAT CU ID
+// STERGE EXERCIȚIU DIN BIBLIOTECA MEA
 // ============================================================
 function stergeExercitiuMeu(id) {
     if (!confirm('Sigur dorești să ștergi acest exercițiu?')) return;
