@@ -327,6 +327,63 @@
             font-size: 0.85rem;
         }
         
+        /* ===== IMAGE UPLOAD ===== */
+        .image-upload-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 0.3rem;
+        }
+        .image-upload-container .preview {
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 10px;
+            border: 2px solid var(--border-color);
+            overflow: hidden;
+            display: none;
+            background: var(--bg-input);
+        }
+        .image-upload-container .preview img {
+            width: 100%;
+            height: auto;
+            max-height: 250px;
+            object-fit: contain;
+        }
+        .image-upload-container .file-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .image-upload-container .file-input-wrapper input[type="file"] {
+            display: none;
+        }
+        .image-upload-container .file-input-wrapper .file-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 1rem;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        .image-upload-container .file-input-wrapper .file-label:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .image-upload-container .remove-image {
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: none;
+        }
+        .image-upload-container .remove-image:hover {
+            text-decoration: underline;
+        }
+        
         /* ===== TAB-URI ===== */
         .taburi {
             display: flex;
@@ -476,6 +533,13 @@
             font-size: 0.85rem;
             color: var(--text-secondary);
             margin-bottom: 0.5rem;
+        }
+        .question-display .question-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+            border: 1px solid var(--border-color);
         }
         
         /* ===== HINT BOX ===== */
@@ -811,6 +875,7 @@
                 </div>
                 <h3 id="q-text">Întrebarea va apărea aici.</h3>
                 <div id="q-subtitle" class="subtitle"></div>
+                <div id="q-image-container"></div>
                 <div class="hint-box hidden" id="hint-box"><i class="fas fa-lightbulb" style="color:var(--warning);"></i> <span id="hint-text"></span></div>
             </div>
 
@@ -892,6 +957,24 @@
             <div class="form-group">
                 <label><i class="fas fa-question-circle"></i> Enunțul exercițiului</label>
                 <textarea class="form-control" id="nou-text" rows="4" placeholder="Scrie aici enunțul exercițiului..."></textarea>
+            </div>
+
+            <!-- IMAGE UPLOAD -->
+            <div class="form-group">
+                <label><i class="fas fa-image"></i> Imagine (opțional)</label>
+                <div class="image-upload-container">
+                    <div class="preview" id="nou-image-preview">
+                        <img id="nou-image-preview-img" src="" alt="Previzualizare imagine">
+                    </div>
+                    <div class="file-input-wrapper">
+                        <label class="file-label" for="nou-image-upload">
+                            <i class="fas fa-upload"></i> Încarcă imagine
+                        </label>
+                        <input type="file" id="nou-image-upload" accept="image/*" />
+                        <span class="remove-image" id="nou-image-remove" style="display:none;">✕ Elimină</span>
+                    </div>
+                    <small class="text-muted" style="font-size:0.75rem;">Formate acceptate: JPG, PNG, GIF. Dimensiune maximă: 2MB.</small>
+                </div>
             </div>
 
             <div id="nou-optiuni-container">
@@ -980,7 +1063,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     await incarcaRolUtilizator();
     incarcaExercitiiComunitate();
     incarcaBiblioteca();
+    
+    // Setup image upload
+    setupImageUpload();
 });
+
+// ============================================================
+// IMAGE UPLOAD SETUP
+// ============================================================
+function setupImageUpload() {
+    const fileInput = document.getElementById('nou-image-upload');
+    const preview = document.getElementById('nou-image-preview');
+    const previewImg = document.getElementById('nou-image-preview-img');
+    const removeBtn = document.getElementById('nou-image-remove');
+    
+    if (!fileInput) return;
+    
+    fileInput.addEventListener('change', function(e) {
+        const file = this.files[0];
+        if (file) {
+            // Verifică dimensiunea (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('⚠️ Imaginea este prea mare! Maxim 2MB.');
+                this.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                previewImg.src = event.target.result;
+                preview.style.display = 'block';
+                removeBtn.style.display = 'inline';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            fileInput.value = '';
+            previewImg.src = '';
+            preview.style.display = 'none';
+            this.style.display = 'none';
+        });
+    }
+}
 
 // ============================================================
 // VARIABILE GLOBALE
@@ -1158,6 +1284,7 @@ function displayTestList() {
                 </div>
             </div>
             <p style="font-size:0.9rem;">${q.text.substring(0, 120)}${q.text.length > 120 ? '...' : ''}</p>
+            ${q.imageData ? `<div style="margin-top:0.3rem;"><img src="${q.imageData}" style="max-height:80px; border-radius:4px; border:1px solid var(--border-color);" /></div>` : ''}
         </div>
     `).join('');
 }
@@ -1229,6 +1356,16 @@ function loadQuestion(index) {
     
     document.getElementById('q-text').textContent = q.text;
     document.getElementById('q-subtitle').textContent = q.subtitle || '';
+    
+    // Afișează imaginea dacă există
+    const imageContainer = document.getElementById('q-image-container');
+    if (q.imageData) {
+        imageContainer.innerHTML = `<img src="${q.imageData}" class="question-image" alt="Imagine exercițiu">`;
+        imageContainer.style.display = 'block';
+    } else {
+        imageContainer.innerHTML = '';
+        imageContainer.style.display = 'none';
+    }
     
     const hintBox = document.getElementById('hint-box');
     const hintText = document.getElementById('hint-text');
@@ -1542,7 +1679,7 @@ function runCode() {
 }
 
 // ============================================================
-// PUBLICĂ EXERCIȚIU - ACCESIBIL PENTRU TOȚI
+// PUBLICĂ EXERCIȚIU
 // ============================================================
 function publicaExercitiu() {
     const capitol = document.getElementById('nou-capitol').value;
@@ -1551,6 +1688,10 @@ function publicaExercitiu() {
     const hint = document.getElementById('nou-hint').value.trim();
     const barem = document.getElementById('nou-barem').value.trim();
     const autor = numeUtilizator || 'Utilizator';
+    
+    // Preluăm imaginea
+    const previewImg = document.getElementById('nou-image-preview-img');
+    const imageData = previewImg.src && previewImg.src !== '' ? previewImg.src : null;
     
     if (!text) {
         showToast('⚠️ Te rugăm să scrii enunțul exercițiului!');
@@ -1574,7 +1715,8 @@ function publicaExercitiu() {
         subiectLabel: subiect === 's1' ? 'Subiectul I (20p)' : (subiect === 's2' ? 'Subiectul II (40p)' : 'Subiectul III (30p)'),
         cerinte: subiect === 's1' ? 'Alege varianta corectă.' : (subiect === 's2' ? 'Scrie algoritmul în pseudocod sau explică execuția.' : 'Program C/C++: citire, prelucrare, afișare.'),
         sursa: 'comunitate',
-        useAI: subiect !== 's1'
+        useAI: subiect !== 's1',
+        imageData: imageData // Adăugăm imaginea
     };
     
     if (subiect === 's1') {
@@ -1607,6 +1749,7 @@ function publicaExercitiu() {
     allExercitii = incarcaExercitiiComunitate();
     document.getElementById('ex-count').textContent = allExercitii.length;
     
+    // Resetare formular
     document.getElementById('nou-text').value = '';
     document.getElementById('nou-hint').value = '';
     document.getElementById('nou-barem').value = '';
@@ -1614,18 +1757,27 @@ function publicaExercitiu() {
         document.getElementById(`nou-optiune-${i}`).value = '';
     }
     
+    // Resetare imagine
+    const preview = document.getElementById('nou-image-preview');
+    const previewImg2 = document.getElementById('nou-image-preview-img');
+    const removeBtn = document.getElementById('nou-image-remove');
+    const fileInput = document.getElementById('nou-image-upload');
+    previewImg2.src = '';
+    preview.style.display = 'none';
+    removeBtn.style.display = 'none';
+    fileInput.value = '';
+    
     showToast('✅ Exercițiul a fost publicat în comunitate!');
     incarcaBiblioteca();
 }
 
 // ============================================================
-// BIBLIOTECA MEA - ARATĂ DOAR EXERCIȚIILE CREATE DE UTILIZATOR
+// BIBLIOTECA MEA
 // ============================================================
 function incarcaBiblioteca() {
     const container = document.getElementById('biblioteca-container');
     const exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
     
-    // Filtrăm doar exercițiile create de utilizatorul curent
     const exercitiiMele = exercitiiComunitate.filter(ex => ex.autor === numeUtilizator);
     
     if (exercitiiMele.length === 0) {
@@ -1653,6 +1805,7 @@ function incarcaBiblioteca() {
                         <i class="fas fa-trash"></i> Șterge
                     </button>
                 </div>
+                ${ex.imageData ? `<img src="${ex.imageData}" style="max-height:150px; border-radius:8px; margin-bottom:0.5rem; border:1px solid var(--border-color);" />` : ''}
                 <p style="font-weight:600;">${ex.text}</p>
                 ${ex.hint ? `<p style="font-size:0.85rem; color:var(--text-secondary);"><i class="fas fa-lightbulb" style="color:var(--warning);"></i> ${ex.hint}</p>` : ''}
                 <div style="margin-top:0.5rem; background:var(--bg-input); padding:0.5rem; border-radius:8px; border-left:3px solid var(--primary);">
@@ -1677,13 +1830,10 @@ function stergeExercitiuMeu(index) {
     
     let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
     
-    // Găsim exercițiile utilizatorului curent
     const exercitiiMele = exercitiiComunitate.filter(ex => ex.autor === numeUtilizator);
     
-    // Ștergem exercițiul din lista filtrată
     if (index >= 0 && index < exercitiiMele.length) {
         const exercitiuDeSters = exercitiiMele[index];
-        // Ștergem din lista principală
         const idxInPrincipal = exercitiiComunitate.findIndex(ex => 
             ex.text === exercitiuDeSters.text && 
             ex.autor === exercitiuDeSters.autor &&
