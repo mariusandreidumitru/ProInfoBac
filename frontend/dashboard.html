@@ -767,6 +767,28 @@
     }
 
     // ============================================================
+    // ACTUALIZEAZĂ UI-UL CU ROL ȘI NUME
+    // ============================================================
+    function actualizeazaUI(role, name) {
+        const badge = document.getElementById('role-badge');
+        const roleText = document.getElementById('role-text');
+        const welcomeName = document.getElementById('welcome-name');
+        const icon = badge.querySelector('i');
+        
+        if (role === 'teacher') {
+            badge.className = 'role-badge teacher';
+            icon.className = 'fas fa-chalkboard-teacher';
+            roleText.textContent = 'Profesor';
+            welcomeName.textContent = name || 'profesor';
+        } else {
+            badge.className = 'role-badge student';
+            icon.className = 'fas fa-user-graduate';
+            roleText.textContent = 'Elev';
+            welcomeName.textContent = name || 'elev';
+        }
+    }
+
+    // ============================================================
     // ACTUALIZEAZĂ CARDUL CREATOR ÎN FUNCȚIE DE ROL
     // ============================================================
     function actualizeazaCardCreator(role) {
@@ -794,7 +816,66 @@
         }
     }
 
-   
+    // ============================================================
+    // ÎNCARCĂ STATISTICI DIN localStorage
+    // ============================================================
+    async function incarcaStatistici() {
+        try {
+            const exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
+            const varianteBac = JSON.parse(localStorage.getItem('varianteBac')) || [];
+            const rezultateElevi = JSON.parse(localStorage.getItem('rezultateElevi')) || {};
+            
+            // RESURSE - din localStorage
+            const resurse = JSON.parse(localStorage.getItem('bibliotecaResurse')) || [];
+            const totalResurse = resurse.length;
+            
+            // Actualizează statisticile
+            const totalExercitii = exercitiiComunitate.length;
+            document.getElementById('stat-exercitii').textContent = totalExercitii;
+            
+            const badgeExercitii = document.getElementById('badge-exercitii');
+            if (badgeExercitii) {
+                badgeExercitii.textContent = totalExercitii + '+';
+            }
+            
+            const badgeResurse = document.getElementById('badge-resurse');
+            if (badgeResurse) {
+                badgeResurse.textContent = totalResurse;
+            }
+            
+            const badgeVariante = document.getElementById('badge-variante');
+            if (badgeVariante) {
+                badgeVariante.textContent = varianteBac.length;
+            }
+            
+            document.getElementById('stat-variante').textContent = varianteBac.length;
+            
+            // Rezolvări și medie
+            let totalRezolvari = 0;
+            let totalNote = 0;
+            let noteCount = 0;
+            
+            for (const variantaId in rezultateElevi) {
+                const rezultate = rezultateElevi[variantaId];
+                if (Array.isArray(rezultate)) {
+                    totalRezolvari += rezultate.length;
+                    rezultate.forEach(r => {
+                        if (r.nota !== null && r.nota !== undefined) {
+                            totalNote += r.nota;
+                            noteCount++;
+                        }
+                    });
+                }
+            }
+            
+            document.getElementById('stat-rezolvate').textContent = totalRezolvari;
+            const medie = noteCount > 0 ? (totalNote / noteCount) : 0;
+            document.getElementById('stat-medie').textContent = medie.toFixed(2);
+            
+        } catch (e) {
+            console.warn('Nu s-au putut încărca statisticile:', e);
+        }
+    }
 
     // ============================================================
     // INIȚIALIZARE
@@ -811,7 +892,6 @@
         }
         
         await verificaRol();
-        adaugaExercitiiTest();
         await incarcaStatistici();
         
         setInterval(incarcaStatistici, 30000);
