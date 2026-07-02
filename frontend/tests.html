@@ -758,6 +758,19 @@
         .image-container.hidden {
             display: none;
         }
+        
+        /* ===== BIBLIOTECA IMAGE ===== */
+        .biblioteca-image {
+            margin-top: 0.5rem;
+        }
+        .biblioteca-image img {
+            max-height: 150px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .biblioteca-image.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -1398,7 +1411,7 @@ function loadQuestion(index) {
     
     // Afișează imaginea DOAR dacă există
     const imageContainer = document.getElementById('q-image-container');
-    if (q.imageData && q.imageData !== '') {
+    if (q.imageData && q.imageData !== '' && q.imageData !== 'null' && q.imageData !== 'undefined') {
         imageContainer.innerHTML = `<img src="${q.imageData}" class="question-image" alt="Imagine exercițiu">`;
         imageContainer.classList.remove('hidden');
     } else {
@@ -1713,7 +1726,10 @@ function publicaExercitiu() {
     
     const previewImg = document.getElementById('nou-image-preview-img');
     let imageData = null;
-    if (previewImg.src && previewImg.src !== '' && previewImg.src !== 'http://localhost/') {
+    // Verificăm dacă există imagine încărcată
+    if (previewImg.src && previewImg.src !== '' && 
+        previewImg.src !== 'http://localhost/' && 
+        !previewImg.src.startsWith('data:image') === false) {
         imageData = previewImg.src;
     }
     
@@ -1891,7 +1907,7 @@ function anuleazaEditareCapitol(exercitiuId) {
 }
 
 // ============================================================
-// BIBLIOTECA MEA
+// BIBLIOTECA MEA - FĂRĂ IMAGINE GOLĂ
 // ============================================================
 function incarcaBiblioteca() {
     const container = document.getElementById('biblioteca-container');
@@ -1926,6 +1942,11 @@ function incarcaBiblioteca() {
         const subiectNume = ex.subiect === 's1' ? 'Subiectul I - Grilă' : (ex.subiect === 's2' ? 'Subiectul II - Pseudocod' : 'Subiectul III - Programare');
         const capitolDisplay = capitolNume[ex.capitol] || ex.capitol || 'Necunoscut';
         
+        // Afișăm imaginea DOAR dacă există
+        const imageHtml = (ex.imageData && ex.imageData !== '' && ex.imageData !== 'null' && ex.imageData !== 'undefined') 
+            ? `<div class="biblioteca-image"><img src="${ex.imageData}" /></div>` 
+            : '';
+        
         html += `
             <div class="exercitiu-item" data-exercitiu-id="${ex.id}">
                 <div class="exercitiu-header">
@@ -1943,7 +1964,7 @@ function incarcaBiblioteca() {
                         <i class="fas fa-trash"></i> Șterge
                     </button>
                 </div>
-                ${ex.imageData && ex.imageData !== '' ? `<div style="margin-top:0.5rem;"><img src="${ex.imageData}" style="max-height:150px; border-radius:8px; border:1px solid var(--border-color);" /></div>` : ''}
+                ${imageHtml}
                 <p style="font-weight:600; margin-top:0.5rem;">${ex.text}</p>
                 <div style="margin-top:0.3rem; font-size:0.8rem; color:var(--text-secondary);">
                     <i class="fas fa-user"></i> Publicat de: ${ex.autor || 'Utilizator'}
