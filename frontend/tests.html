@@ -598,6 +598,25 @@
         .feedback-box.wrong { border-color: var(--danger); background: rgba(231, 76, 60, 0.1); color: var(--danger); }
         .feedback-box.info { border-color: var(--primary); background: rgba(67, 97, 238, 0.1); color: var(--primary); }
         
+        /* ===== REZOLVARE CORECTĂ - STIL NOU ===== */
+        .rezolvare-corecta-box {
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            background: rgba(46, 204, 113, 0.08);
+            border-left: 4px solid var(--success);
+            margin-top: 0.6rem;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .rezolvare-corecta-box.visible {
+            display: block;
+        }
+        .rezolvare-corecta-box strong {
+            color: var(--success);
+        }
+        
         /* ===== NAV ACTIONS ===== */
         .nav-actions {
             display: flex;
@@ -947,6 +966,12 @@
             </div>
 
             <div class="feedback-box" id="feedback-box">Așteaptă răspunsul tău...</div>
+            
+            <!-- REZOLVARE CORECTĂ -->
+            <div class="rezolvare-corecta-box" id="rezolvare-corecta-box">
+                <strong>📝 Rezolvare corectă:</strong><br>
+                <span id="rezolvare-corecta-text"></span>
+            </div>
 
             <div class="nav-actions">
                 <button class="btn btn-outline" id="prev-btn" onclick="prevQuestion()"><i class="fas fa-chevron-left"></i> Anterior</button>
@@ -1038,6 +1063,11 @@
                 </div>
             </div>
 
+            <div class="form-group">
+                <label><i class="fas fa-check-double" style="color:var(--success);"></i> Barem / Rezolvare corectă</label>
+                <textarea class="form-control" id="nou-barem" rows="4" placeholder="Scrie aici rezolvarea corectă sau baremul..."></textarea>
+            </div>
+
             <div style="display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:flex-end; margin-top:1rem;">
                 <button class="btn btn-warning" onclick="publicaExercitiu()">
                     <i class="fas fa-paper-plane"></i> Publică exercițiul
@@ -1068,7 +1098,7 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- SCRIPT - COD ACTUALIZAT -->
+<!-- SCRIPT - COD ACTUALIZAT CU BAREM ȘI REZOLVARE CORECTĂ -->
 <!-- ============================================================ -->
 <script>
 // ============================================================
@@ -1090,19 +1120,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
     document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
     
-    // MIGRARE: Adăugăm ID-uri la exercițiile vechi
     migreazaExercitiiVechi();
     
     await incarcaRolUtilizator();
     incarcaExercitiiComunitate();
     incarcaBiblioteca();
     
-    // Setup image upload
     setupImageUpload();
 });
 
 // ============================================================
-// MIGRARE EXERCIȚII VECHI - ADAUGĂ ID UNIC
+// MIGRARE EXERCIȚII VECHI
 // ============================================================
 function migreazaExercitiiVechi() {
     let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
@@ -1445,6 +1473,9 @@ function loadQuestion(index) {
         document.getElementById('scris-answer').value = answers[q.id] || '';
     }
     
+    // Ascundem rezolvarea corectă la încărcarea unei noi întrebări
+    document.getElementById('rezolvare-corecta-box').classList.remove('visible');
+    
     document.getElementById('feedback-box').textContent = 'Așteaptă răspunsul tău...';
     document.getElementById('feedback-box').className = 'feedback-box';
     
@@ -1583,7 +1614,7 @@ async function evaluateWithAI(answer, question) {
 }
 
 // ============================================================
-// SUBMIT ANSWER
+// SUBMIT ANSWER - CU AFIȘARE REZOLVARE CORECTĂ
 // ============================================================
 async function submitAnswer() {
     if (isEvaluating) return;
@@ -1636,6 +1667,18 @@ async function submitAnswer() {
     const feedbackBox = document.getElementById('feedback-box');
     feedbackBox.textContent = feedbackMsg;
     feedbackBox.className = `feedback-box ${isCorrect ? 'correct' : 'wrong'}`;
+    
+    // AFIȘEAZĂ REZOLVAREA CORECTĂ (BAREMUL)
+    const rezolvareBox = document.getElementById('rezolvare-corecta-box');
+    const rezolvareText = document.getElementById('rezolvare-corecta-text');
+    if (q.barem) {
+        rezolvareText.textContent = q.barem;
+        rezolvareBox.classList.add('visible');
+    } else {
+        // Dacă nu există barem, afișăm un mesaj generic
+        rezolvareText.textContent = 'Nu există o rezolvare standard pentru acest exercițiu. Verifică feedback-ul AI pentru îndrumări.';
+        rezolvareBox.classList.add('visible');
+    }
     
     const progress = ((currentQuestionIndex + 1) / currentTest.questions.length) * 100;
     document.getElementById('progress-fill').style.width = progress + '%';
@@ -1716,25 +1759,42 @@ function runCode() {
 }
 
 // ============================================================
-// PUBLICĂ EXERCIȚIU
+// PUBLICĂ EXERCIȚIU - CU BAREM
 // ============================================================
 function publicaExercitiu() {
     const capitol = document.getElementById('nou-capitol').value;
     const subiect = document.getElementById('nou-subiect').value;
     const text = document.getElementById('nou-text').value.trim();
+    const barem = document.getElementById('nou-barem').value.trim();
     const autor = numeUtilizator || 'Utilizator';
     
     const previewImg = document.getElementById('nou-image-preview-img');
     let imageData = null;
-    // Verificăm dacă există imagine încărcată
     if (previewImg.src && previewImg.src !== '' && 
         previewImg.src !== 'http://localhost/' && 
-        !previewImg.src.startsWith('data:image') === false) {
+        previewImg.src !== 'about:blank') {
         imageData = previewImg.src;
     }
     
     if (!text) {
         showToast('⚠️ Te rugăm să scrii enunțul exercițiului!');
+        return;
+    }
+    
+    if (subiect !== 's1' && !barem) {
+        showToast('⚠️ Te rugăm să adaugi un barem/rezolvare pentru Subiectul II sau III!');
+        return;
+    }
+    
+    // Verifică dacă există deja un exercițiu identic (același text și același autor)
+    let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
+    const exista = exercitiiComunitate.some(ex => 
+        ex.text.trim().toLowerCase() === text.trim().toLowerCase() && 
+        ex.autor === autor
+    );
+    
+    if (exista) {
+        showToast('⚠️ Acest exercițiu există deja în bibliotecă!');
         return;
     }
     
@@ -1745,6 +1805,7 @@ function publicaExercitiu() {
         capitol: capitol,
         subiect: subiect,
         text: text,
+        barem: barem || 'Răspuns corect: una dintre opțiunile de mai sus.',
         autor: autor,
         dificultate: 3,
         puncte: subiect === 's1' ? 4 : (subiect === 's2' ? 10 : 15),
@@ -1778,7 +1839,6 @@ function publicaExercitiu() {
         exercitiuNou.raspuns_corect = null;
     }
     
-    let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
     exercitiiComunitate.push(exercitiuNou);
     localStorage.setItem('exercitiiComunitate', JSON.stringify(exercitiiComunitate));
     
@@ -1786,6 +1846,7 @@ function publicaExercitiu() {
     document.getElementById('ex-count').textContent = allExercitii.length;
     
     document.getElementById('nou-text').value = '';
+    document.getElementById('nou-barem').value = '';
     for (let i = 0; i < 4; i++) {
         document.getElementById(`nou-optiune-${i}`).value = '';
     }
@@ -1907,7 +1968,7 @@ function anuleazaEditareCapitol(exercitiuId) {
 }
 
 // ============================================================
-// BIBLIOTECA MEA - FĂRĂ IMAGINE GOLĂ
+// BIBLIOTECA MEA
 // ============================================================
 function incarcaBiblioteca() {
     const container = document.getElementById('biblioteca-container');
@@ -1942,7 +2003,6 @@ function incarcaBiblioteca() {
         const subiectNume = ex.subiect === 's1' ? 'Subiectul I - Grilă' : (ex.subiect === 's2' ? 'Subiectul II - Pseudocod' : 'Subiectul III - Programare');
         const capitolDisplay = capitolNume[ex.capitol] || ex.capitol || 'Necunoscut';
         
-        // Afișăm imaginea DOAR dacă există
         const imageHtml = (ex.imageData && ex.imageData !== '' && ex.imageData !== 'null' && ex.imageData !== 'undefined') 
             ? `<div class="biblioteca-image"><img src="${ex.imageData}" /></div>` 
             : '';
@@ -1966,6 +2026,10 @@ function incarcaBiblioteca() {
                 </div>
                 ${imageHtml}
                 <p style="font-weight:600; margin-top:0.5rem;">${ex.text}</p>
+                ${ex.barem ? `<div style="margin-top:0.5rem; background:var(--bg-input); padding:0.5rem; border-radius:8px; border-left:3px solid var(--success);">
+                    <strong><i class="fas fa-check-double" style="color:var(--success);"></i> Barem:</strong>
+                    <span style="font-size:0.9rem;">${ex.barem}</span>
+                </div>` : ''}
                 <div style="margin-top:0.3rem; font-size:0.8rem; color:var(--text-secondary);">
                     <i class="fas fa-user"></i> Publicat de: ${ex.autor || 'Utilizator'}
                 </div>
@@ -2035,6 +2099,7 @@ function resetAll() {
     document.getElementById('feedback-box').textContent = 'Așteaptă răspunsul tău...';
     document.getElementById('feedback-box').className = 'feedback-box';
     document.getElementById('cod-output').textContent = 'Output-ul va apărea aici.';
+    document.getElementById('rezolvare-corecta-box').classList.remove('visible');
     
     document.getElementById('submit-btn').disabled = false;
     document.getElementById('submit-text').textContent = 'Trimite';
