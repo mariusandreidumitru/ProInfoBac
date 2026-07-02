@@ -1063,7 +1063,7 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- SCRIPT - COD ACTUALIZAT -->
+<!-- SCRIPT - COD ACTUALIZAT CU MIGRARE EXERCIȚII VECHI -->
 <!-- ============================================================ -->
 <script>
 // ============================================================
@@ -1085,6 +1085,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('theme-icon').className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
     document.getElementById('theme-text').textContent = saved === 'dark' ? 'Light' : 'Dark';
     
+    // MIGRARE: Adăugăm ID-uri la exercițiile vechi
+    migreazaExercitiiVechi();
+    
     await incarcaRolUtilizator();
     incarcaExercitiiComunitate();
     incarcaBiblioteca();
@@ -1092,6 +1095,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Setup image upload
     setupImageUpload();
 });
+
+// ============================================================
+// MIGRARE EXERCIȚII VECHI - ADAUGĂ ID UNIC
+// ============================================================
+function migreazaExercitiiVechi() {
+    let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
+    let modificat = false;
+    
+    exercitiiComunitate.forEach((ex, index) => {
+        // Dacă exercițiul nu are ID, îi atribuim unul
+        if (!ex.id) {
+            ex.id = 'ex_migrat_' + Date.now() + '_' + index + '_' + Math.random().toString(36).substr(2, 6);
+            modificat = true;
+        }
+    });
+    
+    if (modificat) {
+        localStorage.setItem('exercitiiComunitate', JSON.stringify(exercitiiComunitate));
+        console.log('✅ Exercițiile vechi au fost migrate cu ID-uri unice!');
+    }
+}
 
 // ============================================================
 // IMAGE UPLOAD SETUP
