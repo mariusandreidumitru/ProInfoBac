@@ -1705,7 +1705,7 @@ function runCode() {
 }
 
 // ============================================================
-// PUBLICĂ EXERCIȚIU
+// PUBLICĂ EXERCIȚIU - CU GENERARE ID UNIC
 // ============================================================
 function publicaExercitiu() {
     const capitol = document.getElementById('nou-capitol').value;
@@ -1729,7 +1729,11 @@ function publicaExercitiu() {
         return;
     }
     
+    // Generăm un ID unic
+    const idUnic = 'ex_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    
     let exercitiuNou = {
+        id: idUnic,
         capitol: capitol,
         subiect: subiect,
         text: text,
@@ -1742,8 +1746,7 @@ function publicaExercitiu() {
         cerinte: subiect === 's1' ? 'Alege varianta corectă.' : (subiect === 's2' ? 'Scrie algoritmul în pseudocod sau explică execuția.' : 'Program C/C++: citire, prelucrare, afișare.'),
         sursa: 'comunitate',
         useAI: subiect !== 's1',
-        imageData: imageData,
-        id: Date.now() + '_' + Math.random().toString(36).substr(2, 8)
+        imageData: imageData
     };
     
     if (subiect === 's1') {
@@ -1799,29 +1802,34 @@ function publicaExercitiu() {
 }
 
 // ============================================================
-// EDITEAZĂ CAPITOLUL EXERCIȚIULUI
+// EDITEAZĂ CAPITOLUL EXERCIȚIULUI - VERSIUNE REPARATĂ
 // ============================================================
 function editeazaCapitol(exercitiuId) {
-    // Găsim exercițiul în baza de date pentru a afla capitolul curent
+    // Găsim exercițiul în baza de date
     let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
     const exercitiu = exercitiiComunitate.find(ex => ex.id === exercitiuId);
     
     if (!exercitiu) {
-        showToast('⚠️ Exercițiul nu a fost găsit!');
+        showToast('⚠️ Exercițiul nu a fost găsit în baza de date!');
         return;
     }
     
     const oldCapitol = exercitiu.capitol;
-    const itemElement = document.querySelector(`[data-exercitiu-id="${exercitiuId}"]`);
     
+    // Căutăm elementul în pagină după ID
+    let itemElement = document.querySelector(`[data-exercitiu-id="${exercitiuId}"]`);
+    
+    // Dacă nu găsim elementul, reîncărcăm biblioteca
     if (!itemElement) {
-        showToast('⚠️ Elementul nu a fost găsit în pagină. Reîncărcare...');
+        showToast('🔄 Reîncărcare bibliotecă...');
         incarcaBiblioteca();
         setTimeout(() => {
             const newItem = document.querySelector(`[data-exercitiu-id="${exercitiuId}"]`);
             if (newItem) {
-                newItem.scrollIntoView({ behavior: 'smooth' });
+                newItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 editeazaCapitol(exercitiuId);
+            } else {
+                showToast('⚠️ Exercițiul nu a fost găsit în pagină!');
             }
         }, 500);
         return;
@@ -1858,7 +1866,6 @@ function editeazaCapitol(exercitiuId) {
     if (header) {
         header.parentNode.insertBefore(editForm, header.nextSibling);
     } else {
-        // Dacă nu găsim header, adăugăm la începutul elementului
         itemElement.prepend(editForm);
     }
     
@@ -1877,11 +1884,10 @@ function salveazaCapitol(exercitiuId) {
     const index = exercitiiComunitate.findIndex(ex => ex.id === exercitiuId);
     
     if (index === -1) {
-        showToast('⚠️ Exercițiul nu a fost găsit!');
+        showToast('⚠️ Exercițiul nu a fost găsit în baza de date!');
         return;
     }
     
-    // Actualizăm capitolul
     exercitiiComunitate[index].capitol = newCapitol;
     localStorage.setItem('exercitiiComunitate', JSON.stringify(exercitiiComunitate));
     
@@ -1894,9 +1900,8 @@ function salveazaCapitol(exercitiuId) {
         if (form) form.remove();
     }
     
-    // Reîncărcăm biblioteca pentru a afișa noul capitol
     incarcaBiblioteca();
-    showToast(`✅ Capitolul a fost actualizat!`);
+    showToast(`✅ Capitolul a fost actualizat la "${newCapitol}"!`);
 }
 
 function anuleazaEditareCapitol(exercitiuId) {
@@ -1908,7 +1913,7 @@ function anuleazaEditareCapitol(exercitiuId) {
 }
 
 // ============================================================
-// BIBLIOTECA MEA - CU DATA-EXERCITIU-ID
+// BIBLIOTECA MEA - CU ATRIBUT DATA-EXERCITIU-ID
 // ============================================================
 function incarcaBiblioteca() {
     const container = document.getElementById('biblioteca-container');
@@ -1927,7 +1932,6 @@ function incarcaBiblioteca() {
         return;
     }
     
-    // Map pentru numele capitolelor
     const capitolNume = {
         'algoritmi': 'Algoritmi elementari',
         'tablouri': 'Tablouri',
@@ -1942,7 +1946,8 @@ function incarcaBiblioteca() {
     let html = '';
     exercitiiMele.forEach((ex, idx) => {
         const subiectNume = ex.subiect === 's1' ? 'Subiectul I - Grilă' : (ex.subiect === 's2' ? 'Subiectul II - Pseudocod' : 'Subiectul III - Programare');
-        // Folosim ID-ul ca atribut data-exercitiu-id
+        const capitolDisplay = capitolNume[ex.capitol] || ex.capitol || 'Necunoscut';
+        
         html += `
             <div class="exercitiu-item" data-exercitiu-id="${ex.id}">
                 <div class="exercitiu-header">
@@ -1951,7 +1956,7 @@ function incarcaBiblioteca() {
                     <span class="badge badge-public">Publicat</span>
                     <span class="badge badge-owner">✏️ Creat de tine</span>
                     <span class="badge" style="background:var(--primary-light);color:var(--primary);">
-                        📂 ${capitolNume[ex.capitol] || ex.capitol}
+                        📂 ${capitolDisplay}
                     </span>
                     <button class="btn btn-warning btn-sm" onclick="editeazaCapitol('${ex.id}')">
                         <i class="fas fa-edit"></i> Editează capitol
@@ -1984,8 +1989,8 @@ function stergeExercitiuMeu(id) {
     if (!confirm('Sigur dorești să ștergi acest exercițiu?')) return;
     
     let exercitiiComunitate = JSON.parse(localStorage.getItem('exercitiiComunitate')) || [];
-    
     const index = exercitiiComunitate.findIndex(ex => ex.id === id);
+    
     if (index !== -1) {
         exercitiiComunitate.splice(index, 1);
         localStorage.setItem('exercitiiComunitate', JSON.stringify(exercitiiComunitate));
